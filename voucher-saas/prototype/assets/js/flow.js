@@ -120,9 +120,9 @@ function confirmPayment() {
   state.paid = true;
   state.courtesyRunning = false;
 
-  // TODO:BACKEND — webhook Efí confirma → cria usuário PPPoE no MikroTik com
-  // limite de tempo = plan.minutes, 1 sessão simultânea, e move o dispositivo
-  // do walled-garden para acesso liberado.
+  // TODO:BACKEND — webhook Efí confirma → cria /ip/hotspot/user com
+  // limit-uptime = plan.minutes preso ao MAC (1 dispositivo), encerra a
+  // cortesia e faz o login do dispositivo no Hotspot.
   document.getElementById('okPlan').textContent = plan.time;
   document.getElementById('okTime').textContent = plan.time;
   document.getElementById('okLogin').textContent =

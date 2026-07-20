@@ -9,8 +9,8 @@ export const config = {
   publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:3000',
   courtesySeconds: Number(process.env.COURTESY_WINDOW_SECONDS ?? 180),
 
-  // pppoe (padrão, conforme topologia do cliente) ou hotspot (captive portal p/ celular)
-  accessMode: (process.env.ACCESS_MODE as AccessMode) ?? 'pppoe',
+  // hotspot (padrão: captive portal p/ celular) ou pppoe (CPE que disca PPPoE)
+  accessMode: (process.env.ACCESS_MODE as AccessMode) ?? 'hotspot',
 
   mikrotik: {
     host: process.env.MIKROTIK_HOST ?? '',

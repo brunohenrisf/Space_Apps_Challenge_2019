@@ -57,6 +57,9 @@ function randomLogin(): string {
 function randomPassword(): string {
   return Math.random().toString(36).slice(2, 10);
 }
+function courtesySchedName(mac: string): string {
+  return `courtesy-${mac.replace(/:/g, '')}`;
+}
 
 /** Executa um comando na API e fecha a conexão. Loga (mock) se não configurado. */
 async function run(path: string, params: string[] = []): Promise<any[]> {
@@ -105,6 +108,14 @@ export async function provisionVoucher(input: {
     ];
     if (input.mac) params.push(`=mac-address=${input.mac}`); // 1 dispositivo
     await run('/ip/hotspot/user/add', params);
+
+    // Pago: encerra a cortesia (bypass) do dispositivo para que o limit-uptime
+    // do voucher passe a valer. O portal faz o login do device com estas
+    // credenciais (ver docs/MIKROTIK.md).
+    if (input.mac) {
+      await run('/ip/hotspot/ip-binding/remove', [`?mac-address=${input.mac}`]);
+      await run('/system/scheduler/remove', [`?name=${courtesySchedName(input.mac)}`]);
+    }
     console.log(`[mikrotik] hotspot user ${login} criado (limit-uptime=${uptimeLimit})`);
     return { login, password, profile, uptimeLimit, expiresAt };
   }
@@ -164,7 +175,7 @@ export async function grantCourtesyAccess(mac: string, seconds: number): Promise
     `=type=bypassed`,
     `=comment=cortesia ${seconds}s`,
   ]);
-  const schedName = `courtesy-${mac.replace(/:/g, '')}`;
+  const schedName = courtesySchedName(mac);
   const onEvent =
     `/ip/hotspot/ip-binding/remove [find mac-address="${mac}"]; ` +
     `/system/scheduler/remove [find name="${schedName}"]`;

@@ -98,11 +98,11 @@ Detalhes técnicos, regras de negócio e as chamadas de API em
 O backend já provisiona o voucher no roteador via **RouterOS API**
 (`node-routeros`), em dois modos (`ACCESS_MODE` no `.env`):
 
-- **`pppoe`** (padrão, sua topologia): cria `/ppp/secret` por voucher +
-  `/system/scheduler` que encerra ao fim do tempo (o secret não tem limite
-  nativo). `only-one=yes` garante 1 dispositivo por voucher.
-- **`hotspot`**: cria `/ip/hotspot/user` com `limit-uptime` nativo — necessário
-  para o **auto-redirect + cortesia de 3 min** em celulares.
+- **`hotspot`** (padrão — público com celular): cria `/ip/hotspot/user` com
+  `limit-uptime` nativo, faz o **auto-redirect ao conectar** e a **cortesia de
+  3 min** (via `ip-binding bypassed`). 1 dispositivo por voucher (MAC).
+- **`pppoe`** (alternativa): cria `/ppp/secret` por voucher +
+  `/system/scheduler` que encerra ao fim do tempo. Para CPE que disca PPPoE.
 
 > Sem `MIKROTIK_HOST`/`MIKROTIK_PASSWORD`, roda em **modo mock** (loga os
 > comandos sem conectar). Topologia e detalhes em

@@ -3,44 +3,60 @@
 ## Topologia
 
 ```
-   Internet ──▶ [ ether1 ] MikroTik [ ether2 ] ──▶ UniFi ──▶ ((Wi-Fi)) ──▶ clientes
-                 DHCP client            bridge-lan (PPPoE server)
+   Internet ──▶ [ ether1 ] MikroTik [ ether2 ] ──▶ UniFi ──▶ ((Wi-Fi)) ──▶ celulares
+                 DHCP client            bridge-lan (Hotspot)
                  (WAN)                  10.10.0.1/24
 ```
 
 - **ether1** — WAN, recebe o link por **DHCP client** (`/ip dhcp-client`).
 - **ether2** — LAN, numa **bridge** (`bridge-lan`) que vai para a **UniFi**. A
-  UniFi entrega o Wi-Fi; o MikroTik roteia, faz NAT e autentica.
+  UniFi entrega o Wi-Fi (modo AP/bridge); o MikroTik roteia, faz NAT, entrega
+  DHCP aos clientes e roda o **Hotspot** (captive portal).
 
-Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc).
+Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc) (já no **modo
+hotspot**; o bloco PPPoE fica ao final como alternativa).
 
 ---
 
-## Dois modos de acesso (`ACCESS_MODE`)
+## Modo de acesso (`ACCESS_MODE`)
 
-O backend provisiona o voucher de duas formas. Escolha no `.env`.
+Padrão: **`hotspot`** (público com celular). O `pppoe` fica como alternativa.
 
-### `pppoe` (padrão — sua topologia)
-- No pagamento, o backend cria um **`/ppp/secret`** único (login + senha) no
-  perfil `voucher-default` (**`only-one=yes`** → 1 dispositivo por voucher).
-- O `/ppp/secret` **não tem limite de tempo nativo**, então o backend também
-  cria um **`/system/scheduler`** que, ao fim do tempo do plano, derruba a
-  sessão (`/ppp/active/remove`) e desabilita o secret. Assim o próprio MikroTik
-  encerra o acesso mesmo se o backend estiver offline.
-- Indicado quando cada ponto de acesso é um **roteador/CPE que disca PPPoE**.
+### `hotspot` (padrão)
+- O celular conecta no Wi-Fi, recebe IP por DHCP e cai no **captive portal**,
+  que o redireciona para a **página de compra**.
+- **Cortesia de 3 min:** ao conectar, o backend libera o dispositivo com um
+  **`/ip/hotspot/ip-binding` `type=bypassed`** (internet ampla) + um
+  `/system/scheduler` que remove o bypass ao fim do tempo. É "internet ampla"
+  de propósito: para pagar o Pix a pessoa abre o **app do banco**, que precisa
+  de rede aberta — não dá para prever/liberar todos os bancos no walled-garden.
+- **Pagamento confirmado:** o backend cria **`/ip/hotspot/user`** com
+  **`limit-uptime`** (tempo do voucher, nativo) preso ao **MAC** (1 dispositivo)
+  e **encerra a cortesia** daquele MAC. O portal então faz o **login do
+  dispositivo** com as credenciais retornadas (ver "Handoff" abaixo), e a partir
+  daí o `limit-uptime` conta o tempo do voucher — os 3 min de cortesia **não são
+  descontados**, pois o relógio só corre enquanto autenticado como o voucher.
 
-### `hotspot` (recomendado se os clientes são celulares)
-- Cria **`/ip/hotspot/user`** com **`limit-uptime`** (limite de tempo **nativo**).
-- É o único modo que entrega o requisito de **auto-redirect ao conectar** e a
-  **cortesia de 3 minutos**, porque o celular recebe IP via DHCP e cai no
-  captive portal.
+### `pppoe` (alternativa)
+- Cria **`/ppp/secret`** por voucher (**`only-one=yes`** → 1 dispositivo) +
+  **`/system/scheduler`** que encerra ao fim do tempo (o secret não tem limite
+  nativo). Indicado quando cada ponto é um **roteador/CPE que disca PPPoE**.
 
-> ⚠️ **Importante:** em **PPPoE puro, um celular não é redirecionado** para o
-> portal — sem discar PPPoE ele não recebe IP nem conectividade, então não há
-> página para exibir. O "conectou → página de compra + 3 min de cortesia"
-> depende do **Hotspot**. Por isso os dois modos vêm implementados: rode em
-> `pppoe` para CPEs que discam, ou `hotspot` para o público com celular.
-> Não use PPPoE e Hotspot juntos na mesma LAN.
+> ⚠️ Em **PPPoE puro o celular não é redirecionado** (sem discar não recebe IP),
+> então o "auto-redirect + cortesia" não funciona. Por isso o padrão é
+> `hotspot`. Não use PPPoE e Hotspot juntos na mesma LAN.
+
+### Handoff: portal → login do Hotspot
+Depois que o status vira `paid`, o portal recebe `voucherLogin`/`voucherPassword`
+e redireciona o dispositivo para o login do Hotspot, autenticando-o de forma
+transparente:
+
+```
+http://10.10.0.1/login?username=<voucherLogin>&password=<voucherPassword>&dst=<url_original>
+```
+
+Com `mac-cookie` habilitado no profile do Hotspot, reconexões do mesmo aparelho
+reautenticam sozinhas enquanto durar o voucher.
 
 ---
 
