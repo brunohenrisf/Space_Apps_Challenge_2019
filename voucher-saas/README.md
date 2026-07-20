@@ -26,17 +26,23 @@ voucher-saas/
 │       ├── css/admin.css   #   Shell do painel (sidebar/bottom-nav responsivo)
 │       ├── js/flow.js      #   Fluxo do cliente, timer de cortesia e simulações
 │       └── js/admin.js     #   Login simulado e navegação do painel
-├── backend/                # Scaffold Node.js + TypeScript
+├── backend/                # Backend Node.js + TypeScript
 │   ├── src/
 │   │   ├── server.ts       #   Express: serve o protótipo + API
+│   │   ├── config.ts       #   Leitura do .env (modo de acesso, MikroTik, Efí)
 │   │   ├── plans.ts        #   Catálogo de planos
-│   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook
-│   │   └── services/       #   efi.ts (Pix) e mikrotik.ts (RouterOS) — stubs
+│   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /status
+│   │   └── services/
+│   │       ├── efi.ts      #   Pix (stub — a integrar)
+│   │       └── mikrotik.ts #   RouterOS API (PPPoE + Hotspot) — implementado
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── .env.example
+├── mikrotik/
+│   └── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 PPPoE p/ UniFi
 └── docs/
-    └── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
+    ├── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
+    └── MIKROTIK.md         # Topologia, modos pppoe/hotspot e integração
 ```
 
 ---
@@ -87,10 +93,26 @@ npm run dev               # http://localhost:3000  (portal) e /admin.html
 Detalhes técnicos, regras de negócio e as chamadas de API em
 [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 
+## Integração MikroTik
+
+O backend já provisiona o voucher no roteador via **RouterOS API**
+(`node-routeros`), em dois modos (`ACCESS_MODE` no `.env`):
+
+- **`pppoe`** (padrão, sua topologia): cria `/ppp/secret` por voucher +
+  `/system/scheduler` que encerra ao fim do tempo (o secret não tem limite
+  nativo). `only-one=yes` garante 1 dispositivo por voucher.
+- **`hotspot`**: cria `/ip/hotspot/user` com `limit-uptime` nativo — necessário
+  para o **auto-redirect + cortesia de 3 min** em celulares.
+
+> Sem `MIKROTIK_HOST`/`MIKROTIK_PASSWORD`, roda em **modo mock** (loga os
+> comandos sem conectar). Topologia e detalhes em
+> [`docs/MIKROTIK.md`](docs/MIKROTIK.md); config do roteador em
+> [`mikrotik/setup.rsc`](mikrotik/setup.rsc).
+
 ## Próximos passos
 
+- [x] Implementar a RouterOS API (`node-routeros`) em `services/mikrotik.ts`
 - [ ] Implementar a Efí de verdade (SDK `sdk-node-apis-efi`) em `services/efi.ts`
-- [ ] Implementar a RouterOS API (`node-routeros`) em `services/mikrotik.ts`
 - [ ] Persistência (PostgreSQL + Prisma) para eventos, planos, pedidos e vouchers
 - [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
 - [ ] Autenticação do painel do organizador

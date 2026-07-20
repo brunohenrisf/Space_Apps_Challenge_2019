@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { PLANS, findPlan } from '../plans';
 import { createImmediateCharge, getChargeStatus, verifyWebhook } from '../services/efi';
-import { createVoucherUser, grantCourtesyAccess } from '../services/mikrotik';
+import { provisionVoucher, grantCourtesyAccess, pingRouter } from '../services/mikrotik';
+import { config } from '../config';
 
 const router = Router();
 
@@ -10,8 +11,11 @@ type Order = {
   txid: string;
   planId: string;
   amount: number;
+  mac?: string;
   status: 'pending' | 'paid';
   voucherLogin?: string;
+  voucherPassword?: string;
+  expiresAt?: string;
 };
 const orders = new Map<string, Order>();
 
@@ -38,7 +42,13 @@ router.post('/checkout', async (req: Request, res: Response) => {
     planId: plan.id,
     deviceMac: req.body?.mac,
   });
-  orders.set(charge.txid, { txid: charge.txid, planId: plan.id, amount: plan.price, status: 'pending' });
+  orders.set(charge.txid, {
+    txid: charge.txid,
+    planId: plan.id,
+    amount: plan.price,
+    mac: req.body?.mac,
+    status: 'pending',
+  });
 
   res.json({
     txid: charge.txid,
@@ -56,7 +66,12 @@ router.get('/checkout/:txid/status', async (req: Request, res: Response) => {
     const remote = await getChargeStatus(order.txid);
     if (remote === 'CONCLUIDA') order.status = 'paid';
   }
-  res.json({ status: order.status, voucherLogin: order.voucherLogin });
+  res.json({
+    status: order.status,
+    voucherLogin: order.voucherLogin,
+    voucherPassword: order.voucherPassword,
+    expiresAt: order.expiresAt,
+  });
 });
 
 // POST /api/webhook/efi — Efí notifica o pagamento
@@ -70,15 +85,24 @@ router.post('/webhook/efi', async (req: Request, res: Response) => {
     const order = orders.get(txid);
     if (!order || order.status === 'paid') continue;
     const plan = findPlan(order.planId)!;
-    // Confirma → cria o usuário PPPoE no MikroTik com o tempo do voucher.
-    const user = await createVoucherUser({
-      minutes: plan.minutes,
-      profile: process.env.MIKROTIK_PPPOE_PROFILE ?? 'voucher-default',
-    });
+    // Confirma → provisiona o voucher no MikroTik com o tempo do plano.
+    const access = await provisionVoucher({ minutes: plan.minutes, mac: order.mac });
     order.status = 'paid';
-    order.voucherLogin = user.login;
+    order.voucherLogin = access.login;
+    order.voucherPassword = access.password;
+    order.expiresAt = access.expiresAt.toISOString();
   }
   res.json({ ok: true });
+});
+
+// GET /api/status — usado pelo painel: modo de acesso + saúde do roteador
+router.get('/status', async (_req: Request, res: Response) => {
+  const router = await pingRouter();
+  res.json({
+    accessMode: config.accessMode,
+    courtesySeconds: config.courtesySeconds,
+    mikrotik: router,
+  });
 });
 
 export default router;
