@@ -1,11 +1,10 @@
 # =============================================================================
-#  ConectaVoucher - Configuracao base do MikroTik (RouterOS)  [MODO HOTSPOT]
+#  ConectaVoucher - Configuracao do MikroTik (RouterOS) - Hotspot
 #  Topologia:
 #    ether1 -> WAN  : recebe o link da internet via DHCP client
 #    ether2 -> LAN  : bridge para a UniFi (Wi-Fi), com Hotspot (captive portal)
 #
-#  Este arquivo esta no MODO HOTSPOT (ACCESS_MODE=hotspot no backend):
-#  o celular conecta no Wi-Fi, recebe IP e cai no portal de compra. Cortesia
+#  O celular conecta no Wi-Fi, recebe IP e cai no portal de compra. A cortesia
 #  de 3 min e o tempo do voucher sao controlados pelo backend + limit-uptime.
 #
 #  Como aplicar:
@@ -99,16 +98,3 @@ add chain=forward action=accept in-interface=bridge-lan out-interface=ether1 com
 #              /ip hotspot active print     (dispositivos autenticados)
 #              /ip hotspot ip-binding print (cortesias/bypass ativos)
 # =============================================================================
-
-
-# #############################################################################
-#  ALTERNATIVA - MODO PPPoE (ACCESS_MODE=pppoe)
-#  Use SOMENTE se os clientes forem roteadores/CPE que discam PPPoE.
-#  Nao use junto com o Hotspot na mesma LAN. Descomente para usar.
-# #############################################################################
-# /ip pool add name=pppoe-pool ranges=10.10.10.10-10.10.10.254
-# /ppp profile add name=voucher-default local-address=10.10.0.1 \
-#     remote-address=pppoe-pool dns-server=1.1.1.1,8.8.8.8 only-one=yes
-# /interface pppoe-server server add service-name=ConectaVoucher \
-#     interface=bridge-lan one-session-per-host=yes \
-#     default-profile=voucher-default authentication=pap,chap disabled=no

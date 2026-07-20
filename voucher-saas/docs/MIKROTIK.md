@@ -13,16 +13,12 @@
   UniFi entrega o Wi-Fi (modo AP/bridge); o MikroTik roteia, faz NAT, entrega
   DHCP aos clientes e roda o **Hotspot** (captive portal).
 
-Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc) (já no **modo
-hotspot**; o bloco PPPoE fica ao final como alternativa).
+Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc).
 
 ---
 
-## Modo de acesso (`ACCESS_MODE`)
+## Fluxo no Hotspot (captive portal)
 
-Padrão: **`hotspot`** (público com celular). O `pppoe` fica como alternativa.
-
-### `hotspot` (padrão)
 - O celular conecta no Wi-Fi, recebe IP por DHCP e cai no **captive portal**,
   que o redireciona para a **página de compra**.
 - **Cortesia de 3 min:** ao conectar, o backend libera o dispositivo com um
@@ -36,15 +32,6 @@ Padrão: **`hotspot`** (público com celular). O `pppoe` fica como alternativa.
   dispositivo** com as credenciais retornadas (ver "Handoff" abaixo), e a partir
   daí o `limit-uptime` conta o tempo do voucher — os 3 min de cortesia **não são
   descontados**, pois o relógio só corre enquanto autenticado como o voucher.
-
-### `pppoe` (alternativa)
-- Cria **`/ppp/secret`** por voucher (**`only-one=yes`** → 1 dispositivo) +
-  **`/system/scheduler`** que encerra ao fim do tempo (o secret não tem limite
-  nativo). Indicado quando cada ponto é um **roteador/CPE que disca PPPoE**.
-
-> ⚠️ Em **PPPoE puro o celular não é redirecionado** (sem discar não recebe IP),
-> então o "auto-redirect + cortesia" não funciona. Por isso o padrão é
-> `hotspot`. Não use PPPoE e Hotspot juntos na mesma LAN.
 
 ### Handoff: portal → login do Hotspot
 Depois que o status vira `paid`, o portal recebe `voucherLogin`/`voucherPassword`
@@ -62,14 +49,14 @@ reautenticam sozinhas enquanto durar o voucher.
 
 ## O que o backend executa no roteador
 
-| Ação | Modo pppoe | Modo hotspot |
-|---|---|---|
-| Criar voucher | `/ppp/secret/add` + `/system/scheduler/add` | `/ip/hotspot/user/add` (`limit-uptime`) |
-| 1 dispositivo | perfil `only-one=yes` | `mac-address` no user |
-| Encerrar no tempo | scheduler derruba + desabilita | `limit-uptime` nativo |
-| Revogar | remove secret + active + scheduler | remove user + active |
-| Cortesia (3 min) | não se aplica | `ip-binding type=bypassed` + scheduler |
-| Diagnóstico | `/ppp/active/print` | `/ip/hotspot/active/print` |
+| Ação | Comando RouterOS |
+|---|---|
+| Criar voucher | `/ip/hotspot/user/add` (`limit-uptime`) |
+| 1 dispositivo | `mac-address` no user |
+| Encerrar no tempo | `limit-uptime` nativo |
+| Revogar | remove user + active |
+| Cortesia (3 min) | `ip-binding type=bypassed` + scheduler |
+| Diagnóstico | `/ip/hotspot/active/print` |
 
 Implementação: [`../backend/src/services/mikrotik.ts`](../backend/src/services/mikrotik.ts).
 
@@ -81,26 +68,24 @@ Implementação: [`../backend/src/services/mikrotik.ts`](../backend/src/services
    address=` para a faixa do backend.
 2. No backend (`.env`):
    ```
-   ACCESS_MODE=pppoe
    MIKROTIK_HOST=10.10.0.1
    MIKROTIK_PORT=8728
    MIKROTIK_USER=api
    MIKROTIK_PASSWORD=...
-   MIKROTIK_PPPOE_PROFILE=voucher-default
+   MIKROTIK_HOTSPOT_PROFILE=default
    ```
 3. Sem `MIKROTIK_HOST`/`MIKROTIK_PASSWORD`, o serviço roda em **modo mock**
    (loga as ações sem conectar) — útil para desenvolver sem o hardware.
 
-Teste rápido de conexão: `GET /api/status` → retorna `accessMode` e a
-identidade do roteador (`pingRouter`).
+Teste rápido de conexão: `GET /api/status` → retorna a identidade do roteador
+(`pingRouter`) e a janela de cortesia.
 
 ---
 
 ## Notas de produção
 
-- **RADIUS / User Manager**: para PPPoE com controle de tempo/banda mais
-  robusto e relatórios, considere o User Manager como servidor RADIUS em vez do
-  scheduler por voucher.
+- **RADIUS / User Manager**: para relatórios e controle de banda mais robustos,
+  considere o User Manager como servidor RADIUS do Hotspot.
 - **TLS**: habilite `api-ssl` (porta 8729) e `MIKROTIK_TLS=true` se o backend
   não estiver na mesma LAN do roteador.
 - **Persistência**: os vouchers hoje vivem em memória no backend; migrar para

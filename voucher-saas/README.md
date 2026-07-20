@@ -3,7 +3,7 @@
 SaaS mobile para **venda de vouchers de acesso à internet em eventos**. O
 visitante conecta no Wi-Fi, é direcionado automaticamente para a página de
 compra, paga via **Pix (Efí)** e o acesso é liberado automaticamente por meio
-de um cliente **PPPoE criado no MikroTik** com limite de tempo igual ao voucher.
+de um **usuário Hotspot criado no MikroTik** com limite de tempo igual ao voucher.
 
 > ⚠️ **Status: esqueleto para validação.** Esta entrega foca no **protótipo
 > HTML mobile-first** que demonstra todo o fluxo de telas, mais um **scaffold
@@ -34,15 +34,15 @@ voucher-saas/
 │   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /status
 │   │   └── services/
 │   │       ├── efi.ts      #   Pix (stub — a integrar)
-│   │       └── mikrotik.ts #   RouterOS API (PPPoE + Hotspot) — implementado
+│   │       └── mikrotik.ts #   RouterOS API (Hotspot) — implementado
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── .env.example
 ├── mikrotik/
-│   └── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 PPPoE p/ UniFi
+│   └── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 Hotspot p/ UniFi
 └── docs/
     ├── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
-    └── MIKROTIK.md         # Topologia, modos pppoe/hotspot e integração
+    └── MIKROTIK.md         # Topologia, Hotspot e integração
 ```
 
 ---
@@ -84,8 +84,8 @@ npm run dev               # http://localhost:3000  (portal) e /admin.html
    (walled-garden mantém portal + Efí sempre acessíveis).
 3. **Escolhe o voucher** (por tempo) e **paga no Pix** gerado pela Efí.
 4. **Efí confirma** o pagamento por **webhook** → o backend cria o usuário
-   **PPPoE no MikroTik** com `uptime-limit` = tempo do voucher e **1 sessão
-   simultânea** (1 dispositivo por voucher).
+   **Hotspot no MikroTik** com `limit-uptime` = tempo do voucher, preso ao
+   **MAC** (1 dispositivo por voucher).
 5. **Acesso liberado.** Se já pagou, os 3 min de cortesia **não são
    descontados** do tempo contratado. Se a cortesia acabar sem pagamento, o
    acesso é interrompido.
@@ -95,14 +95,13 @@ Detalhes técnicos, regras de negócio e as chamadas de API em
 
 ## Integração MikroTik
 
-O backend já provisiona o voucher no roteador via **RouterOS API**
-(`node-routeros`), em dois modos (`ACCESS_MODE` no `.env`):
+O backend provisiona o voucher no roteador via **RouterOS API** (`node-routeros`)
+usando o **Hotspot** (captive portal para celular):
 
-- **`hotspot`** (padrão — público com celular): cria `/ip/hotspot/user` com
-  `limit-uptime` nativo, faz o **auto-redirect ao conectar** e a **cortesia de
-  3 min** (via `ip-binding bypassed`). 1 dispositivo por voucher (MAC).
-- **`pppoe`** (alternativa): cria `/ppp/secret` por voucher +
-  `/system/scheduler` que encerra ao fim do tempo. Para CPE que disca PPPoE.
+- Cria `/ip/hotspot/user` com `limit-uptime` nativo, preso ao **MAC**
+  (1 dispositivo por voucher).
+- Faz o **auto-redirect ao conectar** e a **cortesia de 3 min** (via
+  `ip-binding bypassed`, para o cliente pagar pelo app do banco).
 
 > Sem `MIKROTIK_HOST`/`MIKROTIK_PASSWORD`, roda em **modo mock** (loga os
 > comandos sem conectar). Topologia e detalhes em

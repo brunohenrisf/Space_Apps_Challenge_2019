@@ -2,15 +2,10 @@ import 'dotenv/config';
 
 /** Centraliza a leitura do .env e valida o que é essencial. */
 
-export type AccessMode = 'pppoe' | 'hotspot';
-
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:3000',
   courtesySeconds: Number(process.env.COURTESY_WINDOW_SECONDS ?? 180),
-
-  // hotspot (padrão: captive portal p/ celular) ou pppoe (CPE que disca PPPoE)
-  accessMode: (process.env.ACCESS_MODE as AccessMode) ?? 'hotspot',
 
   mikrotik: {
     host: process.env.MIKROTIK_HOST ?? '',
@@ -19,7 +14,6 @@ export const config = {
     password: process.env.MIKROTIK_PASSWORD ?? '',
     // TLS opcional (api-ssl na porta 8729)
     tls: (process.env.MIKROTIK_TLS ?? 'false') === 'true',
-    pppoeProfile: process.env.MIKROTIK_PPPOE_PROFILE ?? 'voucher-default',
     hotspotProfile: process.env.MIKROTIK_HOTSPOT_PROFILE ?? 'default',
     hotspotServer: process.env.MIKROTIK_HOTSPOT_SERVER ?? 'all',
   },

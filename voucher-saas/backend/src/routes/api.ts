@@ -95,11 +95,10 @@ router.post('/webhook/efi', async (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// GET /api/status — usado pelo painel: modo de acesso + saúde do roteador
+// GET /api/status — usado pelo painel: saúde do roteador + cortesia
 router.get('/status', async (_req: Request, res: Response) => {
   const router = await pingRouter();
   res.json({
-    accessMode: config.accessMode,
     courtesySeconds: config.courtesySeconds,
     mikrotik: router,
   });
