@@ -47,7 +47,7 @@
   /* ----- Aliases legados (usados por admin.css e estilos inline) ----- */
   --brand: var(--brand-a);
   --brand-dark: var(--brand-b);
-  --brand-soft: rgba(79,124,255,.15);
+  --brand-soft: color-mix(in srgb, var(--brand-a) 16%, transparent);
   --surface: var(--glass);
   --text: var(--ink);
   --muted: var(--ink-3);
@@ -59,6 +59,41 @@
   --danger: var(--crit);
   --danger-soft: rgba(240,89,106,.15);
 }
+
+/* ---------- Tema claro ---------- */
+:root[data-theme="light"] {
+  --bg: #eef1fa;
+  --bg-2: #e6ebf7;
+  --glass: rgba(255,255,255,.72);
+  --glass-2: rgba(255,255,255,.86);
+  --glass-hi: rgba(255,255,255,.95);
+  --line: rgba(15,23,42,.09);
+  --line-strong: rgba(15,23,42,.16);
+  --ink: #0d1526;
+  --ink-2: #455072;
+  --ink-3: #7a86a3;
+  --ink-4: #aeb6cc;
+  --pos: #0f9d6f;
+  --neg: #e5484d;
+  --warn: #d97706;
+  --crit: #dc2626;
+  --grad-soft: linear-gradient(135deg, rgba(79,124,255,.10), rgba(139,92,246,.08));
+  --hero-grad: linear-gradient(135deg, #0e1530 0%, #161f45 45%, #241a52 100%);
+  --shadow: 0 24px 50px -26px rgba(20,30,70,.30);
+  --shadow-sm: 0 6px 18px -12px rgba(20,30,70,.22);
+  --brand-soft: color-mix(in srgb, var(--brand-a) 12%, transparent);
+  --success-soft: color-mix(in srgb, var(--pos) 14%, transparent);
+  --warning-soft: color-mix(in srgb, var(--warn) 14%, transparent);
+  --danger-soft: color-mix(in srgb, var(--crit) 12%, transparent);
+}
+
+/* ---------- Cores de destaque (acento) — valem em claro e escuro ----------
+   Só trocam --brand-* / --grad-soft / --hero-grad; o --grad acompanha sozinho. */
+:root[data-accent="jade"]    { --brand-a:#0f9d70; --brand-b:#12c98e; --brand-c:#34e0a8; --grad-soft:linear-gradient(135deg,rgba(18,201,142,.17),rgba(15,184,176,.13)); --hero-grad:linear-gradient(135deg,#07211b 0%,#0b3129 48%,#08241f 100%); }
+:root[data-accent="ouro"]    { --brand-a:#e0891f; --brand-b:#f0a63c; --brand-c:#f6d36b; --grad-soft:linear-gradient(135deg,rgba(240,166,60,.18),rgba(242,194,97,.13)); --hero-grad:linear-gradient(135deg,#241703 0%,#3a2708 48%,#1f1503 100%); }
+:root[data-accent="coral"]   { --brand-a:#ff4d6d; --brand-b:#ff6f7e; --brand-c:#ff9f6b; --grad-soft:linear-gradient(135deg,rgba(255,77,109,.17),rgba(255,159,107,.13)); --hero-grad:linear-gradient(135deg,#2a0d15 0%,#3d1420 48%,#2a0f18 100%); }
+:root[data-accent="violeta"] { --brand-a:#7c5cff; --brand-b:#a855f7; --brand-c:#d946ef; --grad-soft:linear-gradient(135deg,rgba(124,92,255,.18),rgba(217,70,239,.13)); --hero-grad:linear-gradient(135deg,#160e2e 0%,#241545 48%,#2e123f 100%); }
+:root[data-accent="oceano"]  { --brand-a:#2f80ed; --brand-b:#22a7ee; --brand-c:#38d6d0; --grad-soft:linear-gradient(135deg,rgba(47,128,237,.17),rgba(56,214,208,.13)); --hero-grad:linear-gradient(135deg,#08182e 0%,#0c2740 48%,#06232e 100%); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -83,7 +118,50 @@ body::before {
     radial-gradient(60% 55% at 82% 96%, rgba(46,230,168,.13), transparent 60%),
     var(--bg);
 }
+:root[data-theme="light"] body::before {
+  background:
+    radial-gradient(58% 46% at 8% 2%, rgba(79,124,255,.12), transparent 62%),
+    radial-gradient(50% 40% at 96% 6%, rgba(139,92,246,.10), transparent 60%),
+    radial-gradient(60% 55% at 82% 96%, rgba(46,230,168,.10), transparent 60%),
+    var(--bg);
+}
 .num, .mono-display { font-family: var(--display); font-variant-numeric: tabular-nums; }
+
+/* ---------- Botão de alternância de tema (claro/escuro) ---------- */
+.icon-toggle {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 11px; border: 1px solid var(--line);
+  background: var(--glass-2); color: var(--ink-2);
+  display: grid; place-items: center; font-size: 16px; cursor: pointer;
+  transition: border-color .18s, color .18s, transform .1s;
+}
+.icon-toggle:hover { border-color: var(--line-strong); color: var(--ink); transform: translateY(-1px); }
+.icon-toggle:active { transform: scale(.95); }
+
+/* ---------- Seletor de aparência (Configurações) ---------- */
+.seg-theme { display: flex; background: var(--glass-2); border: 1px solid var(--line); border-radius: 12px; padding: 5px; gap: 5px; max-width: 280px; }
+.seg-theme button { flex: 1; height: 38px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--ink-3); background: none; border: none; cursor: pointer; font-family: var(--font); display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.seg-theme button.on { background: var(--glass-hi); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.theme-opt {
+  display: flex; flex-direction: column; gap: 9px; padding: 11px;
+  border: 1px solid var(--line); border-radius: 15px; background: var(--glass-2);
+  position: relative; cursor: pointer; transition: border-color .16s, transform .16s;
+}
+.theme-opt:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+.theme-opt.on { border-color: var(--brand-a); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-a) 22%, transparent); }
+.theme-sw { width: 100%; height: 44px; border-radius: 11px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.10); }
+.theme-nm { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.theme-chk { position: absolute; top: 9px; right: 9px; width: 21px; height: 21px; border-radius: 50%; background: var(--brand-a); color: #fff; display: none; place-items: center; font-size: 12px; font-weight: 800; }
+.theme-opt.on .theme-chk { display: grid; }
+/* swatches por acento */
+.theme-sw.sw-padrao  { background: linear-gradient(135deg,#4f7cff,#8b5cf6 55%,#2ee6a8); }
+.theme-sw.sw-jade    { background: linear-gradient(135deg,#0f9d70,#12c98e 55%,#34e0a8); }
+.theme-sw.sw-ouro    { background: linear-gradient(135deg,#e0891f,#f0a63c 55%,#f6d36b); }
+.theme-sw.sw-coral   { background: linear-gradient(135deg,#ff4d6d,#ff6f7e 55%,#ff9f6b); }
+.theme-sw.sw-violeta { background: linear-gradient(135deg,#7c5cff,#a855f7 55%,#d946ef); }
+.theme-sw.sw-oceano  { background: linear-gradient(135deg,#2f80ed,#22a7ee 55%,#38d6d0); }
 
 /* ---------- App shell (moldura de celular) ---------- */
 .app-bg {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#070b16" />
+  <script>(function(){try{var t=localStorage.getItem('cv-theme');document.documentElement.dataset.theme=t==='light'?'light':'dark';var a=localStorage.getItem('cv-accent');if(a&&a!=='padrao')document.documentElement.dataset.accent=a;}catch(e){document.documentElement.dataset.theme='dark';}})();</script>
   <title>ConectaVoucher — Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,6 +49,7 @@
           <div class="brand-name">ConectaVoucher</div>
           <div class="brand-sub">Internet por voucher em eventos</div>
         </div>
+        <button class="icon-toggle" data-theme-toggle title="Alternar tema" style="margin-left:auto"><span data-theme-icon>☀️</span></button>
       </header>
 
       <main class="content home" style="padding-bottom:24px">
@@ -77,5 +79,6 @@
       </main>
     </div>
   </div>
+  <script src="assets/js/theme.js"></script>
 </body>
 </html>
