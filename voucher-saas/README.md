@@ -1,0 +1,87 @@
+# ConectaVoucher
+
+SaaS mobile para **venda de vouchers de acesso à internet em eventos**. O
+visitante conecta no Wi-Fi, é direcionado automaticamente para a página de
+compra, paga via **Pix (Efí)** e o acesso é liberado automaticamente por meio
+de um cliente **PPPoE criado no MikroTik** com limite de tempo igual ao voucher.
+
+> ⚠️ **Status: esqueleto para validação.** Esta entrega foca no **protótipo
+> HTML mobile-first** que demonstra todo o fluxo de telas, mais um **scaffold
+> do backend em Node.js + TypeScript** com os contratos de API e os pontos de
+> integração já marcados (`// TODO:BACKEND`). As integrações reais com Efí e
+> MikroTik ainda não estão implementadas.
+
+---
+
+## Como está organizado
+
+```
+voucher-saas/
+├── prototype/              # Esqueleto HTML para validar (abra no navegador)
+│   ├── index.html          #   Portal captivo: conectar → planos → Pix → sucesso
+│   ├── admin.html          #   Painel do organizador (dashboard)
+│   └── assets/
+│       ├── css/app.css     #   Design system mobile-first
+│       └── js/flow.js      #   Fluxo, timer de cortesia e simulações
+├── backend/                # Scaffold Node.js + TypeScript
+│   ├── src/
+│   │   ├── server.ts       #   Express: serve o protótipo + API
+│   │   ├── plans.ts        #   Catálogo de planos
+│   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook
+│   │   └── services/       #   efi.ts (Pix) e mikrotik.ts (RouterOS) — stubs
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── .env.example
+└── docs/
+    └── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
+```
+
+---
+
+## Validar o protótipo (sem instalar nada)
+
+Abra **`prototype/index.html`** direto no navegador (de preferência no modo
+responsivo/celular). Use a **barra escura no topo** para pular entre estados:
+
+- **1·Conectar** → tela de boas-vindas com a cortesia de 3 min correndo
+- **2·Planos** → escolha do voucher
+- **3·Pix** → tela de pagamento (QR + copia e cola)
+- **✓ Simular pagto** → simula o webhook confirmando → tela de sucesso
+- **⏱ Estourar tempo** → simula a cortesia acabando sem pagamento
+
+O painel do organizador está em **`prototype/admin.html`**.
+
+## Rodar servido pelo backend (opcional)
+
+```bash
+cd backend
+cp .env.example .env      # preencha depois com as chaves reais
+npm install
+npm run dev               # http://localhost:3000  (portal) e /admin.html
+```
+
+---
+
+## O fluxo do usuário
+
+1. **Conecta no Wi-Fi** → o hotspot do MikroTik redireciona para o portal.
+2. **Cortesia de 3 min** liberada apenas para navegar no portal e pagar
+   (walled-garden mantém portal + Efí sempre acessíveis).
+3. **Escolhe o voucher** (por tempo) e **paga no Pix** gerado pela Efí.
+4. **Efí confirma** o pagamento por **webhook** → o backend cria o usuário
+   **PPPoE no MikroTik** com `uptime-limit` = tempo do voucher e **1 sessão
+   simultânea** (1 dispositivo por voucher).
+5. **Acesso liberado.** Se já pagou, os 3 min de cortesia **não são
+   descontados** do tempo contratado. Se a cortesia acabar sem pagamento, o
+   acesso é interrompido.
+
+Detalhes técnicos, regras de negócio e as chamadas de API em
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+
+## Próximos passos
+
+- [ ] Implementar a Efí de verdade (SDK `sdk-node-apis-efi`) em `services/efi.ts`
+- [ ] Implementar a RouterOS API (`node-routeros`) em `services/mikrotik.ts`
+- [ ] Persistência (PostgreSQL + Prisma) para eventos, planos, pedidos e vouchers
+- [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
+- [ ] Autenticação do painel do organizador
