@@ -14,7 +14,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-routeros": "^1.6.8"
+    "node-routeros": "^1.6.8",
+    "sdk-node-apis-efi": "^1.2.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

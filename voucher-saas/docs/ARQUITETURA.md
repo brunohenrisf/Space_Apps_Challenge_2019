@@ -52,13 +52,13 @@
      consulta até virar `paid`.
 5. Com `status = paid` e `voucherLogin`, o portal loga o dispositivo no Hotspot.
 
-## Integração Efí (Pix) — a implementar
+## Integração Efí (Pix) — implementada
 
 - SDK oficial: `sdk-node-apis-efi`.
 - Credenciais: `EFI_CLIENT_ID`, `EFI_CLIENT_SECRET`, certificado `.p12`.
 - `pixCreateImmediateCharge` (cob) + `pixGenerateQRCode`.
-- Configurar o webhook da chave Pix apontando para `PUBLIC_URL/api/webhook/efi`.
-- Validar autenticidade do webhook (mTLS / token) antes de provisionar.
+- Webhook em `POST /api/webhook/efi/pix`, validado por HMAC (`?hmac=`).
+- Detalhes em [`EFI.md`](EFI.md).
 
 ## Integração MikroTik (RouterOS) — implementada
 

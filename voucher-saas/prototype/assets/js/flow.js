@@ -1,13 +1,16 @@
 /* =========================================================
-   ConectaVoucher — lógica do protótipo (esqueleto)
-   Sem backend: simula a janela de cortesia de 3 min, a
-   seleção de plano, a tela Pix e a confirmação de pagamento.
-   Toda integração real (Efí Pix / MikroTik) fica marcada
-   com // TODO:BACKEND
+   ConectaVoucher — lógica do portal do cliente.
+
+   Funciona em dois modos automaticamente:
+   - Servido por HTTP (pelo backend): usa a API real
+     (/courtesy, /checkout, polling de status) e faz o
+     login do dispositivo no Hotspot após o pagamento.
+   - Aberto como arquivo (file://) ou sem backend: cai na
+     simulação, para validar as telas sem hardware.
    ========================================================= */
 
-// ---------- Catálogo de planos (viria de GET /api/plans) ----------
-const PLANS = [
+// ---------- Catálogo de planos (fallback; a API sobrescreve via /plans) ----------
+let PLANS = [
   { id: '1h',  time: '1 hora',   minutes: 60,   price: 5,   desc: 'Ideal para uma navegada rápida' },
   { id: '3h',  time: '3 horas',  minutes: 180,  price: 10,  desc: 'Redes sociais e mensagens', badge: 'Mais vendido' },
   { id: '6h',  time: '6 horas',  minutes: 360,  price: 15,  desc: 'Um período do evento' },
@@ -15,8 +18,32 @@ const PLANS = [
   { id: '24h', time: '24 horas', minutes: 1440, price: 30,  desc: 'Acesso liberado por 1 dia' },
 ];
 
-const COURTESY_SECONDS = 3 * 60; // janela de cortesia
+const COURTESY_SECONDS = 3 * 60;
 const BRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+// ---------- Parâmetros que o Hotspot do MikroTik injeta na URL ----------
+const qs = new URLSearchParams(location.search);
+const hotspot = {
+  mac: qs.get('mac') || '',
+  // link-login-only é o alvo do POST de login; link-login é a versão completa.
+  linkLogin: qs.get('link-login-only') || qs.get('link-login') || '',
+  linkOrig: qs.get('link-orig') || qs.get('dst') || '',
+};
+
+// API disponível quando servido por http(s). Vira false se um fetch falhar.
+const API_BASE = location.protocol.startsWith('http') ? '/api' : null;
+let apiOk = !!API_BASE;
+
+async function api(path, opts) {
+  const r = await fetch(API_BASE + path, opts);
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+const jsonPost = (body) => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
 
 const state = {
   screen: 'connect',
@@ -24,6 +51,9 @@ const state = {
   paid: false,
   courtesyLeft: COURTESY_SECONDS,
   courtesyRunning: true,
+  txid: null,
+  voucherPassword: null,
+  poll: null,
 };
 
 // ---------- Navegação entre telas ----------
@@ -36,12 +66,12 @@ const screens = {
 };
 
 function go(name) {
+  if (state.screen === 'payment' && name !== 'payment') stopPolling();
   state.screen = name;
   Object.values(screens).forEach((s) => s.classList.remove('active'));
   screens[name].classList.add('active');
   document.querySelector('.content').scrollTop = 0;
   renderActionBar();
-  // Some o chip de cortesia quando não é mais relevante
   const chip = document.getElementById('timerChip');
   chip.classList.toggle('hidden', name === 'success' || name === 'expired');
 }
@@ -53,7 +83,6 @@ function tickCourtesy() {
   renderTimer();
   if (state.courtesyLeft <= 0) {
     state.courtesyRunning = false;
-    // TODO:BACKEND — aqui o MikroTik já teria cortado o acesso do walled-garden
     if (!state.paid) go('expired');
   }
 }
@@ -95,39 +124,91 @@ function renderPlans() {
 }
 
 // ---------- Tela de pagamento ----------
-function openPayment() {
+async function openPayment() {
   const plan = PLANS.find((p) => p.id === state.selected);
   if (!plan) return;
 
-  // TODO:BACKEND — POST /api/checkout { planId } → cria cobrança Pix na Efí
-  // e retorna { txid, qrcodeImage, pixCopiaECola }. Aqui usamos placeholders.
   document.getElementById('sumPlan').textContent = plan.time;
   document.getElementById('sumPrice').textContent = BRL(plan.price);
-  document.getElementById('qrImg').src = fakeQR(plan.id);
-  document.getElementById('pixCode').textContent =
-    `00020126580014BR.GOV.BCB.PIX0136${plan.id}-conectavoucher-txid-DEMO520400005303986540${plan.price}.005802BR5910EVENTO2026`;
-
   document.getElementById('awaitBox').classList.remove('hidden');
   go('payment');
 
-  // TODO:BACKEND — polling GET /api/checkout/:txid/status como fallback do webhook.
+  if (apiOk) {
+    try {
+      const r = await api('/checkout', jsonPost({ planId: plan.id, mac: hotspot.mac }));
+      state.txid = r.txid;
+      document.getElementById('qrImg').src = r.qrcodeImage;
+      document.getElementById('pixCode').textContent = r.pixCopiaECola;
+      startPolling(plan);
+      return;
+    } catch (e) {
+      apiOk = false; // backend indisponível → cai na simulação
+    }
+  }
+  // Simulação
+  document.getElementById('qrImg').src = fakeQR(plan.id);
+  document.getElementById('pixCode').textContent =
+    `00020126580014BR.GOV.BCB.PIX0136${plan.id}-conectavoucher-txid-DEMO520400005303986540${plan.price}.005802BR5910EVENTO2026`;
 }
 
-// ---------- Confirmação de pagamento (webhook simulado) ----------
-function confirmPayment() {
-  if (!state.selected) return;
-  const plan = PLANS.find((p) => p.id === state.selected);
+// ---------- Polling do status (fallback do webhook) ----------
+function startPolling(plan) {
+  stopPolling();
+  state.poll = setInterval(async () => {
+    if (!state.txid) return;
+    try {
+      const r = await api(`/checkout/${state.txid}/status`);
+      if (r.status === 'paid') {
+        stopPolling();
+        onPaid(plan, r.voucherLogin, r.voucherPassword);
+      }
+    } catch (e) { /* tenta de novo no próximo tick */ }
+  }, 3000);
+}
+function stopPolling() {
+  if (state.poll) { clearInterval(state.poll); state.poll = null; }
+}
+
+// ---------- Pagamento confirmado ----------
+function onPaid(plan, login, password) {
   state.paid = true;
   state.courtesyRunning = false;
-
-  // TODO:BACKEND — webhook Efí confirma → cria /ip/hotspot/user com
-  // limit-uptime = plan.minutes preso ao MAC (1 dispositivo), encerra a
-  // cortesia e faz o login do dispositivo no Hotspot.
+  state.voucherPassword = password || null;
   document.getElementById('okPlan').textContent = plan.time;
   document.getElementById('okTime').textContent = plan.time;
   document.getElementById('okLogin').textContent =
-    'evt-' + Math.random().toString(16).slice(2, 8).toUpperCase();
+    login || 'evt-' + Math.random().toString(16).slice(2, 8).toUpperCase();
   go('success');
+}
+
+// Simulação local (usada pela devbar e no modo file://)
+function confirmPaymentSim() {
+  const plan = PLANS.find((p) => p.id === state.selected) || PLANS[1];
+  state.selected = plan.id;
+  onPaid(plan, null, Math.random().toString(36).slice(2, 10));
+}
+
+// ---------- Handoff: loga o dispositivo no Hotspot do MikroTik ----------
+function startBrowsing() {
+  const login = document.getElementById('okLogin').textContent;
+  const password = state.voucherPassword;
+  if (hotspot.linkLogin && login && password) {
+    // Submete o login do Hotspot; o MikroTik redireciona para link-orig.
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = hotspot.linkLogin;
+    const add = (n, v) => {
+      const i = document.createElement('input');
+      i.type = 'hidden'; i.name = n; i.value = v; form.appendChild(i);
+    };
+    add('username', login);
+    add('password', password);
+    if (hotspot.linkOrig) add('dst', hotspot.linkOrig);
+    document.body.appendChild(form);
+    form.submit();
+  } else {
+    alert('Protótipo: aqui o dispositivo é autenticado no Hotspot e volta a navegar.');
+  }
 }
 
 // ---------- Rodapé de ação por tela ----------
@@ -155,22 +236,15 @@ function renderActionBar() {
 
   } else if (state.screen === 'success') {
     bar.innerHTML = `<button class="btn btn-success" id="btnDone">Começar a navegar</button>`;
-    bar.querySelector('#btnDone').onclick = () => {
-      // TODO:BACKEND — redireciona para a URL original que o usuário tentou abrir
-      alert('Protótipo: aqui o usuário volta a navegar normalmente.');
-    };
+    bar.querySelector('#btnDone').onclick = startBrowsing;
 
   } else if (state.screen === 'expired') {
     bar.innerHTML = `<button class="btn btn-primary" id="btnRetry">Escolher um voucher</button>`;
-    bar.querySelector('#btnRetry').onclick = () => {
-      // Numa situação real o acesso já estaria cortado; para pagar, o MikroTik
-      // mantém o walled-garden (portal + Efí) sempre acessível.
-      go('plans');
-    };
+    bar.querySelector('#btnRetry').onclick = () => go('plans');
   }
 }
 
-// ---------- QR fake (só visual, viria da Efí) ----------
+// ---------- QR fake (só simulação) ----------
 function fakeQR(seed) {
   const size = 25;
   let hash = 0;
@@ -182,7 +256,6 @@ function fakeQR(seed) {
   let rects = '';
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      // cantos de posicionamento (finder patterns)
       const corner = (x < 7 && y < 7) || (x >= size - 7 && y < 7) || (x < 7 && y >= size - 7);
       const on = corner ? finderOn(x, y, size) : rand() > 0.5;
       if (on) rects += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
@@ -208,18 +281,33 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   setTimeout(() => (b.textContent = 'Copiar'), 1500);
 });
 
-// ---------- Barra dev ----------
+// ---------- Barra dev (simulação) ----------
 document.getElementById('devbar').addEventListener('click', (e) => {
   const go_ = e.target.dataset.go;
   const sim = e.target.dataset.sim;
   if (go_ === 'connect') go('connect');
   if (go_ === 'plans') go('plans');
   if (go_ === 'payment') { if (!state.selected) state.selected = '3h'; openPayment(); }
-  if (sim === 'pay') { if (!state.selected) state.selected = '3h'; confirmPayment(); }
+  if (sim === 'pay') { stopPolling(); confirmPaymentSim(); }
   if (sim === 'expire') { state.courtesyLeft = 1; }
 });
 
 // ---------- Init ----------
-renderPlans();
-renderTimer();
-renderActionBar();
+async function init() {
+  if (apiOk) {
+    try {
+      const [{ plans }, status] = await Promise.all([
+        api('/plans'),
+        api('/courtesy', jsonPost({ mac: hotspot.mac })),
+      ]);
+      if (Array.isArray(plans) && plans.length) PLANS = plans;
+      if (status?.seconds) { state.courtesyLeft = status.seconds; }
+    } catch (e) {
+      apiOk = false; // sem backend → segue em simulação
+    }
+  }
+  renderPlans();
+  renderTimer();
+  renderActionBar();
+}
+init();

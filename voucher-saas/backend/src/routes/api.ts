@@ -1,8 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { PLANS, findPlan } from '../plans';
-import { createImmediateCharge, getChargeStatus, verifyWebhook } from '../services/efi';
+import {
+  createImmediateCharge,
+  getChargeStatus,
+  verifyWebhook,
+  configureWebhook,
+} from '../services/efi';
 import { provisionVoucher, grantCourtesyAccess, pingRouter } from '../services/mikrotik';
-import { config } from '../config';
+import { config, efiConfigured } from '../config';
 
 const router = Router();
 
@@ -74,14 +79,9 @@ router.get('/checkout/:txid/status', async (req: Request, res: Response) => {
   });
 });
 
-// POST /api/webhook/efi — Efí notifica o pagamento
-router.post('/webhook/efi', async (req: Request, res: Response) => {
-  if (!verifyWebhook(req.header('x-efi-token'))) {
-    return res.status(401).json({ error: 'webhook não autorizado' });
-  }
-  // A Efí envia uma lista de txids pagos em `pix[]`.
-  const paid: string[] = (req.body?.pix ?? []).map((p: any) => p.txid);
-  for (const txid of paid) {
+// Provisiona os txids pagos que ainda estão pendentes.
+async function processPaidTxids(txids: string[]): Promise<void> {
+  for (const txid of txids) {
     const order = orders.get(txid);
     if (!order || order.status === 'paid') continue;
     const plan = findPlan(order.planId)!;
@@ -92,14 +92,34 @@ router.post('/webhook/efi', async (req: Request, res: Response) => {
     order.voucherPassword = access.password;
     order.expiresAt = access.expiresAt.toISOString();
   }
-  res.json({ ok: true });
+}
+
+// POST /api/webhook/efi[/pix] — Efí notifica o pagamento.
+// A Efí acrescenta "/pix" à URL configurada, por isso as duas rotas.
+async function efiWebhookHandler(req: Request, res: Response) {
+  const hmac = typeof req.query.hmac === 'string' ? req.query.hmac : undefined;
+  if (!verifyWebhook({ hmac, token: req.header('x-efi-token') })) {
+    return res.status(401).json({ error: 'webhook não autorizado' });
+  }
+  const paid: string[] = (req.body?.pix ?? []).map((p: any) => p.txid).filter(Boolean);
+  await processPaidTxids(paid);
+  res.status(200).json({ ok: true }); // Efí espera 200
+}
+router.post('/webhook/efi', efiWebhookHandler);
+router.post('/webhook/efi/pix', efiWebhookHandler);
+
+// POST /api/efi/webhook — (re)configura o webhook da chave Pix na Efí
+router.post('/efi/webhook', async (_req: Request, res: Response) => {
+  const result = await configureWebhook();
+  res.status(result.ok ? 200 : 400).json(result);
 });
 
-// GET /api/status — usado pelo painel: saúde do roteador + cortesia
+// GET /api/status — usado pelo painel: saúde do roteador + Efí + cortesia
 router.get('/status', async (_req: Request, res: Response) => {
   const router = await pingRouter();
   res.json({
     courtesySeconds: config.courtesySeconds,
+    efi: { configured: efiConfigured, env: config.efi.env },
     mikrotik: router,
   });
 });

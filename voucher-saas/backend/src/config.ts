@@ -30,3 +30,8 @@ export const config = {
 
 /** Sem host/senha do MikroTik → roda em modo mock (loga as ações, não conecta). */
 export const mikrotikConfigured = Boolean(config.mikrotik.host && config.mikrotik.password);
+
+/** Sem client_id/secret/cert da Efí → roda em modo mock (Pix fictício). */
+export const efiConfigured = Boolean(
+  config.efi.clientId && config.efi.clientSecret && config.efi.certPath
+);

@@ -29,11 +29,11 @@ voucher-saas/
 ├── backend/                # Backend Node.js + TypeScript
 │   ├── src/
 │   │   ├── server.ts       #   Express: serve o protótipo + API
-│   │   ├── config.ts       #   Leitura do .env (modo de acesso, MikroTik, Efí)
+│   │   ├── config.ts       #   Leitura do .env (MikroTik, Efí, cortesia)
 │   │   ├── plans.ts        #   Catálogo de planos
 │   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /status
 │   │   └── services/
-│   │       ├── efi.ts      #   Pix (stub — a integrar)
+│   │       ├── efi.ts      #   Pix (SDK Efí) — implementado
 │   │       └── mikrotik.ts #   RouterOS API (Hotspot) — implementado
 │   ├── package.json
 │   ├── tsconfig.json
@@ -42,7 +42,8 @@ voucher-saas/
 │   └── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 Hotspot p/ UniFi
 └── docs/
     ├── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
-    └── MIKROTIK.md         # Topologia, Hotspot e integração
+    ├── MIKROTIK.md         # Topologia, Hotspot e integração
+    └── EFI.md              # Credenciais, cobrança Pix e webhook
 ```
 
 ---
@@ -111,7 +112,8 @@ usando o **Hotspot** (captive portal para celular):
 ## Próximos passos
 
 - [x] Implementar a RouterOS API (`node-routeros`) em `services/mikrotik.ts`
-- [ ] Implementar a Efí de verdade (SDK `sdk-node-apis-efi`) em `services/efi.ts`
+- [x] Integrar a Efí (SDK `sdk-node-apis-efi`) em `services/efi.ts` + webhook
+- [x] Auto-login do portal no Hotspot após o pagamento
 - [ ] Persistência (PostgreSQL + Prisma) para eventos, planos, pedidos e vouchers
 - [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
 - [ ] Autenticação do painel do organizador
