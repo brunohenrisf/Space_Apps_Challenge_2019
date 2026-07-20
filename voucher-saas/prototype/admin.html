@@ -3,76 +3,232 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ConectaVoucher — Painel do Organizador</title>
+  <meta name="theme-color" content="#0f172a" />
+  <title>ConectaVoucher — Painel do Administrador</title>
   <link rel="stylesheet" href="assets/css/app.css" />
-  <style>
-    .admin { max-width: 480px; }
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 14px; box-shadow: var(--shadow-sm); }
-    .stat .lbl { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing:.4px; font-weight:700; }
-    .stat .num { font-size: 24px; font-weight: 800; margin-top: 4px; }
-    .stat .num.g { color: var(--success); }
-    .list-item { display:flex; align-items:center; gap:12px; padding:12px 0; }
-    .list-item + .list-item { border-top:1px solid var(--border); }
-    .li-ico { width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
-              background:var(--brand-soft);color:var(--brand);font-size:18px;flex-shrink:0; }
-    .li-body { flex:1; } .li-title { font-weight:600; font-size:14px; }
-    .li-sub { font-size:12px; color:var(--muted); }
-    .li-val { font-weight:700; font-size:14px; } .li-val.g { color: var(--success); }
-    .pill { font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:999px; }
-    .pill.on { background:var(--success-soft); color:var(--success); }
-    .pill.off { background:var(--danger-soft); color:var(--danger); }
-  </style>
+  <link rel="stylesheet" href="assets/css/admin.css" />
 </head>
-<body>
-  <div class="app-bg">
-    <div class="phone admin">
-      <header class="topbar">
-        <div class="logo">📊</div>
-        <div>
-          <div class="brand-name">Painel do Organizador</div>
-          <div class="brand-sub">Feira de Tecnologia 2026</div>
-        </div>
-        <span class="pill on" style="margin-left:auto">Evento ativo</span>
+<body class="admin-body">
+
+  <!-- ================= LOGIN ================= -->
+  <div class="login-wrap" id="loginWrap">
+    <form class="login-card" id="loginForm">
+      <div class="login-logo">🛠️</div>
+      <h1>Painel do Administrador</h1>
+      <div class="sub">ConectaVoucher · acesso do organizador</div>
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" value="organizador@evento.com" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" value="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary" type="submit">Entrar</button>
+      <p class="helper" style="margin-top:14px"><a href="index.html">‹ Voltar ao portal</a> · esqueleto (login simulado)</p>
+    </form>
+  </div>
+
+  <!-- ================= APP ================= -->
+  <div class="app" id="app">
+
+    <!-- Sidebar (desktop) -->
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="logo">📶</div>
+        <div><b>ConectaVoucher</b><span>Painel do organizador</span></div>
+      </div>
+      <button class="nav-item active" data-nav="dashboard"><span class="ni-ico">📊</span> Dashboard</button>
+      <button class="nav-item" data-nav="eventos"><span class="ni-ico">🎪</span> Eventos</button>
+      <button class="nav-item" data-nav="planos"><span class="ni-ico">🎟️</span> Planos</button>
+      <button class="nav-item" data-nav="vendas"><span class="ni-ico">💳</span> Vendas</button>
+      <button class="nav-item" data-nav="config"><span class="ni-ico">⚙️</span> Configurações</button>
+      <div class="side-foot">
+        <button class="nav-item" id="logoutBtn"><span class="ni-ico">↩︎</span> Sair</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <!-- Header desktop -->
+      <header class="main-head">
+        <h2 id="pageTitle">Dashboard</h2>
+        <div class="spacer"></div>
+        <span class="pill on">Feira de Tecnologia 2026</span>
+        <div class="avatar">OR</div>
       </header>
 
-      <main class="content" style="padding-bottom:24px">
-        <div class="section-label">Hoje</div>
-        <div class="stat-grid">
-          <div class="stat"><div class="lbl">Faturamento</div><div class="num g">R$ 1.240</div></div>
-          <div class="stat"><div class="lbl">Vouchers</div><div class="num">98</div></div>
-          <div class="stat"><div class="lbl">Ativos agora</div><div class="num">37</div></div>
-          <div class="stat"><div class="lbl">Conversão</div><div class="num">64%</div></div>
-        </div>
+      <!-- Header mobile -->
+      <header class="mobile-topbar">
+        <div class="logo">📶</div>
+        <div><b id="mobileTitle">Dashboard</b><span>Feira de Tecnologia 2026</span></div>
+      </header>
 
-        <div class="section-label">Planos do evento</div>
-        <div class="card">
-          <div class="list-item"><div class="li-ico">⏱</div><div class="li-body"><div class="li-title">1 hora</div><div class="li-sub">21 vendidos</div></div><span class="pill on">Ativo</span></div>
-          <div class="list-item"><div class="li-ico">⏱</div><div class="li-body"><div class="li-title">3 horas</div><div class="li-sub">44 vendidos · mais vendido</div></div><span class="pill on">Ativo</span></div>
-          <div class="list-item"><div class="li-ico">⏱</div><div class="li-body"><div class="li-title">6 horas</div><div class="li-sub">18 vendidos</div></div><span class="pill on">Ativo</span></div>
-          <div class="list-item"><div class="li-ico">⏱</div><div class="li-body"><div class="li-title">24 horas</div><div class="li-sub">15 vendidos</div></div><span class="pill off">Pausado</span></div>
-        </div>
+      <div class="main-body">
 
-        <div class="section-label">Últimas vendas</div>
-        <div class="card">
-          <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-8F3A21 · 3 horas</div><div class="li-sub">há 2 min · Pix confirmado</div></div><span class="li-val g">R$ 10</span></div>
-          <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-2B9C04 · 1 hora</div><div class="li-sub">há 5 min · Pix confirmado</div></div><span class="li-val g">R$ 5</span></div>
-          <div class="list-item"><div class="li-ico">⏳</div><div class="li-body"><div class="li-title">evt-77D1AA · 6 horas</div><div class="li-sub">há 6 min · aguardando Pix</div></div><span class="li-val">R$ 15</span></div>
-          <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-4E10FF · 3 horas</div><div class="li-sub">há 9 min · Pix confirmado</div></div><span class="li-val g">R$ 10</span></div>
-        </div>
+        <!-- ---------- DASHBOARD ---------- -->
+        <section class="page active" id="page-dashboard">
+          <div class="stat-grid">
+            <div class="stat"><div class="lbl">Faturamento hoje</div><div class="num g">R$ 1.240</div><div class="delta">▲ 18% vs ontem</div></div>
+            <div class="stat"><div class="lbl">Vouchers</div><div class="num">98</div><div class="delta">hoje</div></div>
+            <div class="stat"><div class="lbl">Ativos agora</div><div class="num">37</div><div class="delta">de 200 sessões</div></div>
+            <div class="stat"><div class="lbl">Conversão</div><div class="num">64%</div><div class="delta">portal → pago</div></div>
+          </div>
 
-        <div class="section-label">MikroTik</div>
-        <div class="card">
-          <div class="row"><span class="k">Roteador</span><span class="v">RB4011 · online</span></div>
-          <div class="row"><span class="k">Sessões PPPoE ativas</span><span class="v">37 / 200</span></div>
-          <div class="row"><span class="k">API RouterOS</span><span class="v" style="color:var(--success)">● conectada</span></div>
-          <div class="row"><span class="k">Webhook Efí</span><span class="v" style="color:var(--success)">● recebendo</span></div>
-        </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head"><h3>Últimas vendas</h3><div class="spacer"></div><span class="li-sub">tempo real</span></div>
+              <div class="panel-body">
+                <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-8F3A21 · 3 horas</div><div class="li-sub">há 2 min · Pix confirmado</div></div><span class="li-val g">R$ 10</span></div>
+                <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-2B9C04 · 1 hora</div><div class="li-sub">há 5 min · Pix confirmado</div></div><span class="li-val g">R$ 5</span></div>
+                <div class="list-item"><div class="li-ico">⏳</div><div class="li-body"><div class="li-title">evt-77D1AA · 6 horas</div><div class="li-sub">há 6 min · aguardando Pix</div></div><span class="li-val">R$ 15</span></div>
+                <div class="list-item"><div class="li-ico">✓</div><div class="li-body"><div class="li-title">evt-4E10FF · 3 horas</div><div class="li-sub">há 9 min · Pix confirmado</div></div><span class="li-val g">R$ 10</span></div>
+              </div>
+            </div>
 
-        <p class="helper">Esqueleto do painel — dados fictícios para validação visual.</p>
-      </main>
+            <div class="panel">
+              <div class="panel-head"><h3>Infraestrutura</h3></div>
+              <div class="panel-body">
+                <div class="row"><span class="k">Roteador MikroTik</span><span class="v">RB4011 · online</span></div>
+                <div class="row"><span class="k">Sessões PPPoE ativas</span><span class="v">37 / 200</span></div>
+                <div class="row"><span class="k">API RouterOS</span><span class="v" style="color:var(--success)">● conectada</span></div>
+                <div class="row"><span class="k">Webhook Efí</span><span class="v" style="color:var(--success)">● recebendo</span></div>
+                <div class="row"><span class="k">Cortesia configurada</span><span class="v">3 min</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- EVENTOS ---------- -->
+        <section class="page" id="page-eventos">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Meus eventos</h3><div class="spacer"></div>
+              <button class="btn btn-sm btn-primary" data-demo="Criar evento">+ Novo evento</button>
+            </div>
+            <div class="panel-body">
+              <div class="list-item">
+                <div class="li-ico">🎪</div>
+                <div class="li-body"><div class="li-title">Feira de Tecnologia 2026</div><div class="li-sub">20–22 jul · RB4011 · 3 planos ativos</div></div>
+                <span class="pill on">Ativo</span>
+              </div>
+              <div class="list-item">
+                <div class="li-ico">🎪</div>
+                <div class="li-body"><div class="li-title">Festival de Verão</div><div class="li-sub">10–12 jan · encerrado · R$ 8.430 arrecadados</div></div>
+                <span class="pill off">Encerrado</span>
+              </div>
+              <div class="list-item">
+                <div class="li-ico">🎪</div>
+                <div class="li-body"><div class="li-title">Congresso Médico</div><div class="li-sub">05 set · agendado</div></div>
+                <span class="pill wait">Agendado</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Evento selecionado · Feira de Tecnologia 2026</h3></div>
+            <div class="panel-body">
+              <div class="row"><span class="k">SSID do Wi-Fi</span><span class="v">EventoTech-Livre</span></div>
+              <div class="row"><span class="k">Roteador vinculado</span><span class="v">MikroTik RB4011</span></div>
+              <div class="row"><span class="k">Conta Efí (Pix)</span><span class="v">recebedor@evento.com</span></div>
+              <div class="row"><span class="k">Janela de cortesia</span><span class="v">3 minutos</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- PLANOS ---------- -->
+        <section class="page" id="page-planos">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Planos de voucher</h3><div class="spacer"></div>
+              <button class="btn btn-sm btn-primary" data-demo="Criar plano">+ Novo plano</button>
+            </div>
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Plano</th><th>Tempo</th><th>Preço</th><th>Dispositivos</th><th>Vendidos</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>1 hora</td><td>60 min</td><td>R$ 5</td><td>1</td><td>21</td><td><span class="pill on">Ativo</span></td></tr>
+                  <tr><td>3 horas <span class="badge" style="margin-left:4px">Mais vendido</span></td><td>180 min</td><td>R$ 10</td><td>1</td><td>44</td><td><span class="pill on">Ativo</span></td></tr>
+                  <tr><td>6 horas</td><td>360 min</td><td>R$ 15</td><td>1</td><td>18</td><td><span class="pill on">Ativo</span></td></tr>
+                  <tr><td>12 horas</td><td>720 min</td><td>R$ 22</td><td>1</td><td>0</td><td><span class="pill on">Ativo</span></td></tr>
+                  <tr><td>24 horas</td><td>1440 min</td><td>R$ 30</td><td>1</td><td>15</td><td><span class="pill off">Pausado</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p class="helper">Cada plano define <b>tempo (uptime-limit)</b> e sempre <b>1 dispositivo por voucher</b> no MikroTik.</p>
+        </section>
+
+        <!-- ---------- VENDAS ---------- -->
+        <section class="page" id="page-vendas">
+          <div class="panel">
+            <div class="panel-head"><h3>Vendas · Feira de Tecnologia 2026</h3><div class="spacer"></div><span class="li-sub">98 hoje · R$ 1.240</span></div>
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Voucher</th><th>Plano</th><th>Valor</th><th>Pix (txid)</th><th>Dispositivo</th><th>Status</th><th>Hora</th></tr></thead>
+                <tbody>
+                  <tr><td>evt-8F3A21</td><td>3 horas</td><td>R$ 10</td><td>DEMO9AF3…</td><td>A4:83:E7…</td><td><span class="pill on">Pago</span></td><td>14:02</td></tr>
+                  <tr><td>evt-2B9C04</td><td>1 hora</td><td>R$ 5</td><td>DEMO3C7B…</td><td>F0:18:98…</td><td><span class="pill on">Pago</span></td><td>13:59</td></tr>
+                  <tr><td>evt-77D1AA</td><td>6 horas</td><td>R$ 15</td><td>DEMO1D0A…</td><td>—</td><td><span class="pill wait">Aguardando</span></td><td>13:58</td></tr>
+                  <tr><td>evt-4E10FF</td><td>3 horas</td><td>R$ 10</td><td>DEMO4E10…</td><td>3C:22:FB…</td><td><span class="pill on">Pago</span></td><td>13:55</td></tr>
+                  <tr><td>evt-91C7D2</td><td>1 hora</td><td>R$ 5</td><td>DEMO91C7…</td><td>—</td><td><span class="pill off">Expirado</span></td><td>13:51</td></tr>
+                  <tr><td>evt-55A0BE</td><td>24 horas</td><td>R$ 30</td><td>DEMO55A0…</td><td>B8:27:EB…</td><td><span class="pill on">Pago</span></td><td>13:47</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- CONFIGURAÇÕES ---------- -->
+        <section class="page" id="page-config">
+          <div class="panel">
+            <div class="panel-head"><h3>Integração Efí (Pix)</h3></div>
+            <div class="panel-body">
+              <div class="field"><label>Client ID</label><input type="text" placeholder="Client_Id_..." /></div>
+              <div class="field"><label>Client Secret</label><input type="password" placeholder="••••••••••••" /></div>
+              <div class="field"><label>Chave Pix recebedora</label><input type="text" placeholder="recebedor@evento.com" /></div>
+              <div class="row"><span class="k">Webhook</span><span class="v" style="color:var(--success)">● configurado</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Integração MikroTik (RouterOS)</h3></div>
+            <div class="panel-body">
+              <div class="grid-2">
+                <div class="field"><label>Host</label><input type="text" placeholder="192.168.88.1" /></div>
+                <div class="field"><label>Porta</label><input type="text" placeholder="8728" /></div>
+                <div class="field"><label>Usuário API</label><input type="text" placeholder="api" /></div>
+                <div class="field"><label>Senha</label><input type="password" placeholder="••••••••" /></div>
+              </div>
+              <div class="field"><label>Profile PPPoE base</label><input type="text" placeholder="voucher-default" /></div>
+              <div class="row"><span class="k">Status da conexão</span><span class="v" style="color:var(--success)">● conectada</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Regras de negócio</h3></div>
+            <div class="panel-body">
+              <div class="field"><label>Janela de cortesia (minutos)</label><input type="number" value="3" /></div>
+              <p class="helper" style="text-align:left">Tempo liberado só para o cliente pagar. Após pagar, não é descontado do voucher.</p>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" data-demo="Salvar configurações">Salvar configurações</button>
+        </section>
+
+      </div>
     </div>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+      <button class="bn-item active" data-nav="dashboard"><span class="bn-ico">📊</span> Painel</button>
+      <button class="bn-item" data-nav="eventos"><span class="bn-ico">🎪</span> Eventos</button>
+      <button class="bn-item" data-nav="planos"><span class="bn-ico">🎟️</span> Planos</button>
+      <button class="bn-item" data-nav="vendas"><span class="bn-ico">💳</span> Vendas</button>
+      <button class="bn-item" data-nav="config"><span class="bn-ico">⚙️</span> Config</button>
+    </nav>
   </div>
+
+  <script src="assets/js/admin.js"></script>
 </body>
 </html>

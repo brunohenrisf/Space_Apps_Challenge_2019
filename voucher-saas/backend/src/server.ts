@@ -21,6 +21,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => {
   console.log(`ConectaVoucher rodando em http://localhost:${PORT}`);
-  console.log(`Portal:  http://localhost:${PORT}/`);
-  console.log(`Painel:  http://localhost:${PORT}/admin.html`);
+  console.log(`Entrada:  http://localhost:${PORT}/            (escolhe Cliente ou Administrador)`);
+  console.log(`Cliente:  http://localhost:${PORT}/portal.html`);
+  console.log(`Admin:    http://localhost:${PORT}/admin.html`);
 });

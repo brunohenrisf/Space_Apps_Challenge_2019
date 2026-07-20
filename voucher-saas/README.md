@@ -18,11 +18,14 @@ de um cliente **PPPoE criado no MikroTik** com limite de tempo igual ao voucher.
 ```
 voucher-saas/
 ├── prototype/              # Esqueleto HTML para validar (abra no navegador)
-│   ├── index.html          #   Portal captivo: conectar → planos → Pix → sucesso
-│   ├── admin.html          #   Painel do organizador (dashboard)
+│   ├── index.html          #   Entrada: escolhe acesso Cliente ou Administrador
+│   ├── portal.html         #   ACESSO CLIENTE — portal captivo: conectar → planos → Pix → sucesso
+│   ├── admin.html          #   ACESSO ADMIN — login + dashboard, eventos, planos, vendas, config
 │   └── assets/
 │       ├── css/app.css     #   Design system mobile-first
-│       └── js/flow.js      #   Fluxo, timer de cortesia e simulações
+│       ├── css/admin.css   #   Shell do painel (sidebar/bottom-nav responsivo)
+│       ├── js/flow.js      #   Fluxo do cliente, timer de cortesia e simulações
+│       └── js/admin.js     #   Login simulado e navegação do painel
 ├── backend/                # Scaffold Node.js + TypeScript
 │   ├── src/
 │   │   ├── server.ts       #   Express: serve o protótipo + API
@@ -40,8 +43,11 @@ voucher-saas/
 
 ## Validar o protótipo (sem instalar nada)
 
-Abra **`prototype/index.html`** direto no navegador (de preferência no modo
-responsivo/celular). Use a **barra escura no topo** para pular entre estados:
+Abra **`prototype/index.html`** no navegador (de preferência no modo
+responsivo/celular). A tela de entrada oferece os **dois acessos do portal**:
+
+### Acesso do Cliente (`portal.html`)
+Portal captivo mobile. Use a **barra escura no topo** para pular entre estados:
 
 - **1·Conectar** → tela de boas-vindas com a cortesia de 3 min correndo
 - **2·Planos** → escolha do voucher
@@ -49,7 +55,10 @@ responsivo/celular). Use a **barra escura no topo** para pular entre estados:
 - **✓ Simular pagto** → simula o webhook confirmando → tela de sucesso
 - **⏱ Estourar tempo** → simula a cortesia acabando sem pagamento
 
-O painel do organizador está em **`prototype/admin.html`**.
+### Acesso do Administrador (`admin.html`)
+Login simulado (é só clicar em **Entrar**) e o painel do organizador com
+**Dashboard, Eventos, Planos, Vendas e Configurações** (Efí + MikroTik).
+Responsivo: menu lateral no desktop, barra inferior no celular.
 
 ## Rodar servido pelo backend (opcional)
 

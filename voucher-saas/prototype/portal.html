@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e40af" />
+  <title>ConectaVoucher — Acesso do Cliente</title>
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body>
+  <!-- Barra de atalhos (apenas protótipo, para validar estados sem hardware) -->
+  <div class="devbar" id="devbar">
+    <button data-go="connect">1·Conectar</button>
+    <button data-go="plans">2·Planos</button>
+    <button data-go="payment">3·Pix</button>
+    <button data-sim="pay">✓ Simular pagto</button>
+    <button data-sim="expire">⏱ Estourar tempo</button>
+  </div>
+
+  <div class="app-bg">
+    <div class="phone">
+      <!-- Top bar -->
+      <header class="topbar">
+        <a class="logo" href="index.html" title="Início" style="text-decoration:none;color:#fff">‹</a>
+        <div>
+          <div class="brand-name">ConectaVoucher</div>
+          <div class="brand-sub">Wi-Fi · Feira de Tecnologia 2026</div>
+        </div>
+        <div class="timer-chip" id="timerChip">
+          <span class="dot"></span>
+          <span id="timerText">03:00</span>
+        </div>
+      </header>
+
+      <main class="content">
+
+        <!-- ============ TELA 1: CONECTOU ============ -->
+        <section class="screen active" id="screen-connect">
+          <div class="banner info">
+            <span class="ico">👋</span>
+            <div>Você se conectou ao Wi-Fi do evento. Liberamos <b>3 minutos de cortesia</b> só para você escolher um plano e pagar.</div>
+          </div>
+
+          <h1 class="title">Acesso rápido à internet do evento</h1>
+          <p class="lead">Compre um voucher, pague no Pix e conecte na hora. Sem cadastro, sem senha para digitar.</p>
+
+          <div class="section-label">Como funciona</div>
+          <div class="card">
+            <div class="row"><span class="k">1 · Escolha o plano</span><span class="v">⏱ por tempo</span></div>
+            <div class="row"><span class="k">2 · Pague no Pix</span><span class="v">⚡ na hora</span></div>
+            <div class="row"><span class="k">3 · Conecte 1 dispositivo</span><span class="v">📱 automático</span></div>
+          </div>
+
+          <div class="banner warn">
+            <span class="ico">⏳</span>
+            <div>Se o tempo de cortesia acabar antes do pagamento, o acesso é interrompido. Após pagar, o tempo do voucher <b>não desconta</b> esses minutos.</div>
+          </div>
+        </section>
+
+        <!-- ============ TELA 2: PLANOS ============ -->
+        <section class="screen" id="screen-plans">
+          <h1 class="title">Escolha seu voucher</h1>
+          <p class="lead">Cada voucher libera <b>1 dispositivo</b> pelo tempo contratado.</p>
+          <div id="planList"><!-- preenchido via JS --></div>
+        </section>
+
+        <!-- ============ TELA 3: PAGAMENTO PIX ============ -->
+        <section class="screen" id="screen-payment">
+          <h1 class="title">Pague com Pix</h1>
+          <p class="lead">Escaneie o QR Code ou use o Pix copia e cola. O acesso é liberado automaticamente após a confirmação.</p>
+
+          <div class="await" id="awaitBox">
+            <div class="spinner"></div>
+            <div>Aguardando pagamento…</div>
+          </div>
+
+          <div class="qr-wrap">
+            <img class="qr" id="qrImg" alt="QR Code Pix" />
+            <div class="pix-code">
+              <code id="pixCode">00020126…gerado pela Efí…5204000053039865802BR6009SAO PAULO62070503***6304</code>
+              <button class="btn btn-outline btn-sm" id="copyBtn">Copiar</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row"><span class="k">Plano</span><span class="v" id="sumPlan">—</span></div>
+            <div class="row"><span class="k">Dispositivos</span><span class="v">1 dispositivo</span></div>
+            <div class="row"><span class="k">Total</span><span class="v big" id="sumPrice">—</span></div>
+          </div>
+
+          <p class="helper">Pagamento processado via <b>Efí</b> (Pix). A confirmação chega em segundos por webhook.</p>
+        </section>
+
+        <!-- ============ TELA 4: SUCESSO ============ -->
+        <section class="screen" id="screen-success">
+          <div class="big-status ok">
+            <div class="circle">✓</div>
+            <h2>Acesso liberado!</h2>
+            <p>Seu voucher foi ativado no MikroTik e seu dispositivo já está conectado.</p>
+          </div>
+
+          <div class="card" style="margin-top:20px">
+            <div class="row"><span class="k">Plano</span><span class="v" id="okPlan">—</span></div>
+            <div class="row"><span class="k">Tempo restante</span><span class="v big" id="okTime">—</span></div>
+            <div class="row"><span class="k">Dispositivo</span><span class="v">Este aparelho</span></div>
+            <div class="row"><span class="k">Login PPPoE</span><span class="v" id="okLogin">evt-8F3A21</span></div>
+          </div>
+
+          <div class="banner ok">
+            <span class="ico">🎉</span>
+            <div>Pode navegar! Os 3 minutos de cortesia <b>não foram descontados</b> do tempo do voucher.</div>
+          </div>
+        </section>
+
+        <!-- ============ TELA 5: TEMPO ESGOTADO ============ -->
+        <section class="screen" id="screen-expired">
+          <div class="big-status err">
+            <div class="circle">⏱</div>
+            <h2>Tempo de cortesia esgotado</h2>
+            <p>O período gratuito de 3 minutos terminou e o pagamento não foi identificado. O acesso à internet foi interrompido.</p>
+          </div>
+          <div class="banner err">
+            <span class="ico">🔒</span>
+            <div>Para continuar, escolha um voucher e finalize o pagamento no Pix.</div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Rodapé de ação (muda por tela) -->
+      <footer class="action-bar" id="actionBar">
+        <!-- botões injetados via JS -->
+      </footer>
+    </div>
+  </div>
+
+  <script src="assets/js/flow.js"></script>
+</body>
+</html>
