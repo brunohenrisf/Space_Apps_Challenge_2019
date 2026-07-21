@@ -75,17 +75,18 @@ Portal captivo mobile. Use a **barra escura no topo** para pular entre estados:
 
 ### Acesso do Administrador (`admin.html`)
 Login real (via `/api/admin/login`; padrão de dev: `organizador@evento.com` /
-`conecta123`) e o painel do organizador com **Dashboard, Eventos, Planos,
-Vendas, Relatórios e Configurações**. Aberto como arquivo (sem backend), entra
-em modo demonstração. Responsivo:
+`conecta123`) ou **criar uma nova conta** (`/api/signup`, aberto por padrão) e
+o painel com **Dashboard, Planos, Vendas, Relatórios e Configurações**. Aberto
+como arquivo (sem backend), entra em modo demonstração. Responsivo:
 menu lateral no desktop, barra inferior no celular. Destaques:
 
 - **Planos:** gerenciar os planos da conta (criar, pausar).
 - **Vendas / Relatórios:** resumo, filtros, gráficos e exportação **CSV**
   (dados ao vivo via `/api/admin/...`, escopados à conta autenticada).
-- **Configurações:** **conta Efí** + **gerador de configuração da MikroTik** —
-  preencha e baixe o `.rsc` e o `login.html` prontos para importar no roteador,
-  **sem digitar comandos**. Cada conta = um cliente com seu equipamento.
+- **Configurações:** **conta Efí** + **gerador de configuração da MikroTik**
+  (baixe o `.rsc` e o `login.html` prontos, **sem digitar comandos**) +
+  **conta e segurança** (URL do portal da conta e troca de senha).
+  Cada conta = um cliente com seu equipamento.
 
 ## Rodar servido pelo backend (opcional)
 

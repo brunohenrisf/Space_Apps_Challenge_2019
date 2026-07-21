@@ -18,19 +18,25 @@
   <div class="login-wrap" id="loginWrap">
     <form class="login-card" id="loginForm">
       <div class="login-logo"><img src="assets/img/logo.svg" alt="ConectaVoucher" /></div>
-      <h1>Painel do Administrador</h1>
-      <div class="sub">ConectaVoucher · acesso do organizador</div>
+      <h1 id="loginTitle">Painel do Administrador</h1>
+      <div class="sub" id="loginSub">ConectaVoucher · acesso do organizador</div>
+      <div class="field hidden" id="fieldAccount">
+        <label for="signupName">Nome da conta / evento</label>
+        <input id="signupName" type="text" placeholder="Ex.: Feira de Tecnologia 2026" />
+      </div>
       <div class="field">
         <label for="email">E-mail</label>
-        <input id="email" type="email" value="organizador@evento.com" autocomplete="username" />
+        <input id="email" type="email" placeholder="voce@evento.com" autocomplete="username" />
       </div>
       <div class="field">
         <label for="senha">Senha</label>
         <input id="senha" type="password" placeholder="sua senha" autocomplete="current-password" />
       </div>
       <p id="loginError" class="helper" style="color:var(--crit);text-align:left;margin:0 0 10px;min-height:16px"></p>
-      <button class="btn btn-primary" type="submit">Entrar</button>
-      <p class="helper" style="margin-top:14px"><a href="index.html">‹ Voltar ao portal</a></p>
+      <button class="btn btn-primary" type="submit" id="loginBtn">Entrar</button>
+      <p class="helper" style="margin-top:14px">
+        <a href="#" id="signupToggle">Criar uma conta</a> · <a href="index.html">Voltar ao portal</a>
+      </p>
     </form>
   </div>
 
@@ -276,6 +282,25 @@
                 <span class="helper" id="gen-msg" style="margin:0;align-self:center"></span>
               </div>
               <pre id="gen-output" class="code-out" hidden></pre>
+            </div>
+          </div>
+
+          <!-- Conta e segurança -->
+          <div class="panel">
+            <div class="panel-head"><h3>Conta e segurança</h3></div>
+            <div class="panel-body">
+              <div class="row"><span class="k">Conta</span><span class="v" id="acc-name">—</span></div>
+              <div class="row"><span class="k">Identificador (slug)</span><span class="v" id="acc-slug">—</span></div>
+              <div class="row"><span class="k">URL do portal</span><span class="v" id="acc-portal" style="font-size:12px;word-break:break-all">—</span></div>
+              <div class="sec-title">Trocar senha</div>
+              <div class="grid-2">
+                <div class="field"><label>Senha atual</label><input id="pw-current" type="password" placeholder="••••••••" /></div>
+                <div class="field"><label>Nova senha (mín. 6)</label><input id="pw-new" type="password" placeholder="••••••••" /></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+                <button class="btn btn-sm btn-primary" id="pw-save" style="width:auto">Trocar senha</button>
+                <span class="helper" id="pw-msg" style="margin:0"></span>
+              </div>
             </div>
           </div>
         </section>

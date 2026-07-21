@@ -186,3 +186,17 @@ export function getAdminByEmail(email: string) {
 export function createAdmin(email: string, passwordHash: string, accountId: string) {
   return prisma.adminUser.create({ data: { email, passwordHash, accountId } });
 }
+export async function emailTaken(email: string) {
+  return !!(await prisma.adminUser.findUnique({ where: { email } }));
+}
+export async function setAdminPassword(email: string, passwordHash: string) {
+  await prisma.adminUser.update({ where: { email }, data: { passwordHash } });
+}
+
+/** Cria uma nova conta (Efí vazia; configura a própria) + seu admin. */
+export async function createAccountAndAdmin(name: string, slug: string, email: string, passwordHash: string) {
+  const account = await prisma.account.create({ data: { slug, name, courtesySeconds: config.courtesySeconds } });
+  await seedPlans(account.id);
+  await prisma.adminUser.create({ data: { email, passwordHash, accountId: account.id } });
+  return account;
+}

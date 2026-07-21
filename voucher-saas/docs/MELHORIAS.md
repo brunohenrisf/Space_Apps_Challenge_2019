@@ -15,12 +15,12 @@ para ficar **production-ready**; as demais aumentam robustez e experiência.
    `/api/efi/webhook` protegidas (401 sem token). Falta: troca de senha pelo
    painel, expiração/renovação e rate limiting no login.
 
-3. **Multi-tenant.** ✅ **Feito.**
-   Isolamento **entre contas** (usuários da plataforma). Cada conta tem sua Efí,
-   sua MikroTik/rede e seus planos/vendas; dentro da conta os dados são
-   compartilhados (sem separação por evento). O portal serve a conta por
-   `?ac=<slug>`. Falta: cadastro/gestão de contas (signup), múltiplos usuários
-   por conta e billing.
+3. **Multi-tenant + cadastro de contas.** ✅ **Feito.**
+   Isolamento **entre contas** (usuários da plataforma): cada conta tem sua Efí,
+   sua MikroTik/rede e seus planos/vendas. Portal serve a conta por `?ac=<slug>`.
+   **Cadastro self-serve** (`/signup`, gate por `ALLOW_SIGNUP`) e **troca de
+   senha** no painel. Falta: verificação de e-mail/anti-abuso, múltiplos
+   usuários por conta e billing.
 
 ## Robustez
 

@@ -32,6 +32,7 @@ services:
       AUTH_SECRET: "${AUTH_SECRET}"
       ADMIN_EMAIL: "${ADMIN_EMAIL}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+      ALLOW_SIGNUP: "${ALLOW_SIGNUP:-true}"
       # Efí (Pix) — o certificado .p12 é montado em /certs
       EFI_ENV: "${EFI_ENV:-producao}"
       EFI_CLIENT_ID: "${EFI_CLIENT_ID}"

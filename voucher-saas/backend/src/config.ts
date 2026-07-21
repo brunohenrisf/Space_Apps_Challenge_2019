@@ -12,6 +12,8 @@ export const config = {
   authSecret: process.env.AUTH_SECRET || 'dev-inseguro-troque-em-producao',
   adminEmail: process.env.ADMIN_EMAIL || 'organizador@evento.com',
   adminPassword: process.env.ADMIN_PASSWORD || 'conecta123',
+  // Cadastro aberto de novas contas (self-serve). Feche com ALLOW_SIGNUP=false.
+  allowSignup: (process.env.ALLOW_SIGNUP ?? 'true') === 'true',
 
   mikrotik: {
     host: process.env.MIKROTIK_HOST ?? '',

@@ -55,16 +55,39 @@ const loginWrap = $('loginWrap'), app = $('app');
 function enterApp() { loginWrap.style.display = 'none'; app.classList.add('active'); initPanel(); }
 function showLogin() { app.classList.remove('active'); loginWrap.style.display = 'grid'; }
 
+let authMode = 'login';
+function setAuthMode(m) {
+  authMode = m;
+  $('fieldAccount').classList.toggle('hidden', m !== 'signup');
+  $('loginTitle').textContent = m === 'signup' ? 'Criar conta' : 'Painel do Administrador';
+  $('loginSub').textContent = m === 'signup' ? 'ConectaVoucher · nova conta na plataforma' : 'ConectaVoucher · acesso do organizador';
+  $('loginBtn').textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
+  $('signupToggle').textContent = m === 'signup' ? 'Já tenho conta' : 'Criar uma conta';
+  $('loginError').textContent = '';
+}
+$('signupToggle')?.addEventListener('click', (e) => { e.preventDefault(); setAuthMode(authMode === 'signup' ? 'login' : 'signup'); });
+
 $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const err = $('loginError'); if (err) err.textContent = '';
   if (!apiOk) { enterApp(); return; }
-  try { const r = await api('/admin/login', jsonPost({ email: $('email').value, password: $('senha').value })); setToken(r.token); enterApp(); }
-  catch (ex) { if (err) err.textContent = 'E-mail ou senha inválidos.'; }
+  try {
+    const r = authMode === 'signup'
+      ? await api('/signup', jsonPost({ accountName: $('signupName').value, email: $('email').value, password: $('senha').value }))
+      : await api('/admin/login', jsonPost({ email: $('email').value, password: $('senha').value }));
+    setToken(r.token); enterApp();
+  } catch (ex) {
+    if (err) err.textContent = authMode === 'signup'
+      ? 'Não foi possível criar (e-mail já usado ou senha curta).'
+      : 'E-mail ou senha inválidos.';
+  }
 });
 $('logoutBtn')?.addEventListener('click', () => { setToken(''); showLogin(); });
 (async function initAuth() {
-  if (apiOk && getToken()) { try { await api('/admin/me'); enterApp(); } catch (e) { setToken(''); } }
+  if (apiOk) {
+    api('/signup/open').then((r) => { if (!r.open) $('signupToggle').style.display = 'none'; }).catch(() => {});
+    if (getToken()) { try { await api('/admin/me'); enterApp(); } catch (e) { setToken(''); } }
+  }
 })();
 
 // ---------- Bootstrap ----------
@@ -248,7 +271,19 @@ function loadAccountPanel() {
   set('gen-dhcpFrom', n.dhcpFrom); set('gen-dhcpTo', n.dhcpTo); set('gen-dns', n.dns);
   set('gen-portal', n.portalDomain); set('gen-apiUser', n.apiUser);
   set('gen-wgEndpoint', n.wgVpsEndpoint); set('gen-wgPort', n.wgVpsPort); set('gen-wgKey', n.wgVpsPublicKey); set('gen-wgPeer', n.wgPeerAddress);
+  // Conta e segurança
+  $('acc-name').textContent = account.name;
+  $('acc-slug').textContent = account.slug;
+  $('acc-portal').textContent = location.origin + '/portal.html?ac=' + account.slug;
 }
+$('pw-save')?.addEventListener('click', async () => {
+  const msg = $('pw-msg'); msg.textContent = '';
+  if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
+  try {
+    await api('/admin/password', jsonPost({ current: $('pw-current').value, new: $('pw-new').value }));
+    $('pw-current').value = ''; $('pw-new').value = ''; msg.textContent = '✓ Senha alterada';
+  } catch (e) { msg.textContent = 'Senha atual incorreta ou nova muito curta.'; }
+});
 $('efi-save')?.addEventListener('click', async () => {
   const efi = { env: $('efi-env').value, clientId: $('efi-clientId').value, clientSecret: $('efi-clientSecret').value, pixKey: $('efi-pixKey').value, webhookToken: $('efi-webhookToken').value };
   const msg = $('efi-msg'); msg.textContent = 'Salvando…';

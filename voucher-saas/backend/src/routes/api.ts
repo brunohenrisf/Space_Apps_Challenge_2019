@@ -6,9 +6,19 @@ import {
 import { provisionVoucher, grantCourtesyAccess, pingRouter, mkConnFromAccount } from '../services/mikrotik';
 import { config } from '../config';
 import * as store from '../store';
-import { requireAuth, signToken, verifyPassword } from '../auth';
+import { requireAuth, signToken, verifyPassword, hashPassword } from '../auth';
 
 const router = Router();
+
+function slugify(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'conta';
+}
+async function uniqueSlug(base: string) {
+  let slug = base, i = 1;
+  while (await store.getAccountBySlug(slug)) slug = `${base}-${++i}`;
+  return slug;
+}
 
 // Resolve a conta do portal: por slug (?ac=) ou a primeira (fallback).
 async function resolveAccount(slug?: string) {
@@ -84,6 +94,22 @@ router.post('/webhook/efi', efiWebhookHandler);
 router.post('/webhook/efi/pix', efiWebhookHandler);
 
 // =============================================================== Auth
+router.get('/signup/open', (_req: Request, res: Response) => res.json({ open: config.allowSignup }));
+
+router.post('/signup', async (req: Request, res: Response) => {
+  if (!config.allowSignup) return res.status(403).json({ error: 'cadastro fechado' });
+  const name = String(req.body?.accountName ?? '').trim();
+  const email = String(req.body?.email ?? '').toLowerCase().trim();
+  const password = String(req.body?.password ?? '');
+  if (!name || !/.+@.+\..+/.test(email) || password.length < 6) {
+    return res.status(400).json({ error: 'dados inválidos (senha mínima de 6 caracteres)' });
+  }
+  if (await store.emailTaken(email)) return res.status(409).json({ error: 'e-mail já cadastrado' });
+  const slug = await uniqueSlug(slugify(name));
+  const account = await store.createAccountAndAdmin(name, slug, email, hashPassword(password));
+  res.json({ token: signToken({ sub: email, acc: account.id }), email });
+});
+
 router.post('/admin/login', async (req: Request, res: Response) => {
   const email = String(req.body?.email ?? '').toLowerCase().trim();
   const user = await store.getAdminByEmail(email);
@@ -91,6 +117,18 @@ router.post('/admin/login', async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'credenciais inválidas' });
   }
   res.json({ token: signToken({ sub: user.email, acc: user.accountId }), email: user.email });
+});
+
+router.post('/admin/password', requireAuth, async (req: Request, res: Response) => {
+  const email = (req as any).adminEmail as string;
+  const user = await store.getAdminByEmail(email);
+  if (!user || !verifyPassword(String(req.body?.current ?? ''), user.passwordHash)) {
+    return res.status(401).json({ error: 'senha atual incorreta' });
+  }
+  const nw = String(req.body?.new ?? '');
+  if (nw.length < 6) return res.status(400).json({ error: 'nova senha muito curta (mín. 6)' });
+  await store.setAdminPassword(email, hashPassword(nw));
+  res.json({ ok: true });
 });
 router.get('/admin/me', requireAuth, async (req: Request, res: Response) => {
   const acc = await store.getAccount(accId(req));
