@@ -5,10 +5,10 @@ para ficar **production-ready**; as demais aumentam robustez e experiência.
 
 ## Essenciais (produção)
 
-1. **Persistência (PostgreSQL + Prisma).**
-   Hoje pedidos, settings e vendas vivem em memória e se perdem ao reiniciar o
-   backend. Modelar `Event`, `Plan`, `Order`, `Voucher`, `Settings` e migrar os
-   endpoints para o banco (o Postgres já está no `docker-compose`).
+1. **Persistência (PostgreSQL + Prisma).** ✅ **Feito.**
+   Planos, pedidos/vendas e configurações agora ficam no banco (Prisma; SQLite
+   no dev, Postgres em produção) e sobrevivem a reinícios. Falta ainda modelar
+   `Event`/`Voucher` dedicados quando o multi-tenant entrar.
 
 2. **Autenticação real do painel.**
    O login é simulado e as rotas `/api/admin/*` e `/api/efi/webhook` estão

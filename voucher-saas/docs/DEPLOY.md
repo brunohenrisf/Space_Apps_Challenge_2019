@@ -40,12 +40,10 @@ docker compose ps
 curl -s http://localhost:3000/health; echo     # {"ok":true}
 ```
 
-No boot o backend sobe na porta **3000** (proxied pelo Caddy).
-
-> **Persistência:** o Postgres já sobe no stack, mas o app ainda usa
-> armazenamento **em memória** — a ligação com Prisma (`DATABASE_URL` já está no
-> compose) é o próximo passo. Enquanto isso, reiniciar o `cv-app` zera os
-> pedidos em aberto (vouchers já provisionados no MikroTik permanecem).
+No boot o container roda **`prisma db push`** (cria/atualiza o schema no
+Postgres, idempotente) e sobe o backend na porta **3000** (proxied pelo Caddy).
+Planos, pedidos, vendas e configurações ficam no **Postgres** — sobrevivem a
+reinícios.
 
 ## 2) Cloudflare (DNS + TLS)
 

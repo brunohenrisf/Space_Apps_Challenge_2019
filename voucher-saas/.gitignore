@@ -3,4 +3,6 @@ dist/
 .env
 *.log
 backend/certs/*.p12
+backend/prisma/*.db
+backend/prisma/*.db-journal
 .DS_Store

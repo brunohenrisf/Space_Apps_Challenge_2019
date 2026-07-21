@@ -27,13 +27,16 @@ voucher-saas/
 │       ├── js/flow.js      #   Fluxo do cliente, timer de cortesia e simulações
 │       └── js/admin.js     #   Login simulado e navegação do painel
 ├── backend/                # Backend Node.js + TypeScript
+│   ├── prisma/schema.prisma #  Modelos: Plan, Order, AppSettings
 │   ├── src/
-│   │   ├── server.ts       #   Express: serve o protótipo + API
-│   │   ├── config.ts       #   Leitura do .env (MikroTik, Efí, cortesia)
-│   │   ├── plans.ts        #   Catálogo de planos
-│   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /status
+│   │   ├── server.ts       #   Express: serve o protótipo + API; seed no boot
+│   │   ├── config.ts       #   Leitura do .env (MikroTik, Efí, cortesia, DB)
+│   │   ├── db.ts           #   Cliente Prisma
+│   │   ├── store.ts        #   Repositório (planos, pedidos, relatório, settings)
+│   │   ├── plans.ts        #   Catálogo padrão (seed)
+│   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /admin/* /status
 │   │   └── services/
-│   │       ├── efi.ts      #   Pix (SDK Efí) — implementado
+│   │       ├── efi.ts      #   Pix (SDK Efí) — usa settings do banco
 │   │       └── mikrotik.ts #   RouterOS API (Hotspot) — implementado
 │   ├── package.json
 │   ├── tsconfig.json
@@ -86,10 +89,14 @@ menu lateral no desktop, barra inferior no celular. Destaques:
 
 ```bash
 cd backend
-cp .env.example .env      # preencha depois com as chaves reais
+cp .env.example .env      # já vem com DATABASE_URL=SQLite (dev, sem serviço externo)
 npm install
-npm run dev               # http://localhost:3000  (portal) e /admin.html
+npm run dev               # roda `prisma db push` e sobe em http://localhost:3000
 ```
+
+O banco no dev é **SQLite** (arquivo `prisma/dev.db`, criado no boot); em
+produção o `docker-compose` usa **Postgres**. Sem chaves de Efí/MikroTik, roda
+em modo mock. Planos são semeados na primeira execução.
 
 ---
 
@@ -145,6 +152,6 @@ Passo a passo (Cloudflare, webhook e WireGuard) em [`docs/DEPLOY.md`](docs/DEPLO
 - [x] Integrar a Efí (SDK `sdk-node-apis-efi`) em `services/efi.ts` + webhook
 - [x] Auto-login do portal no Hotspot após o pagamento
 - [x] Empacotar para deploy (Docker + Compose + Caddy + WireGuard) na VPS
-- [ ] Persistência (PostgreSQL + Prisma) para eventos, planos, pedidos e vouchers
-- [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
+- [x] Persistência (PostgreSQL + Prisma) para planos, pedidos, vendas e settings
 - [ ] Autenticação do painel do organizador
+- [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí

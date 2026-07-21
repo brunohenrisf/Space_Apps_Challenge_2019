@@ -1,0 +1,70 @@
+// ConectaVoucher — schema de persistência.
+// DEV (local): provider = "sqlite"  (nenhum serviço externo)
+// PROD (VPS):  provider = "postgresql" (trocado na imagem Docker via sed)
+// Valores monetários em reais inteiros (os planos são valores cheios).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Catálogo de planos de voucher.
+model Plan {
+  id      String  @id @default(cuid())
+  code    String  @unique // ex.: "3h"
+  label   String // ex.: "3 horas"
+  minutes Int
+  price   Int // em reais
+  descr   String  @default("")
+  badge   String?
+  active  Boolean @default(true)
+  sort    Int     @default(0)
+}
+
+/// Cobrança/venda. Snapshot do plano no momento da compra (histórico estável).
+model Order {
+  id              String    @id @default(cuid())
+  txid            String    @unique
+  planCode        String
+  planLabel       String
+  minutes         Int
+  amount          Int
+  mac             String?
+  status          String    @default("pending") // pending | paid
+  voucherLogin    String?
+  voucherPassword String?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  paidAt          DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Configurações do organizador (singleton, id=1). Segredos nunca saem pela API.
+model AppSettings {
+  id                   Int      @id @default(1)
+  efiEnv               String   @default("producao")
+  efiClientId          String   @default("")
+  efiClientSecret      String   @default("")
+  efiPixKey            String   @default("")
+  efiWebhookToken      String   @default("")
+  efiWebhookConfigured Boolean  @default(false)
+  lanCidr              String   @default("10.10.0.1/24")
+  dhcpFrom             String   @default("10.10.0.10")
+  dhcpTo               String   @default("10.10.0.254")
+  dns                  String   @default("1.1.1.1,8.8.8.8")
+  hotspotName          String   @default("ConectaVoucher")
+  portalDomain         String   @default("")
+  apiUser              String   @default("api")
+  apiPassword          String   @default("")
+  wgVpsPublicKey       String   @default("")
+  wgVpsEndpoint        String   @default("")
+  wgVpsPort            Int      @default(51820)
+  wgPeerAddress        String   @default("10.20.0.2")
+  updatedAt            DateTime @updatedAt
+}
