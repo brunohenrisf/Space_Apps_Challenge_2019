@@ -228,31 +228,62 @@ $('reportExport')?.addEventListener('click', () => {
 });
 
 // ====================================================== PLANOS
+let plansCache = [], editingPlanId = null;
 async function loadPlans() {
   let plans = MOCK_PLANS, report = mockReport();
   if (apiOk) {
     try { plans = (await api('/admin/plans')).plans; report = await api('/admin/report').catch(() => mockReport()); }
     catch (e) { apiOk = false; }
   }
+  plansCache = plans;
   const sold = {}; (report.byPlan || []).forEach((p) => { sold[p.time] = p.count; });
   $('pl-body').innerHTML = plans.map((p) => `<tr>
       <td>${esc(p.label)}${p.badge ? ` <span class="badge" style="margin-left:4px">${esc(p.badge)}</span>` : ''}</td>
       <td>${p.minutes} min</td><td>${BRL(p.price)}</td><td>${sold[p.label] ?? 0}</td>
       <td>${p.active === false ? '<span class="pill off">Pausado</span>' : '<span class="pill on">Ativo</span>'}</td>
-      <td style="text-align:right">${apiOk ? `<button class="btn btn-sm btn-outline" data-plan-toggle="${p.id}" data-active="${p.active}" style="width:auto">${p.active === false ? 'Ativar' : 'Pausar'}</button>` : ''}</td></tr>`).join('');
+      <td style="text-align:right;white-space:nowrap">${apiOk ? `
+        <button class="btn btn-sm btn-outline" data-plan-edit="${p.id}" style="width:auto">Editar</button>
+        <button class="btn btn-sm btn-outline" data-plan-toggle="${p.id}" data-active="${p.active}" style="width:auto">${p.active === false ? 'Ativar' : 'Pausar'}</button>
+        <button class="btn btn-sm btn-outline" data-plan-del="${p.id}" style="width:auto">Remover</button>` : ''}</td></tr>`).join('');
+}
+function startEditPlan(p) {
+  editingPlanId = p.id;
+  $('pl-code').value = p.code; $('pl-code').disabled = true;
+  $('pl-label').value = p.label; $('pl-minutes').value = p.minutes; $('pl-price').value = p.price;
+  $('pl-create').textContent = 'Salvar edição';
+  $('pl-msg').textContent = 'Editando ' + p.label;
+}
+function resetPlanForm() {
+  editingPlanId = null;
+  ['pl-code', 'pl-label', 'pl-minutes', 'pl-price'].forEach((i) => ($(i).value = ''));
+  $('pl-code').disabled = false; $('pl-create').textContent = '+ Adicionar plano';
 }
 $('pl-body')?.addEventListener('click', async (e) => {
-  const b = e.target.closest('[data-plan-toggle]'); if (!b || !apiOk) return;
-  const active = b.dataset.active !== 'true';
-  try { await api('/admin/plans/' + b.dataset.planToggle, jsonPost({ active })); loadPlans(); } catch (ex) {}
+  if (!apiOk) return;
+  const tog = e.target.closest('[data-plan-toggle]');
+  if (tog) { try { await api('/admin/plans/' + tog.dataset.planToggle, jsonPost({ active: tog.dataset.active !== 'true' })); loadPlans(); } catch (ex) {} return; }
+  const ed = e.target.closest('[data-plan-edit]');
+  if (ed) { const p = plansCache.find((x) => x.id === ed.dataset.planEdit); if (p) startEditPlan(p); return; }
+  const del = e.target.closest('[data-plan-del]');
+  if (del) {
+    const p = plansCache.find((x) => x.id === del.dataset.planDel);
+    if (p && confirm('Remover o plano "' + p.label + '"?')) { try { await api('/admin/plans/' + p.id, { method: 'DELETE' }); if (editingPlanId === p.id) resetPlanForm(); loadPlans(); } catch (ex) {} }
+  }
 });
 $('pl-create')?.addEventListener('click', async () => {
   const msg = $('pl-msg');
-  const body = { code: $('pl-code').value.trim(), label: $('pl-label').value.trim(), minutes: $('pl-minutes').value, price: $('pl-price').value };
-  if (!body.code || !body.label || !body.minutes || !body.price) { msg.textContent = 'Preencha todos os campos.'; return; }
   if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
-  try { await api('/admin/plans', jsonPost(body)); ['pl-code', 'pl-label', 'pl-minutes', 'pl-price'].forEach((i) => ($(i).value = '')); msg.textContent = '✓ Adicionado'; loadPlans(); }
-  catch (e) { msg.textContent = 'Erro (código já existe?).'; }
+  try {
+    if (editingPlanId) {
+      await api('/admin/plans/' + editingPlanId, jsonPost({ label: $('pl-label').value.trim(), minutes: $('pl-minutes').value, price: $('pl-price').value }));
+      resetPlanForm(); msg.textContent = '✓ Plano atualizado';
+    } else {
+      const body = { code: $('pl-code').value.trim(), label: $('pl-label').value.trim(), minutes: $('pl-minutes').value, price: $('pl-price').value };
+      if (!body.code || !body.label || !body.minutes || !body.price) { msg.textContent = 'Preencha todos os campos.'; return; }
+      await api('/admin/plans', jsonPost(body)); resetPlanForm(); msg.textContent = '✓ Adicionado';
+    }
+    loadPlans();
+  } catch (e) { msg.textContent = 'Erro (código já existe?).'; }
 });
 
 // ====================================================== CONFIGURAÇÕES

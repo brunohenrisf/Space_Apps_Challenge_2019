@@ -115,6 +115,9 @@ export function updatePlan(id: string, b: any) {
   if (typeof b.active === 'boolean') data.active = b.active;
   return prisma.plan.update({ where: { id }, data });
 }
+export function deletePlan(id: string) {
+  return prisma.plan.delete({ where: { id } });
+}
 
 // ============================================================ Pedidos
 export function createOrder(data: {
@@ -125,8 +128,34 @@ export function createOrder(data: {
 export function getOrder(txid: string) {
   return prisma.order.findUnique({ where: { txid } });
 }
-export function setOrderPaid(txid: string, v: { voucherLogin: string; voucherPassword: string; expiresAt: Date }) {
-  return prisma.order.update({ where: { txid }, data: { status: 'paid', paidAt: new Date(), ...v } });
+/** Marca como pago (pagamento é real) sem o voucher — provisionamento vem depois. */
+export function markOrderPaid(txid: string) {
+  return prisma.order.update({ where: { txid }, data: { status: 'paid', paidAt: new Date() } });
+}
+export function setOrderVoucher(txid: string, v: { voucherLogin: string; voucherPassword: string; expiresAt: Date }) {
+  return prisma.order.update({ where: { txid }, data: v });
+}
+
+// --- Reconciliação / robustez ---
+/** Expira pedidos pendentes antigos (cobrança Pix já venceu). Retorna a contagem. */
+export async function expireStalePending(minutes = 60) {
+  const cutoff = new Date(Date.now() - minutes * 60_000);
+  const r = await prisma.order.updateMany({
+    where: { status: 'pending', createdAt: { lt: cutoff } },
+    data: { status: 'expired' },
+  });
+  return r.count;
+}
+/** Pedidos pagos mas sem voucher (MikroTik falhou na hora) — para reprocessar. */
+export function paidWithoutVoucher() {
+  return prisma.order.findMany({ where: { status: 'paid', voucherLogin: null } });
+}
+/** Voucher ativo (pago e não expirado) de um dispositivo — para reconectar sem pagar. */
+export function getActiveVoucherByMac(accountId: string, mac: string) {
+  return prisma.order.findFirst({
+    where: { accountId, mac, status: 'paid', voucherLogin: { not: null }, expiresAt: { gt: new Date() } },
+    orderBy: { paidAt: 'desc' },
+  });
 }
 
 type OrderRow = NonNullable<Awaited<ReturnType<typeof getOrder>>>;

@@ -7,8 +7,22 @@ import { provisionVoucher, grantCourtesyAccess, pingRouter, mkConnFromAccount } 
 import { config } from '../config';
 import * as store from '../store';
 import { requireAuth, signToken, verifyPassword, hashPassword } from '../auth';
+import { log } from '../services/log';
 
 const router = Router();
+
+// Rate limiting simples (por IP+rota) para endpoints sensíveis.
+const rlHits = new Map<string, { count: number; ts: number }>();
+function rateLimit(max: number, windowMs: number) {
+  return (req: Request, res: Response, next: () => void) => {
+    const key = `${req.ip}:${req.path}`;
+    const now = Date.now();
+    const e = rlHits.get(key);
+    if (!e || now - e.ts > windowMs) { rlHits.set(key, { count: 1, ts: now }); return next(); }
+    if (++e.count > max) { log.warn('ratelimit.block', { ip: req.ip, path: req.path }); return res.status(429).json({ error: 'muitas tentativas, tente mais tarde' }); }
+    next();
+  };
+}
 
 function slugify(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -54,14 +68,33 @@ router.post('/checkout', async (req: Request, res: Response) => {
   res.json({ txid: charge.txid, qrcodeImage: charge.qrcodeImage, pixCopiaECola: charge.pixCopiaECola, amount: charge.amount });
 });
 
-// Confirma o pagamento: provisiona na MikroTik da conta e marca pago (idempotente).
+// Confirma o pagamento: marca pago (pagamento é real) e provisiona na MikroTik.
+// Se o provisionamento falhar, o pedido fica pago sem voucher e o job de
+// reconciliação reprovisiona depois — o cliente que pagou nunca fica sem acesso.
 async function confirmAndProvision(order: NonNullable<Awaited<ReturnType<typeof store.getOrder>>>) {
   if (order.status === 'paid') return order;
+  const paid = await store.markOrderPaid(order.txid);
+  log.info('payment.confirmed', { txid: order.txid, accountId: order.accountId, amount: order.amount });
   const acc = await store.getAccount(order.accountId);
-  if (!acc) return order;
-  const access = await provisionVoucher(mkConnFromAccount(acc), { minutes: order.minutes, mac: order.mac ?? undefined });
-  return store.setOrderPaid(order.txid, { voucherLogin: access.login, voucherPassword: access.password, expiresAt: access.expiresAt });
+  if (!acc) return paid;
+  try {
+    const access = await provisionVoucher(mkConnFromAccount(acc), { minutes: order.minutes, mac: order.mac ?? undefined });
+    log.info('voucher.provisioned', { txid: order.txid, login: access.login });
+    return store.setOrderVoucher(order.txid, { voucherLogin: access.login, voucherPassword: access.password, expiresAt: access.expiresAt });
+  } catch (e: any) {
+    log.warn('voucher.provision_failed', { txid: order.txid, error: e?.message });
+    return paid; // reprovisionado pelo job de reconciliação
+  }
 }
+
+// GET /api/voucher/active?ac=slug&mac=XX — voucher ativo do dispositivo (reconectar)
+router.get('/voucher/active', async (req: Request, res: Response) => {
+  const acc = await resolveAccount(req.query.ac ? String(req.query.ac) : undefined);
+  const mac = req.query.mac ? String(req.query.mac) : '';
+  if (!acc || !mac) return res.json({ active: null });
+  const o = await store.getActiveVoucherByMac(acc.id, mac);
+  res.json({ active: o ? { login: o.voucherLogin, password: o.voucherPassword, plan: o.planLabel, expiresAt: o.expiresAt?.toISOString() } : null });
+});
 
 router.get('/checkout/:txid/status', async (req: Request, res: Response) => {
   let order = await store.getOrder(req.params.txid);
@@ -96,7 +129,7 @@ router.post('/webhook/efi/pix', efiWebhookHandler);
 // =============================================================== Auth
 router.get('/signup/open', (_req: Request, res: Response) => res.json({ open: config.allowSignup }));
 
-router.post('/signup', async (req: Request, res: Response) => {
+router.post('/signup', rateLimit(5, 600_000), async (req: Request, res: Response) => {
   if (!config.allowSignup) return res.status(403).json({ error: 'cadastro fechado' });
   const name = String(req.body?.accountName ?? '').trim();
   const email = String(req.body?.email ?? '').toLowerCase().trim();
@@ -110,7 +143,7 @@ router.post('/signup', async (req: Request, res: Response) => {
   res.json({ token: signToken({ sub: email, acc: account.id }), email });
 });
 
-router.post('/admin/login', async (req: Request, res: Response) => {
+router.post('/admin/login', rateLimit(10, 300_000), async (req: Request, res: Response) => {
   const email = String(req.body?.email ?? '').toLowerCase().trim();
   const user = await store.getAdminByEmail(email);
   if (!user || !verifyPassword(String(req.body?.password ?? ''), user.passwordHash)) {
@@ -170,6 +203,12 @@ router.post('/admin/plans/:id', requireAuth, async (req: Request, res: Response)
   const plan = await store.getPlan(req.params.id);
   if (!plan || plan.accountId !== accId(req)) return res.status(404).json({ error: 'plano não encontrado' });
   res.json(await store.updatePlan(plan.id, req.body ?? {}));
+});
+router.delete('/admin/plans/:id', requireAuth, async (req: Request, res: Response) => {
+  const plan = await store.getPlan(req.params.id);
+  if (!plan || plan.accountId !== accId(req)) return res.status(404).json({ error: 'plano não encontrado' });
+  await store.deletePlan(plan.id);
+  res.json({ ok: true });
 });
 
 // ----- Vendas / relatório / status -----

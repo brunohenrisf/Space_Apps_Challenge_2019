@@ -1,0 +1,17 @@
+/* ConectaVoucher — fontes self-hosted (variáveis, subset latin).
+   Evita depender do Google Fonts, que fica bloqueado no walled-garden
+   antes da cortesia — o portal renderiza 100% mesmo sem internet. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(./inter.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url(./space-grotesk.woff2) format('woff2');
+}

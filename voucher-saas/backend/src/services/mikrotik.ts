@@ -40,19 +40,30 @@ function loadRouterOSAPI(): any {
   return require('node-routeros').RouterOSAPI;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function run(conn: MkConn, path: string, params: string[] = []): Promise<any[]> {
   if (!configured(conn)) { console.log(`[mikrotik:mock] ${path} ${params.join(' ')}`); return []; }
   const RouterOSAPI = loadRouterOSAPI();
-  const client = new RouterOSAPI({
-    host: conn.host, user: conn.user, password: conn.password, port: conn.port, timeout: 8,
-    ...(conn.tls ? { tls: {} } : {}),
-  });
-  try {
-    await client.connect();
-    return await client.write(path, params);
-  } finally {
-    try { client.close(); } catch { /* noop */ }
+  let lastErr: any;
+  // Retry com backoff para falhas transitórias do túnel/roteador.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const client = new RouterOSAPI({
+      host: conn.host, user: conn.user, password: conn.password, port: conn.port, timeout: 8,
+      ...(conn.tls ? { tls: {} } : {}),
+    });
+    try {
+      await client.connect();
+      const res = await client.write(path, params);
+      try { client.close(); } catch { /* noop */ }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      try { client.close(); } catch { /* noop */ }
+      if (attempt < 2) await sleep(300 * Math.pow(2, attempt));
+    }
   }
+  throw lastErr;
 }
 
 // ------------------------------------------------------------- provisionamento
@@ -84,6 +95,10 @@ export async function revokeVoucher(conn: MkConn, login: string): Promise<void> 
 
 // ----------------------------------------------------------------- cortesia
 export async function grantCourtesyAccess(conn: MkConn, mac: string, seconds: number): Promise<void> {
+  // Idempotente: limpa binding/scheduler anteriores do MAC antes de recriar
+  // (o portal chama /courtesy a cada carga; evita empilhar bindings).
+  await run(conn, '/ip/hotspot/ip-binding/remove', [`?mac-address=${mac}`]);
+  await run(conn, '/system/scheduler/remove', [`?name=${courtesySchedName(mac)}`]);
   await run(conn, '/ip/hotspot/ip-binding/add', [`=mac-address=${mac}`, `=type=bypassed`, `=comment=cortesia ${seconds}s`]);
   const schedName = courtesySchedName(mac);
   const onEvent =

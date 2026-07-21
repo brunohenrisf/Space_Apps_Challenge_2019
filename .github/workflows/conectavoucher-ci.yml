@@ -1,0 +1,27 @@
+name: ConectaVoucher CI
+
+on:
+  push:
+    paths: ['voucher-saas/**', '.github/workflows/conectavoucher-ci.yml']
+  pull_request:
+    paths: ['voucher-saas/**', '.github/workflows/conectavoucher-ci.yml']
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voucher-saas/backend
+    env:
+      DATABASE_URL: "file:./ci.db"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: voucher-saas/backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm test

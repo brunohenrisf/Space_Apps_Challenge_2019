@@ -160,9 +160,13 @@ function startPolling(plan) {
     if (!state.txid) return;
     try {
       const r = await api(`/checkout/${state.txid}/status`);
-      if (r.status === 'paid') {
+      if (r.status === 'paid' && r.voucherLogin) {
         stopPolling();
         onPaid(plan, r.voucherLogin, r.voucherPassword);
+      } else if (r.status === 'paid') {
+        // pago, mas o voucher ainda está sendo liberado (reprovisionamento)
+        const box = document.getElementById('awaitBox');
+        if (box) box.querySelector('div:last-child').textContent = 'Pagamento confirmado, liberando acesso…';
       }
     } catch (e) { /* tenta de novo no próximo tick */ }
   }, 3000);
@@ -180,6 +184,23 @@ function onPaid(plan, login, password) {
   document.getElementById('okTime').textContent = plan.time;
   document.getElementById('okLogin').textContent =
     login || 'evt-' + Math.random().toString(16).slice(2, 8).toUpperCase();
+  go('success');
+}
+
+// Reconexão: dispositivo já tem voucher ativo → oferece reconectar sem pagar.
+function showReconnect(active) {
+  state.paid = true;
+  state.courtesyRunning = false;
+  state.voucherPassword = active.password || null;
+  document.getElementById('okPlan').textContent = active.plan;
+  document.getElementById('okTime').textContent = active.expiresAt
+    ? 'até ' + new Date(active.expiresAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : '—';
+  document.getElementById('okLogin').textContent = active.login;
+  const h2 = document.querySelector('#screen-success h2');
+  if (h2) h2.textContent = 'Você já tem acesso';
+  const p = document.querySelector('#screen-success .big-status p');
+  if (p) p.textContent = 'Este dispositivo já tem um voucher ativo. Toque para reconectar.';
   go('success');
 }
 
@@ -310,6 +331,12 @@ async function init() {
         if (sub) sub.textContent = 'Wi-Fi · ' + plansRes.account.name;
       }
       if (status?.seconds) { state.courtesyLeft = status.seconds; }
+      // Reconexão: se este dispositivo já tem voucher ativo, oferece reconectar.
+      if (hotspot.mac) {
+        const q = new URLSearchParams(); if (hotspot.ac) q.set('ac', hotspot.ac); q.set('mac', hotspot.mac);
+        const { active } = await api('/voucher/active?' + q.toString());
+        if (active) showReconnect(active);
+      }
     } catch (e) {
       apiOk = false; // sem backend → segue em simulação
     }

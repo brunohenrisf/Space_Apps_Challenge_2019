@@ -9,6 +9,7 @@
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "prisma generate && tsc --noEmit",
+    "test": "node --require ts-node/register/transpile-only --test test/unit.test.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
   },
