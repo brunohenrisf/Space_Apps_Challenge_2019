@@ -24,13 +24,13 @@ const BRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL
 // ---------- Parâmetros que o Hotspot do MikroTik injeta na URL ----------
 const qs = new URLSearchParams(location.search);
 const hotspot = {
-  event: qs.get('event') || '',   // slug do evento (multi-tenant)
+  ac: qs.get('ac') || '',   // slug da conta (multi-tenant)
   mac: qs.get('mac') || '',
   // link-login-only é o alvo do POST de login; link-login é a versão completa.
   linkLogin: qs.get('link-login-only') || qs.get('link-login') || '',
   linkOrig: qs.get('link-orig') || qs.get('dst') || '',
 };
-const eventQuery = hotspot.event ? '?event=' + encodeURIComponent(hotspot.event) : '';
+const acQuery = hotspot.ac ? '?ac=' + encodeURIComponent(hotspot.ac) : '';
 
 // API disponível quando servido por http(s). Vira false se um fetch falhar.
 const API_BASE = location.protocol.startsWith('http') ? '/api' : null;
@@ -137,7 +137,7 @@ async function openPayment() {
 
   if (apiOk) {
     try {
-      const r = await api('/checkout', jsonPost({ event: hotspot.event, planId: plan.id, mac: hotspot.mac }));
+      const r = await api('/checkout', jsonPost({ ac: hotspot.ac, planId: plan.id, mac: hotspot.mac }));
       state.txid = r.txid;
       document.getElementById('qrImg').src = r.qrcodeImage;
       document.getElementById('pixCode').textContent = r.pixCopiaECola;
@@ -301,13 +301,13 @@ async function init() {
   if (apiOk) {
     try {
       const [plansRes, status] = await Promise.all([
-        api('/plans' + eventQuery),
-        api('/courtesy', jsonPost({ event: hotspot.event, mac: hotspot.mac })),
+        api('/plans' + acQuery),
+        api('/courtesy', jsonPost({ ac: hotspot.ac, mac: hotspot.mac })),
       ]);
       if (Array.isArray(plansRes?.plans) && plansRes.plans.length) PLANS = plansRes.plans;
-      if (plansRes?.event?.name) {
+      if (plansRes?.account?.name) {
         const sub = document.querySelector('.brand-sub');
-        if (sub) sub.textContent = 'Wi-Fi · ' + plansRes.event.name;
+        if (sub) sub.textContent = 'Wi-Fi · ' + plansRes.account.name;
       }
       if (status?.seconds) { state.courtesyLeft = status.seconds; }
     } catch (e) {

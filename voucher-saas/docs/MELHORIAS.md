@@ -16,10 +16,11 @@ para ficar **production-ready**; as demais aumentam robustez e experiência.
    painel, expiração/renovação e rate limiting no login.
 
 3. **Multi-tenant.** ✅ **Feito.**
-   Organizador (tenant) → eventos → planos; conta Efí por organizador e
-   MikroTik/rede por evento. Todo dado admin é filtrado pelo organizador e por
-   evento (isolamento validado). O portal serve o evento por `?event=<slug>`.
-   Falta: convite/gestão de múltiplos usuários por organizador e billing.
+   Isolamento **entre contas** (usuários da plataforma). Cada conta tem sua Efí,
+   sua MikroTik/rede e seus planos/vendas; dentro da conta os dados são
+   compartilhados (sem separação por evento). O portal serve a conta por
+   `?ac=<slug>`. Falta: cadastro/gestão de contas (signup), múltiplos usuários
+   por conta e billing.
 
 ## Robustez
 

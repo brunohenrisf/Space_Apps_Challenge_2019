@@ -9,17 +9,17 @@ export interface EfiCreds {
   env: string; clientId: string; clientSecret: string; pixKey: string; certPath: string; webhookToken: string;
 }
 
-/** Deriva as credenciais efetivas do organizador (fallback para o .env). */
-export function efiCredsFromOrganizer(o: {
+/** Deriva as credenciais efetivas da conta (fallback para o .env). */
+export function efiCredsFromAccount(a: {
   efiEnv?: string; efiClientId?: string; efiClientSecret?: string; efiPixKey?: string; efiWebhookToken?: string;
 }): EfiCreds {
   return {
-    env: o.efiEnv || config.efi.env,
-    clientId: o.efiClientId || config.efi.clientId,
-    clientSecret: o.efiClientSecret || config.efi.clientSecret,
-    pixKey: o.efiPixKey || config.efi.pixKey,
+    env: a.efiEnv || config.efi.env,
+    clientId: a.efiClientId || config.efi.clientId,
+    clientSecret: a.efiClientSecret || config.efi.clientSecret,
+    pixKey: a.efiPixKey || config.efi.pixKey,
     certPath: config.efi.certPath,
-    webhookToken: o.efiWebhookToken || config.efi.webhookToken,
+    webhookToken: a.efiWebhookToken || config.efi.webhookToken,
   };
 }
 

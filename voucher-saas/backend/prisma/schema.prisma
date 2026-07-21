@@ -1,6 +1,7 @@
-// ConectaVoucher — schema (multi-tenant por linha).
-// Organizer (tenant) -> Events -> Plans/Orders. Efí por organizador;
-// MikroTik/rede por evento. Toda query admin é filtrada pelo organizador.
+// ConectaVoucher — schema (multi-tenant por CONTA).
+// Isolamento entre usuários da plataforma (contas). Dentro de uma conta os
+// dados são compartilhados (sem separação por evento). Cada conta = um cliente
+// com seu equipamento (MikroTik) e sua conta Efí.
 // DEV: sqlite | PROD: postgresql (trocado na imagem via sed).
 
 generator client {
@@ -12,84 +13,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Organizador = tenant. Guarda a conta Efí (Pix) própria.
-model Organizer {
-  id                   String      @id @default(cuid())
-  name                 String
-  efiEnv               String      @default("producao")
-  efiClientId          String      @default("")
-  efiClientSecret      String      @default("")
-  efiPixKey            String      @default("")
-  efiWebhookToken      String      @default("")
-  efiWebhookConfigured Boolean     @default(false)
-  createdAt            DateTime    @default(now())
-  users                AdminUser[]
-  events               Event[]
-}
+/// Conta (tenant) = um cliente da plataforma. Guarda Efí, MikroTik/rede,
+/// planos e vendas. `slug` identifica a conta no portal (login.html do MikroTik).
+model Account {
+  id   String @id @default(cuid())
+  slug String @unique
+  name String // nome exibido no portal (ex.: nome do evento/local)
 
-/// Admin (login) pertence a um organizador.
-model AdminUser {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  organizerId  String
-  organizer    Organizer @relation(fields: [organizerId], references: [id])
-  createdAt    DateTime  @default(now())
-}
+  // Efí (Pix)
+  efiEnv               String  @default("producao")
+  efiClientId          String  @default("")
+  efiClientSecret      String  @default("")
+  efiPixKey            String  @default("")
+  efiWebhookToken      String  @default("")
+  efiWebhookConfigured Boolean @default(false)
 
-/// Evento: um deployment físico (uma MikroTik) com seus planos e vendas.
-model Event {
-  id               String    @id @default(cuid())
-  organizerId      String
-  organizer        Organizer @relation(fields: [organizerId], references: [id])
-  slug             String    @unique
-  name             String
-  active           Boolean   @default(true)
-  courtesySeconds  Int       @default(180)
+  // Cortesia
+  courtesySeconds Int @default(180)
+
   // Conexão do backend com a MikroTik (host = IP do peer no túnel WireGuard)
-  mkPort           Int       @default(8728)
-  mkTls            Boolean   @default(false)
-  mkHotspotProfile String    @default("default")
+  mkPort           Int     @default(8728)
+  mkTls            Boolean @default(false)
+  mkHotspotProfile String  @default("default")
+
   // Rede / gerador de configuração
-  lanCidr          String    @default("10.10.0.1/24")
-  dhcpFrom         String    @default("10.10.0.10")
-  dhcpTo           String    @default("10.10.0.254")
-  dns              String    @default("1.1.1.1,8.8.8.8")
-  hotspotName      String    @default("ConectaVoucher")
-  portalDomain     String    @default("")
-  apiUser          String    @default("api")
-  apiPassword      String    @default("")
-  wgVpsPublicKey   String    @default("")
-  wgVpsEndpoint    String    @default("")
-  wgVpsPort        Int       @default(51820)
-  wgPeerAddress    String    @default("10.20.0.2")
-  createdAt        DateTime  @default(now())
-  plans            Plan[]
-  orders           Order[]
+  lanCidr        String @default("10.10.0.1/24")
+  dhcpFrom       String @default("10.10.0.10")
+  dhcpTo         String @default("10.10.0.254")
+  dns            String @default("1.1.1.1,8.8.8.8")
+  hotspotName    String @default("ConectaVoucher")
+  portalDomain   String @default("")
+  apiUser        String @default("api")
+  apiPassword    String @default("")
+  wgVpsPublicKey String @default("")
+  wgVpsEndpoint  String @default("")
+  wgVpsPort      Int    @default(51820)
+  wgPeerAddress  String @default("10.20.0.2")
+
+  createdAt DateTime    @default(now())
+  users     AdminUser[]
+  plans     Plan[]
+  orders    Order[]
 }
 
-/// Plano de voucher (por evento).
+/// Login do painel — pertence a uma conta.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+/// Plano de voucher (por conta).
 model Plan {
-  id      String  @id @default(cuid())
-  eventId String
-  event   Event   @relation(fields: [eventId], references: [id])
-  code    String
-  label   String
-  minutes Int
-  price   Int
-  descr   String  @default("")
-  badge   String?
-  active  Boolean @default(true)
-  sort    Int     @default(0)
+  id        String  @id @default(cuid())
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+  code      String
+  label     String
+  minutes   Int
+  price     Int
+  descr     String  @default("")
+  badge     String?
+  active    Boolean @default(true)
+  sort      Int     @default(0)
 
-  @@unique([eventId, code])
+  @@unique([accountId, code])
 }
 
-/// Venda (por evento). Snapshot do plano no momento da compra.
+/// Venda (por conta). Snapshot do plano no momento da compra.
 model Order {
   id              String    @id @default(cuid())
-  eventId         String
-  event           Event     @relation(fields: [eventId], references: [id])
+  accountId       String
+  account         Account   @relation(fields: [accountId], references: [id])
   txid            String    @unique
   planCode        String
   planLabel       String
@@ -103,6 +101,6 @@ model Order {
   createdAt       DateTime  @default(now())
   paidAt          DateTime?
 
-  @@index([eventId, status])
-  @@index([eventId, createdAt])
+  @@index([accountId, status])
+  @@index([accountId, createdAt])
 }

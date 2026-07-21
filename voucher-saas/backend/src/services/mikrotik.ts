@@ -8,11 +8,11 @@ export interface MkConn {
   host: string; port: number; user: string; password: string; tls: boolean; hotspotProfile: string;
 }
 
-/** Deriva a conexão do backend com a MikroTik do evento. */
-export function mkConnFromEvent(e: {
+/** Deriva a conexão do backend com a MikroTik da conta. */
+export function mkConnFromAccount(a: {
   wgPeerAddress: string; mkPort: number; apiUser: string; apiPassword: string; mkTls: boolean; mkHotspotProfile: string;
 }): MkConn {
-  return { host: e.wgPeerAddress, port: e.mkPort, user: e.apiUser, password: e.apiPassword, tls: e.mkTls, hotspotProfile: e.mkHotspotProfile };
+  return { host: a.wgPeerAddress, port: a.mkPort, user: a.apiUser, password: a.apiPassword, tls: a.mkTls, hotspotProfile: a.mkHotspotProfile };
 }
 
 const configured = (c: MkConn) => Boolean(c.host && c.password);

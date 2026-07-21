@@ -44,7 +44,6 @@
         <div><b>ConectaVoucher</b><span>Painel do organizador</span></div>
       </div>
       <button class="nav-item active" data-nav="dashboard"><span class="ni-ico">📊</span> Dashboard</button>
-      <button class="nav-item" data-nav="eventos"><span class="ni-ico">🎪</span> Eventos</button>
       <button class="nav-item" data-nav="planos"><span class="ni-ico">🎟️</span> Planos</button>
       <button class="nav-item" data-nav="vendas"><span class="ni-ico">💳</span> Vendas</button>
       <button class="nav-item" data-nav="relatorios"><span class="ni-ico">📈</span> Relatórios</button>
@@ -60,7 +59,7 @@
       <header class="main-head">
         <h2 id="pageTitle">Dashboard</h2>
         <div class="spacer"></div>
-        <select class="event-select" id="eventSelect" title="Evento"></select>
+        <span class="pill on" id="acctName">Minha conta</span>
         <button class="icon-toggle" data-theme-toggle title="Alternar tema"><span data-theme-icon>☀️</span></button>
         <div class="avatar">OR</div>
       </header>
@@ -68,9 +67,7 @@
       <!-- Header mobile -->
       <header class="mobile-topbar">
         <div class="logo"><img src="assets/img/logo.svg" alt="ConectaVoucher" /></div>
-        <div style="min-width:0"><b id="mobileTitle">Dashboard</b>
-          <select class="event-select event-select-sm" id="eventSelectM" title="Evento"></select>
-        </div>
+        <div style="min-width:0"><b id="mobileTitle">Dashboard</b><span id="acctNameM">Minha conta</span></div>
         <button class="icon-toggle" data-theme-toggle title="Alternar tema" style="margin-left:auto"><span data-theme-icon>☀️</span></button>
       </header>
 
@@ -100,22 +97,6 @@
                 <div class="row"><span class="k">Efí (Pix)</span><span class="v" id="db-efi">—</span></div>
                 <div class="row"><span class="k">Cortesia configurada</span><span class="v" id="db-courtesy">—</span></div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ---------- EVENTOS ---------- -->
-        <section class="page" id="page-eventos">
-          <div class="panel">
-            <div class="panel-head"><h3>Meus eventos</h3></div>
-            <div class="panel-body" id="ev-list"><div class="empty" style="padding:20px">Carregando…</div></div>
-          </div>
-          <div class="panel">
-            <div class="panel-head"><h3>Novo evento</h3></div>
-            <div class="panel-body">
-              <div class="field"><label>Nome do evento</label><input id="ev-name" type="text" placeholder="Ex.: Feira de Tecnologia 2026" /></div>
-              <button class="btn btn-sm btn-primary" id="ev-create" style="width:auto">+ Criar evento</button>
-              <span class="helper" id="ev-msg" style="margin-left:10px"></span>
             </div>
           </div>
         </section>
@@ -239,7 +220,7 @@
 
           <!-- Integração Efí -->
           <div class="panel">
-            <div class="panel-head"><h3>Conta Efí (Pix) · organizador</h3><div class="spacer"></div>
+            <div class="panel-head"><h3>Conta Efí (Pix)</h3><div class="spacer"></div>
               <span class="pill" id="efi-status">não configurado</span>
             </div>
             <div class="panel-body">
@@ -269,6 +250,7 @@
               <p class="helper" style="text-align:left;margin-top:0">Preencha os campos e gere o script <code>.rsc</code> pronto — é só importar no roteador (Winbox → Files ou <code>/import</code>). Sem digitar comandos.</p>
               <div class="sec-title">Rede / Hotspot</div>
               <div class="grid-2">
+                <div class="field"><label>Nome exibido no portal</label><input id="gen-eventName" type="text" placeholder="Ex.: Feira de Tecnologia 2026" /></div>
                 <div class="field"><label>Nome do Hotspot / SSID</label><input id="gen-hotspot" type="text" value="ConectaVoucher" /></div>
                 <div class="field"><label>Gateway/LAN (CIDR)</label><input id="gen-lan" type="text" value="10.10.0.1/24" /></div>
                 <div class="field"><label>DHCP início</label><input id="gen-dhcpFrom" type="text" value="10.10.0.10" /></div>
@@ -287,7 +269,7 @@
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 6px">
                 <button class="btn btn-sm btn-primary" id="gen-run" style="width:auto">Gerar configuração</button>
-                <button class="btn btn-sm btn-outline" id="gen-save" style="width:auto">Salvar no evento</button>
+                <button class="btn btn-sm btn-outline" id="gen-save" style="width:auto">Salvar na conta</button>
                 <button class="btn btn-sm btn-outline" id="gen-copy" style="width:auto" disabled>Copiar</button>
                 <button class="btn btn-sm btn-outline" id="gen-download" style="width:auto" disabled>Baixar .rsc</button>
                 <button class="btn btn-sm btn-outline" id="gen-login" style="width:auto" disabled>Baixar login.html</button>
@@ -304,7 +286,6 @@
     <!-- Bottom nav (mobile) -->
     <nav class="bottom-nav">
       <button class="bn-item active" data-nav="dashboard"><span class="bn-ico">📊</span> Painel</button>
-      <button class="bn-item" data-nav="eventos"><span class="bn-ico">🎪</span> Eventos</button>
       <button class="bn-item" data-nav="planos"><span class="bn-ico">🎟️</span> Planos</button>
       <button class="bn-item" data-nav="vendas"><span class="bn-ico">💳</span> Vendas</button>
       <button class="bn-item" data-nav="relatorios"><span class="bn-ico">📈</span> Relatórios</button>

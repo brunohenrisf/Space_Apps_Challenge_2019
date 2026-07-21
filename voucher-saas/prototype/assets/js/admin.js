@@ -1,20 +1,18 @@
 /* =========================================================
-   ConectaVoucher — Painel do Administrador (multi-tenant)
-   Login + seletor de evento + dados ao vivo (por evento) +
-   gerador de configuração da MikroTik. Sem backend (file://),
-   mostra dados de exemplo para validar as telas.
+   ConectaVoucher — Painel do Administrador (por conta)
+   Login + dados ao vivo da conta + gerador de configuração
+   da MikroTik. Isolamento é entre contas (usuários); dentro
+   da conta os dados são compartilhados. Sem backend (file://),
+   mostra dados de exemplo.
    ========================================================= */
 
-const PAGES = ['dashboard', 'eventos', 'planos', 'vendas', 'relatorios', 'config'];
-const TITLES = {
-  dashboard: 'Dashboard', eventos: 'Eventos', planos: 'Planos',
-  vendas: 'Vendas', relatorios: 'Relatórios', config: 'Configurações',
-};
+const PAGES = ['dashboard', 'planos', 'vendas', 'relatorios', 'config'];
+const TITLES = { dashboard: 'Dashboard', planos: 'Planos', vendas: 'Vendas', relatorios: 'Relatórios', config: 'Configurações' };
 
 const API_BASE = location.protocol.startsWith('http') ? '/api' : null;
 let apiOk = !!API_BASE;
 
-const TOKEN_KEY = 'cv-admin-token', EVENT_KEY = 'cv-admin-event';
+const TOKEN_KEY = 'cv-admin-token';
 const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
 const setToken = (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch {} };
 
@@ -31,13 +29,15 @@ const BRL = (v) => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currenc
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// Estado multi-tenant
-let events = [];
-let currentEvent = null;
-const evUrl = (suffix) => `/admin/events/${currentEvent.id}${suffix}`;
+// Conta atual (carregada no login)
+let account = null;
 
 // ---------- Dados de exemplo (modo offline) ----------
-const MOCK_EVENTS = [{ id: 'demo', slug: 'principal', name: 'Feira de Tecnologia 2026', active: true }];
+const MOCK_ACCOUNT = {
+  id: 'demo', slug: 'principal', name: 'Feira de Tecnologia 2026', courtesySeconds: 180,
+  efi: { env: 'producao', clientId: '', pixKey: '', hasSecret: false, webhookConfigured: false },
+  network: { lanCidr: '10.10.0.1/24', dhcpFrom: '10.10.0.10', dhcpTo: '10.10.0.254', dns: '1.1.1.1,8.8.8.8', hotspotName: 'ConectaVoucher', portalDomain: '', apiUser: 'api', apiPassword: '', wgVpsPublicKey: '', wgVpsEndpoint: '', wgVpsPort: 51820, wgPeerAddress: '10.20.0.2' },
+};
 const MOCK_PLANS = [
   { id: 'p1', code: '1h', label: '1 hora', minutes: 60, price: 5, active: true },
   { id: 'p2', code: '3h', label: '3 horas', minutes: 180, price: 10, active: true, badge: 'Mais vendido' },
@@ -67,32 +67,14 @@ $('logoutBtn')?.addEventListener('click', () => { setToken(''); showLogin(); });
   if (apiOk && getToken()) { try { await api('/admin/me'); enterApp(); } catch (e) { setToken(''); } }
 })();
 
-// ---------- Bootstrap do painel + eventos ----------
+// ---------- Bootstrap ----------
 async function initPanel() {
-  await loadEvents();
+  account = MOCK_ACCOUNT;
+  if (apiOk) { try { account = await api('/admin/account'); } catch (e) { apiOk = false; account = MOCK_ACCOUNT; } }
+  $('acctName').textContent = account.name;
+  $('acctNameM').textContent = account.name;
   navigate('dashboard');
 }
-async function loadEvents() {
-  if (apiOk) {
-    try { events = (await api('/admin/events')).events || []; }
-    catch (e) { apiOk = false; events = MOCK_EVENTS; }
-  } else { events = MOCK_EVENTS; }
-  if (!events.length) events = MOCK_EVENTS;
-  const stored = (() => { try { return localStorage.getItem(EVENT_KEY); } catch { return null; } })();
-  currentEvent = events.find((e) => e.id === stored) || events[0];
-  renderEventSelectors();
-}
-function renderEventSelectors() {
-  const opts = events.map((e) => `<option value="${e.id}"${e.id === currentEvent.id ? ' selected' : ''}>${esc(e.name)}</option>`).join('');
-  ['eventSelect', 'eventSelectM'].forEach((id) => { const el = $(id); if (el) el.innerHTML = opts; });
-}
-function setCurrentEvent(id) {
-  currentEvent = events.find((e) => e.id === id) || currentEvent;
-  try { localStorage.setItem(EVENT_KEY, currentEvent.id); } catch {}
-  renderEventSelectors();
-  navigate(currentPage);
-}
-['eventSelect', 'eventSelectM'].forEach((id) => $(id)?.addEventListener('change', (e) => setCurrentEvent(e.target.value)));
 
 // ---------- Navegação ----------
 let currentPage = 'dashboard';
@@ -108,9 +90,8 @@ function navigate(page) {
   if (page === 'dashboard') loadDashboard();
   if (page === 'vendas') loadSales(currentSalesFilter);
   if (page === 'relatorios') loadReport();
-  if (page === 'eventos') loadEventsPage();
   if (page === 'planos') loadPlans();
-  if (page === 'config') { loadAccount(); loadEventSettings(); }
+  if (page === 'config') { loadAccountPanel(); }
 }
 document.querySelectorAll('[data-nav]').forEach((el) => el.addEventListener('click', () => navigate(el.dataset.nav)));
 
@@ -125,13 +106,13 @@ const hhmm = (iso) => { try { return new Date(iso).toLocaleTimeString('pt-BR', {
 
 async function fetchSales(status) {
   if (!apiOk) return MOCK_SALES.filter((s) => !status || s.status === status);
-  try { return (await api(evUrl('/sales' + (status ? '?status=' + status : '')))).sales; }
+  try { return (await api('/admin/sales' + (status ? '?status=' + status : ''))).sales; }
   catch (e) { apiOk = false; return MOCK_SALES; }
 }
 
 // ====================================================== DASHBOARD
 async function loadDashboard() {
-  const rep = apiOk ? await api(evUrl('/report')).catch(() => mockReport()) : mockReport();
+  const rep = apiOk ? await api('/admin/report').catch(() => mockReport()) : mockReport();
   $('db-rev').textContent = BRL(rep.totals.revenue);
   $('db-vouchers').textContent = rep.totals.vouchers;
   $('db-pending').textContent = rep.totals.pending;
@@ -145,10 +126,9 @@ async function loadDashboard() {
       <span class="li-val ${s.status === 'paid' ? 'g' : ''}">${BRL(s.amount)}</span></div>`).join('')
     : '<div class="empty" style="padding:18px">Nenhuma venda ainda.</div>';
 
-  let st = { mikrotik: { ok: false }, efi: { configured: false }, courtesySeconds: currentEvent.courtesySeconds || 180 };
-  if (apiOk) { try { st = await api(evUrl('/status')); } catch (e) {} }
-  const ok = (b) => b ? '<span style="color:var(--pos)">● conectada</span>' : '<span style="color:var(--ink-3)">● modo mock</span>';
-  $('db-router').innerHTML = ok(st.mikrotik?.ok);
+  let st = { mikrotik: { ok: false }, efi: { configured: false }, courtesySeconds: account.courtesySeconds || 180 };
+  if (apiOk) { try { st = await api('/admin/status'); } catch (e) {} }
+  $('db-router').innerHTML = st.mikrotik?.ok ? '<span style="color:var(--pos)">● conectada</span>' : '<span style="color:var(--ink-3)">● modo mock</span>';
   $('db-efi').innerHTML = st.efi?.configured ? '<span style="color:var(--pos)">● configurada</span>' : '<span style="color:var(--ink-3)">● não configurada</span>';
   $('db-courtesy').textContent = Math.round((st.courtesySeconds || 180) / 60) + ' min';
 }
@@ -216,7 +196,7 @@ function renderReport(r) {
 }
 async function loadReport() {
   if (!apiOk) return renderReport(mockReport());
-  try { renderReport(await api(evUrl('/report'))); } catch (e) { renderReport(mockReport()); }
+  try { renderReport(await api('/admin/report')); } catch (e) { renderReport(mockReport()); }
 }
 $('reportExport')?.addEventListener('click', () => {
   const rows = [['Plano', 'Vendas', 'Faturamento']];
@@ -224,29 +204,11 @@ $('reportExport')?.addEventListener('click', () => {
   downloadCSV('relatorio-por-plano.csv', rows);
 });
 
-// ====================================================== EVENTOS
-async function loadEventsPage() {
-  $('ev-list').innerHTML = events.map((e) => `
-    <div class="list-item"><div class="li-ico">🎪</div>
-      <div class="li-body"><div class="li-title">${esc(e.name)}</div><div class="li-sub">/${esc(e.slug)}${e.id === currentEvent.id ? ' · selecionado' : ''}</div></div>
-      <span class="pill ${e.active === false ? 'off' : 'on'}">${e.active === false ? 'Inativo' : 'Ativo'}</span></div>`).join('');
-}
-$('ev-create')?.addEventListener('click', async () => {
-  const name = $('ev-name').value.trim(); const msg = $('ev-msg');
-  if (!name) { msg.textContent = 'Informe um nome.'; return; }
-  if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
-  try {
-    const ev = await api('/admin/events', jsonPost({ name }));
-    $('ev-name').value = ''; msg.textContent = '✓ Criado';
-    await loadEvents(); setCurrentEvent(ev.id); navigate('eventos');
-  } catch (e) { msg.textContent = 'Erro ao criar.'; }
-});
-
 // ====================================================== PLANOS
 async function loadPlans() {
   let plans = MOCK_PLANS, report = mockReport();
   if (apiOk) {
-    try { plans = (await api(evUrl('/plans'))).plans; report = await api(evUrl('/report')).catch(() => mockReport()); }
+    try { plans = (await api('/admin/plans')).plans; report = await api('/admin/report').catch(() => mockReport()); }
     catch (e) { apiOk = false; }
   }
   const sold = {}; (report.byPlan || []).forEach((p) => { sold[p.time] = p.count; });
@@ -254,67 +216,65 @@ async function loadPlans() {
       <td>${esc(p.label)}${p.badge ? ` <span class="badge" style="margin-left:4px">${esc(p.badge)}</span>` : ''}</td>
       <td>${p.minutes} min</td><td>${BRL(p.price)}</td><td>${sold[p.label] ?? 0}</td>
       <td>${p.active === false ? '<span class="pill off">Pausado</span>' : '<span class="pill on">Ativo</span>'}</td>
-      <td style="text-align:right">${apiOk && p.id !== 'p1' ? `<button class="btn btn-sm btn-outline" data-plan-toggle="${p.id}" data-active="${p.active}" style="width:auto">${p.active === false ? 'Ativar' : 'Pausar'}</button>` : ''}</td></tr>`).join('');
+      <td style="text-align:right">${apiOk ? `<button class="btn btn-sm btn-outline" data-plan-toggle="${p.id}" data-active="${p.active}" style="width:auto">${p.active === false ? 'Ativar' : 'Pausar'}</button>` : ''}</td></tr>`).join('');
 }
 $('pl-body')?.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-plan-toggle]'); if (!b || !apiOk) return;
   const active = b.dataset.active !== 'true';
-  try { await api(evUrl('/plans/' + b.dataset.planToggle), jsonPost({ active })); loadPlans(); } catch (ex) {}
+  try { await api('/admin/plans/' + b.dataset.planToggle, jsonPost({ active })); loadPlans(); } catch (ex) {}
 });
 $('pl-create')?.addEventListener('click', async () => {
   const msg = $('pl-msg');
   const body = { code: $('pl-code').value.trim(), label: $('pl-label').value.trim(), minutes: $('pl-minutes').value, price: $('pl-price').value };
   if (!body.code || !body.label || !body.minutes || !body.price) { msg.textContent = 'Preencha todos os campos.'; return; }
   if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
-  try { await api(evUrl('/plans'), jsonPost(body)); ['pl-code', 'pl-label', 'pl-minutes', 'pl-price'].forEach((i) => ($(i).value = '')); msg.textContent = '✓ Adicionado'; loadPlans(); }
+  try { await api('/admin/plans', jsonPost(body)); ['pl-code', 'pl-label', 'pl-minutes', 'pl-price'].forEach((i) => ($(i).value = '')); msg.textContent = '✓ Adicionado'; loadPlans(); }
   catch (e) { msg.textContent = 'Erro (código já existe?).'; }
 });
 
-// ====================================================== CONFIGURAÇÕES — Conta Efí
-async function loadAccount() {
-  if (!apiOk) { $('efi-status').textContent = 'demo'; $('efi-status').className = 'pill'; return; }
-  try {
-    const a = await api('/admin/account');
-    $('efi-env').value = a.efi.env || 'producao';
-    $('efi-clientId').value = a.efi.clientId || '';
-    $('efi-pixKey').value = a.efi.pixKey || '';
-    const st = $('efi-status'), ok = a.efi.clientId && a.efi.hasSecret;
-    st.textContent = ok ? 'configurada' : 'não configurada'; st.className = 'pill ' + (ok ? 'on' : 'off');
-  } catch (e) {}
+// ====================================================== CONFIGURAÇÕES
+function loadAccountPanel() {
+  // Efí
+  $('efi-env').value = account.efi.env || 'producao';
+  $('efi-clientId').value = account.efi.clientId || '';
+  $('efi-pixKey').value = account.efi.pixKey || '';
+  const st = $('efi-status'), ok = account.efi.clientId && account.efi.hasSecret;
+  st.textContent = apiOk ? (ok ? 'configurada' : 'não configurada') : 'demo';
+  st.className = 'pill ' + (apiOk ? (ok ? 'on' : 'off') : '');
+  // Rede / gerador
+  const n = account.network || {};
+  const set = (id, v) => { const el = $(id); if (el && v !== undefined && v !== null) el.value = v; };
+  set('gen-eventName', account.name); set('gen-hotspot', n.hotspotName); set('gen-lan', n.lanCidr);
+  set('gen-dhcpFrom', n.dhcpFrom); set('gen-dhcpTo', n.dhcpTo); set('gen-dns', n.dns);
+  set('gen-portal', n.portalDomain); set('gen-apiUser', n.apiUser);
+  set('gen-wgEndpoint', n.wgVpsEndpoint); set('gen-wgPort', n.wgVpsPort); set('gen-wgKey', n.wgVpsPublicKey); set('gen-wgPeer', n.wgPeerAddress);
 }
 $('efi-save')?.addEventListener('click', async () => {
   const efi = { env: $('efi-env').value, clientId: $('efi-clientId').value, clientSecret: $('efi-clientSecret').value, pixKey: $('efi-pixKey').value, webhookToken: $('efi-webhookToken').value };
   const msg = $('efi-msg'); msg.textContent = 'Salvando…';
   if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
-  try { await api('/admin/account', jsonPost({ efi })); msg.textContent = '✓ Salvo'; loadAccount(); } catch (e) { msg.textContent = 'Erro ao salvar'; }
+  try { const r = await api('/admin/efi', jsonPost({ efi })); account = r.account; msg.textContent = '✓ Salvo'; loadAccountPanel(); } catch (e) { msg.textContent = 'Erro ao salvar'; }
 });
 $('efi-webhook')?.addEventListener('click', async () => {
   const msg = $('efi-msg'); msg.textContent = 'Configurando webhook…';
   if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
   try { const r = await api('/admin/efi/webhook', jsonPost({})); msg.textContent = r.ok ? '✓ Webhook configurado' : (r.error || 'Falhou'); } catch (e) { msg.textContent = 'Falhou (backend/efí)'; }
 });
-
-// ====================================================== CONFIGURAÇÕES — Evento (gerador)
-async function loadEventSettings() {
-  if (!apiOk || !currentEvent) return;
-  try {
-    const e = await api(evUrl(''));
-    const set = (id, v) => { const el = $(id); if (el && v !== undefined) el.value = v; };
-    set('gen-hotspot', e.hotspotName); set('gen-lan', e.lanCidr); set('gen-dhcpFrom', e.dhcpFrom); set('gen-dhcpTo', e.dhcpTo);
-    set('gen-dns', e.dns); set('gen-portal', e.portalDomain); set('gen-apiUser', e.apiUser);
-    set('gen-wgEndpoint', e.wgVpsEndpoint); set('gen-wgPort', e.wgVpsPort); set('gen-wgKey', e.wgVpsPublicKey); set('gen-wgPeer', e.wgPeerAddress);
-  } catch (e) {}
-}
 $('gen-save')?.addEventListener('click', async () => {
   const msg = $('gen-msg'); msg.textContent = 'Salvando…';
   if (!apiOk) { msg.textContent = 'Protótipo: sem backend aqui.'; return; }
   const body = {
-    hotspotName: $('gen-hotspot').value, lanCidr: $('gen-lan').value, dhcpFrom: $('gen-dhcpFrom').value, dhcpTo: $('gen-dhcpTo').value,
-    dns: $('gen-dns').value, portalDomain: $('gen-portal').value, apiUser: $('gen-apiUser').value,
+    name: $('gen-eventName').value, hotspotName: $('gen-hotspot').value, lanCidr: $('gen-lan').value,
+    dhcpFrom: $('gen-dhcpFrom').value, dhcpTo: $('gen-dhcpTo').value, dns: $('gen-dns').value,
+    portalDomain: $('gen-portal').value, apiUser: $('gen-apiUser').value,
     wgVpsEndpoint: $('gen-wgEndpoint').value, wgVpsPort: $('gen-wgPort').value, wgVpsPublicKey: $('gen-wgKey').value, wgPeerAddress: $('gen-wgPeer').value,
   };
   const pass = $('gen-apiPass').value; if (pass) body.apiPassword = pass;
-  try { await api(evUrl(''), jsonPost(body)); msg.textContent = '✓ Salvo no evento'; } catch (e) { msg.textContent = 'Erro ao salvar'; }
+  try {
+    const r = await api('/admin/network', jsonPost(body)); account = r.account;
+    $('acctName').textContent = account.name; $('acctNameM').textContent = account.name;
+    msg.textContent = '✓ Salvo na conta';
+  } catch (e) { msg.textContent = 'Erro ao salvar'; }
 });
 
 // ====================================================== Gerador MikroTik
@@ -324,7 +284,7 @@ function buildRsc(v) {
   const walledPortal = v.portal ? `add dst-host=${v.portal} comment="Portal ConectaVoucher"` : `# add dst-host=SEU_DOMINIO comment="Portal ConectaVoucher"`;
   return `# =============================================================================
 #  ConectaVoucher - Configuracao gerada pelo painel (Hotspot + WireGuard)
-#  Evento: ${v.eventName} (${v.slug})
+#  Conta: ${v.accountName} (${v.slug})
 #  Importe:  /import file-name=conectavoucher.rsc  | Backup antes recomendado.
 # =============================================================================
 
@@ -365,7 +325,7 @@ ${walledPortal}
 /ip/firewall/filter add chain=input in-interface=wg-cv protocol=tcp dst-port=8728 action=accept place-before=0
 
 :put [/interface/wireguard/get wg-cv public-key]
-# No painel do evento: apiUser=${v.apiUser}, IP no tunel=${v.wgPeer}
+# Na conta: apiUser=${v.apiUser}, IP no tunel=${v.wgPeer}
 # Suba tambem o login.html gerado para a pasta /hotspot (botao "Baixar login.html").
 `;
 }
@@ -373,7 +333,7 @@ function buildLoginHtml(portalDomain, slug) {
   const base = portalDomain
     ? (/^https?:\/\//.test(portalDomain) ? portalDomain.replace(/\/$/, '') : 'https://' + portalDomain)
     : 'https://conectavoucher.seudominio.com';
-  const url = base + '/portal.html?event=' + encodeURIComponent(slug || 'principal');
+  const url = base + '/portal.html?ac=' + encodeURIComponent(slug || 'principal');
   return `<!doctype html>
 <!-- ConectaVoucher — login do Hotspot: redireciona o celular para o portal. -->
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ConectaVoucher</title></head>
@@ -394,7 +354,7 @@ let lastRsc = '', lastLoginHtml = '';
 $('gen-run')?.addEventListener('click', () => {
   const val = (id, d) => ($(id).value.trim() || d);
   const v = {
-    eventName: currentEvent?.name || 'Meu Evento', slug: currentEvent?.slug || 'principal',
+    accountName: $('gen-eventName').value.trim() || (account?.name || 'Minha conta'), slug: account?.slug || 'principal',
     hotspot: val('gen-hotspot', 'ConectaVoucher'), lan: val('gen-lan', '10.10.0.1/24'),
     dhcpFrom: val('gen-dhcpFrom', '10.10.0.10'), dhcpTo: val('gen-dhcpTo', '10.10.0.254'),
     dns: val('gen-dns', '1.1.1.1,8.8.8.8'), portal: $('gen-portal').value.trim(),

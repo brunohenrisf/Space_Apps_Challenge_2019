@@ -85,13 +85,6 @@
   width: 34px; height: 34px; border-radius: 10px; background: var(--grad);
   color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; font-family: var(--display);
 }
-.event-select {
-  height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--glass-2);
-  color: var(--ink); font-family: var(--font); font-size: 13px; padding: 0 10px; max-width: 220px; cursor: pointer;
-}
-.event-select:focus { outline: none; border-color: var(--brand-a); }
-.event-select-sm { height: 24px; font-size: 11px; padding: 0 6px; max-width: 160px; margin-top: 1px;
-  background: transparent; border-color: transparent; color: var(--ink-3); }
 .main-body { padding: 22px 24px 90px; max-width: 960px; width: 100%; min-width: 0; }
 
 .mobile-topbar, .bottom-nav { display: none; }
