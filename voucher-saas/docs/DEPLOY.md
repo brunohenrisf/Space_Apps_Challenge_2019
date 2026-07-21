@@ -45,6 +45,9 @@ Postgres, idempotente) e sobe o backend na porta **3000** (proxied pelo Caddy).
 Planos, pedidos, vendas e configurações ficam no **Postgres** — sobrevivem a
 reinícios.
 
+> **Login do painel:** o `setup-env.sh` gera `ADMIN_EMAIL`/`ADMIN_PASSWORD` e
+> os imprime; o admin é criado no primeiro boot. Guarde a senha e troque depois.
+
 ## 2) Cloudflare (DNS + TLS)
 
 - **DNS:** registro `conectavoucher.seudominio.com` → IP do VPS.

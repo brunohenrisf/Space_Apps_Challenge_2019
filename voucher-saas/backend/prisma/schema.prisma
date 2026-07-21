@@ -12,6 +12,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Administrador (organizador) que acessa o painel.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String // scrypt: salt:hash (hex)
+  createdAt    DateTime @default(now())
+}
+
 /// Catálogo de planos de voucher.
 model Plan {
   id      String  @id @default(cuid())

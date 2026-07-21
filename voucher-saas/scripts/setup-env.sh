@@ -20,6 +20,9 @@ gen() {
 HOST="${CV_HOST:-conectavoucher.seudominio.com}"
 DB_PW="$(gen 24)"
 WEBHOOK="$(gen 24)"
+AUTH="$(gen 32)"
+ADMIN_EMAIL="${ADMIN_EMAIL:-organizador@${HOST}}"
+ADMIN_PW="$(gen 12)"
 
 if [ -f .env ]; then
   cp .env ".env.bak.$(date +%s)"
@@ -31,6 +34,11 @@ cat > .env <<EOF
 CV_HOST=${HOST}
 COURTESY_WINDOW_SECONDS=180
 CV_DB_PASSWORD=${DB_PW}
+
+# Painel do organizador
+AUTH_SECRET=${AUTH}
+ADMIN_EMAIL=${ADMIN_EMAIL}
+ADMIN_PASSWORD=${ADMIN_PW}
 
 # Efí (Pix) — preencha e coloque o certificado em ./certs/efi.p12
 EFI_ENV=producao
@@ -51,6 +59,9 @@ chmod 600 .env
 
 echo "✓ .env gerado (chmod 600):"
 grep -v '^#' .env | grep -v '^$'
+echo
+echo ">> Login do painel:  ${ADMIN_EMAIL}  /  ${ADMIN_PW}"
+echo "   (guarde a senha; troque depois de entrar)"
 echo
 echo "⚠  Falta preencher no .env: EFI_CLIENT_ID/SECRET, EFI_PIX_KEY e MIKROTIK_PASSWORD."
 echo "   E colocar o certificado da Efí em ./certs/efi.p12"

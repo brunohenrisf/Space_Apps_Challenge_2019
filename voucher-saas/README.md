@@ -32,6 +32,7 @@ voucher-saas/
 │   │   ├── server.ts       #   Express: serve o protótipo + API; seed no boot
 │   │   ├── config.ts       #   Leitura do .env (MikroTik, Efí, cortesia, DB)
 │   │   ├── db.ts           #   Cliente Prisma
+│   │   ├── auth.ts         #   Login: hash scrypt, token HMAC, middleware
 │   │   ├── store.ts        #   Repositório (planos, pedidos, relatório, settings)
 │   │   ├── plans.ts        #   Catálogo padrão (seed)
 │   │   ├── routes/api.ts   #   /plans /courtesy /checkout /webhook /admin/* /status
@@ -73,8 +74,10 @@ Portal captivo mobile. Use a **barra escura no topo** para pular entre estados:
 - **⏱ Estourar tempo** → simula a cortesia acabando sem pagamento
 
 ### Acesso do Administrador (`admin.html`)
-Login simulado (é só clicar em **Entrar**) e o painel do organizador com
-**Dashboard, Eventos, Planos, Vendas, Relatórios e Configurações**. Responsivo:
+Login real (via `/api/admin/login`; padrão de dev: `organizador@evento.com` /
+`conecta123`) e o painel do organizador com **Dashboard, Eventos, Planos,
+Vendas, Relatórios e Configurações**. Aberto como arquivo (sem backend), entra
+em modo demonstração. Responsivo:
 menu lateral no desktop, barra inferior no celular. Destaques:
 
 - **Vendas:** resumo (faturamento, pagos, aguardando, ticket), filtros e
@@ -153,5 +156,5 @@ Passo a passo (Cloudflare, webhook e WireGuard) em [`docs/DEPLOY.md`](docs/DEPLO
 - [x] Auto-login do portal no Hotspot após o pagamento
 - [x] Empacotar para deploy (Docker + Compose + Caddy + WireGuard) na VPS
 - [x] Persistência (PostgreSQL + Prisma) para planos, pedidos, vendas e settings
-- [ ] Autenticação do painel do organizador
+- [x] Autenticação do painel (login + token; rotas `/admin/*` protegidas)
 - [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí

@@ -13,8 +13,17 @@ const TITLES = {
 
 const API_BASE = location.protocol.startsWith('http') ? '/api' : null;
 let apiOk = !!API_BASE;
-async function api(path, opts) {
-  const r = await fetch(API_BASE + path, opts);
+
+const TOKEN_KEY = 'cv-admin-token';
+const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
+const setToken = (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch {} };
+
+async function api(path, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  const t = getToken();
+  if (t) headers['Authorization'] = 'Bearer ' + t;
+  const r = await fetch(API_BASE + path, { ...opts, headers });
+  if (r.status === 401) { setToken(''); showLogin(); throw new Error('401'); }
   if (!r.ok) throw new Error('http ' + r.status);
   return r.json();
 }
@@ -22,20 +31,30 @@ const jsonPost = (body) => ({ method: 'POST', headers: { 'Content-Type': 'applic
 const BRL = (v) => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const $ = (id) => document.getElementById(id);
 
-// ---------- Login (simulado) ----------
+// ---------- Login / sessão ----------
 const loginWrap = $('loginWrap');
 const app = $('app');
-$('loginForm').addEventListener('submit', (e) => {
+function enterApp() { loginWrap.style.display = 'none'; app.classList.add('active'); navigate('dashboard'); }
+function showLogin() { app.classList.remove('active'); loginWrap.style.display = 'grid'; }
+
+$('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  // TODO:BACKEND — POST /api/admin/login → JWT/sessão do organizador.
-  loginWrap.style.display = 'none';
-  app.classList.add('active');
-  navigate('dashboard');
+  const err = $('loginError'); if (err) err.textContent = '';
+  if (!apiOk) { enterApp(); return; }            // protótipo offline (file://)
+  try {
+    const r = await api('/admin/login', jsonPost({ email: $('email').value, password: $('senha').value }));
+    setToken(r.token);
+    enterApp();
+  } catch (ex) { if (err) err.textContent = 'E-mail ou senha inválidos.'; }
 });
-$('logoutBtn')?.addEventListener('click', () => {
-  app.classList.remove('active');
-  loginWrap.style.display = 'grid';
-});
+$('logoutBtn')?.addEventListener('click', () => { setToken(''); showLogin(); });
+
+// Sessão existente: valida o token e entra direto.
+(async function initAuth() {
+  if (apiOk && getToken()) {
+    try { await api('/admin/me'); enterApp(); } catch (e) { setToken(''); }
+  }
+})();
 
 // ---------- Navegação ----------
 function navigate(page) {

@@ -6,6 +6,7 @@ import {
 import { provisionVoucher, grantCourtesyAccess, pingRouter } from '../services/mikrotik';
 import { config } from '../config';
 import * as store from '../store';
+import { requireAuth, signToken, verifyPassword } from '../auth';
 
 const router = Router();
 
@@ -73,8 +74,8 @@ async function efiWebhookHandler(req: Request, res: Response) {
 router.post('/webhook/efi', efiWebhookHandler);
 router.post('/webhook/efi/pix', efiWebhookHandler);
 
-// POST /api/efi/webhook — (re)configura o webhook da chave Pix na Efí
-router.post('/efi/webhook', async (_req: Request, res: Response) => {
+// POST /api/efi/webhook — (re)configura o webhook da chave Pix na Efí (admin)
+router.post('/efi/webhook', requireAuth, async (_req: Request, res: Response) => {
   const result = await configureWebhook();
   if (result.ok) await store.setWebhookConfigured(true);
   res.status(result.ok ? 200 : 400).json(result);
@@ -86,22 +87,39 @@ router.get('/status', async (_req: Request, res: Response) => {
   res.json({ courtesySeconds: config.courtesySeconds, efi: { configured: efiOk }, mikrotik: router });
 });
 
-// ---------------------------------------------------------------- Admin
-router.get('/admin/sales', async (req: Request, res: Response) => {
+// ---------------------------------------------------------------- Auth
+// POST /api/admin/login — autentica o organizador e devolve um token
+router.post('/admin/login', async (req: Request, res: Response) => {
+  const email = String(req.body?.email ?? '').toLowerCase().trim();
+  const password = String(req.body?.password ?? '');
+  const user = await store.getAdminByEmail(email);
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    return res.status(401).json({ error: 'credenciais inválidas' });
+  }
+  res.json({ token: signToken({ sub: user.email }), email: user.email });
+});
+
+// GET /api/admin/me — valida o token e devolve o usuário
+router.get('/admin/me', requireAuth, (req: Request, res: Response) => {
+  res.json({ email: (req as any).adminEmail });
+});
+
+// ---------------------------------------------------------------- Admin (protegido)
+router.get('/admin/sales', requireAuth, async (req: Request, res: Response) => {
   const status = req.query.status ? String(req.query.status) : undefined;
   const planId = req.query.planId ? String(req.query.planId) : undefined;
   res.json({ sales: await store.listSales(status, planId) });
 });
 
-router.get('/admin/report', async (_req: Request, res: Response) => {
+router.get('/admin/report', requireAuth, async (_req: Request, res: Response) => {
   res.json(await store.buildReport());
 });
 
-router.get('/admin/settings', async (_req: Request, res: Response) => {
+router.get('/admin/settings', requireAuth, async (_req: Request, res: Response) => {
   res.json(await store.publicSettings());
 });
 
-router.post('/admin/settings', async (req: Request, res: Response) => {
+router.post('/admin/settings', requireAuth, async (req: Request, res: Response) => {
   res.json({ ok: true, settings: await store.saveSettings(req.body ?? {}) });
 });
 

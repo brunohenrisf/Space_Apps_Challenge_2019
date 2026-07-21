@@ -10,10 +10,10 @@ para ficar **production-ready**; as demais aumentam robustez e experiência.
    no dev, Postgres em produção) e sobrevivem a reinícios. Falta ainda modelar
    `Event`/`Voucher` dedicados quando o multi-tenant entrar.
 
-2. **Autenticação real do painel.**
-   O login é simulado e as rotas `/api/admin/*` e `/api/efi/webhook` estão
-   abertas. Adicionar sessão/JWT do organizador e proteger todas as rotas admin
-   (fail-closed), com hash de senha e expiração.
+2. **Autenticação real do painel.** ✅ **Feito.**
+   Login com senha (scrypt) + token assinado (HMAC); rotas `/api/admin/*` e
+   `/api/efi/webhook` protegidas (401 sem token). Falta: troca de senha pelo
+   painel, expiração/renovação e rate limiting no login.
 
 3. **Multi-tenant.**
    Um organizador → vários eventos → planos, conta Efí e MikroTik próprios.

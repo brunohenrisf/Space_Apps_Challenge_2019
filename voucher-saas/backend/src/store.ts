@@ -132,3 +132,14 @@ export async function saveSettings(b: any) {
 export async function setWebhookConfigured(v: boolean) {
   await prisma.appSettings.update({ where: { id: 1 }, data: { efiWebhookConfigured: v } });
 }
+
+// ---------- Admin ----------
+export function countAdmins() {
+  return prisma.adminUser.count();
+}
+export function getAdminByEmail(email: string) {
+  return prisma.adminUser.findUnique({ where: { email } });
+}
+export function createAdmin(email: string, passwordHash: string) {
+  return prisma.adminUser.create({ data: { email, passwordHash } });
+}

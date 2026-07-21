@@ -6,8 +6,12 @@ export const config = {
   port: Number(process.env.PORT ?? 3000),
   publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:3000',
   courtesySeconds: Number(process.env.COURTESY_WINDOW_SECONDS ?? 180),
-  // Persistência (pronto p/ o Prisma; ainda não usado — ver docs/DEPLOY.md).
   databaseUrl: process.env.DATABASE_URL ?? '',
+
+  // Autenticação do painel do organizador
+  authSecret: process.env.AUTH_SECRET || 'dev-inseguro-troque-em-producao',
+  adminEmail: process.env.ADMIN_EMAIL || 'organizador@evento.com',
+  adminPassword: process.env.ADMIN_PASSWORD || 'conecta123',
 
   mikrotik: {
     host: process.env.MIKROTIK_HOST ?? '',

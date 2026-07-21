@@ -27,8 +27,11 @@ services:
       PORT: "3000"
       PUBLIC_URL: "https://${CV_HOST}"
       COURTESY_WINDOW_SECONDS: "${COURTESY_WINDOW_SECONDS:-180}"
-      # Persistência (pronto p/ o Prisma; hoje o app usa memória — ver DEPLOY.md)
       DATABASE_URL: "postgresql://conectavoucher:${CV_DB_PASSWORD}@cv-db:5432/conectavoucher"
+      # Painel do organizador (autenticação)
+      AUTH_SECRET: "${AUTH_SECRET}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
       # Efí (Pix) — o certificado .p12 é montado em /certs
       EFI_ENV: "${EFI_ENV:-producao}"
       EFI_CLIENT_ID: "${EFI_CLIENT_ID}"

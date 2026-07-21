@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import api from './routes/api';
 import { seedPlans, ensureSettings } from './store';
+import { ensureAdmin } from './auth';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
@@ -23,6 +24,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 async function start() {
   await ensureSettings();  // cria a linha de settings (id=1) se faltar
   await seedPlans();       // semeia os planos padrão na primeira execução
+  await ensureAdmin();     // cria o admin inicial se não houver nenhum
   app.listen(PORT, () => {
     console.log(`ConectaVoucher rodando em http://localhost:${PORT}`);
     console.log(`Entrada:  http://localhost:${PORT}/            (escolhe Cliente ou Administrador)`);
