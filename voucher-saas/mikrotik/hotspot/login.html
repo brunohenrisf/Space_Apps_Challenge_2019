@@ -22,8 +22,9 @@
 <body>
   <script type="text/javascript">
     (function () {
+      // __PORTAL_URL__ deve já incluir ?event=<slug> (ex.: .../portal.html?event=principal)
       var portal = "__PORTAL_URL__";
-      var q = "?mac=$(mac)&ip=$(ip)"
+      var q = "&mac=$(mac)&ip=$(ip)"
         + "&link-login-only=" + encodeURIComponent("$(link-login-only)")
         + "&link-orig=" + encodeURIComponent("$(link-orig)");
       location.href = portal + q;

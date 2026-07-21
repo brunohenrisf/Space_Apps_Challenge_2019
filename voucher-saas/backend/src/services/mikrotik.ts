@@ -1,79 +1,51 @@
 /**
- * Integração com o MikroTik (RouterOS API) — Hotspot / captive portal.
- *
- * Topologia:
- *   ether1  -> WAN (DHCP client) recebe o link da internet
- *   ether2  -> LAN (bridge) para a UniFi, com Hotspot (captive portal)
- *
- * Fluxo:
- *   - Cortesia: ao conectar, libera o MAC com ip-binding bypassed por N seg
- *     (internet ampla p/ pagar via app do banco) + scheduler que remove no fim.
- *   - Pago: cria /ip/hotspot/user com limit-uptime (tempo do voucher) preso ao
- *     MAC (1 dispositivo) e encerra a cortesia daquele MAC.
- *
- * Sem host/senha no .env, roda em modo MOCK (apenas loga as ações).
+ * Integração com o MikroTik (RouterOS API) — Hotspot. Multi-tenant: a conexão
+ * vem do EVENTO (host = IP do peer no túnel WireGuard). Sem host/senha, roda em
+ * modo MOCK (só loga as ações), útil para desenvolver sem hardware.
  */
 
-import { config, mikrotikConfigured } from '../config';
-
-// node-routeros não publica tipos e só é necessário quando há hardware.
-// Carregamos sob demanda (lazy) para o modo mock rodar sem a dependência.
-function loadRouterOSAPI(): any {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require('node-routeros').RouterOSAPI;
+export interface MkConn {
+  host: string; port: number; user: string; password: string; tls: boolean; hotspotProfile: string;
 }
 
-export interface VoucherAccess {
-  login: string;
-  password: string;
-  profile: string;
-  uptimeLimit: string; // ex: "3h"
-  expiresAt: Date;
+/** Deriva a conexão do backend com a MikroTik do evento. */
+export function mkConnFromEvent(e: {
+  wgPeerAddress: string; mkPort: number; apiUser: string; apiPassword: string; mkTls: boolean; mkHotspotProfile: string;
+}): MkConn {
+  return { host: e.wgPeerAddress, port: e.mkPort, user: e.apiUser, password: e.apiPassword, tls: e.mkTls, hotspotProfile: e.mkHotspotProfile };
 }
+
+const configured = (c: MkConn) => Boolean(c.host && c.password);
+
+export interface VoucherAccess { login: string; password: string; profile: string; uptimeLimit: string; expiresAt: Date; }
 
 // ------------------------------------------------------------------ helpers
-
 export function minutesToRouterOS(minutes: number): string {
   if (minutes % 1440 === 0) return `${minutes / 1440}d`;
   if (minutes % 60 === 0) return `${minutes / 60}h`;
   return `${minutes}m`;
 }
-
-/** Converte minutos para o formato de intervalo do scheduler (ex: "1d02:30:00"). */
 export function toRouterOSInterval(minutes: number): string {
   const total = minutes * 60;
-  const d = Math.floor(total / 86400);
-  const h = Math.floor((total % 86400) / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
+  const d = Math.floor(total / 86400), h = Math.floor((total % 86400) / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d > 0 ? d + 'd' : ''}${pad(h)}:${pad(m)}:${pad(s)}`;
 }
+const randomLogin = () => 'evt-' + Math.random().toString(16).slice(2, 8).toUpperCase();
+const randomPassword = () => Math.random().toString(36).slice(2, 10);
+const courtesySchedName = (mac: string) => `courtesy-${mac.replace(/:/g, '')}`;
 
-function randomLogin(): string {
-  return 'evt-' + Math.random().toString(16).slice(2, 8).toUpperCase();
-}
-function randomPassword(): string {
-  return Math.random().toString(36).slice(2, 10);
-}
-function courtesySchedName(mac: string): string {
-  return `courtesy-${mac.replace(/:/g, '')}`;
+function loadRouterOSAPI(): any {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require('node-routeros').RouterOSAPI;
 }
 
-/** Executa um comando na API e fecha a conexão. Loga (mock) se não configurado. */
-async function run(path: string, params: string[] = []): Promise<any[]> {
-  if (!mikrotikConfigured) {
-    console.log(`[mikrotik:mock] ${path} ${params.join(' ')}`);
-    return [];
-  }
+async function run(conn: MkConn, path: string, params: string[] = []): Promise<any[]> {
+  if (!configured(conn)) { console.log(`[mikrotik:mock] ${path} ${params.join(' ')}`); return []; }
   const RouterOSAPI = loadRouterOSAPI();
   const client = new RouterOSAPI({
-    host: config.mikrotik.host,
-    user: config.mikrotik.user,
-    password: config.mikrotik.password,
-    port: config.mikrotik.port,
-    timeout: 8,
-    ...(config.mikrotik.tls ? { tls: {} } : {}),
+    host: conn.host, user: conn.user, password: conn.password, port: conn.port, timeout: 8,
+    ...(conn.tls ? { tls: {} } : {}),
   });
   try {
     await client.connect();
@@ -84,85 +56,55 @@ async function run(path: string, params: string[] = []): Promise<any[]> {
 }
 
 // ------------------------------------------------------------- provisionamento
-
-/** Cria o usuário Hotspot do voucher (limit-uptime = tempo do plano). */
-export async function provisionVoucher(input: {
-  minutes: number;
-  mac?: string;
-}): Promise<VoucherAccess> {
+export async function provisionVoucher(conn: MkConn, input: { minutes: number; mac?: string }): Promise<VoucherAccess> {
   const login = randomLogin();
   const password = randomPassword();
   const uptimeLimit = minutesToRouterOS(input.minutes);
   const expiresAt = new Date(Date.now() + input.minutes * 60_000);
-  const profile = config.mikrotik.hotspotProfile;
 
-  // limit-uptime é nativo no hotspot: o próprio RouterOS encerra ao fim do tempo.
   const params = [
-    `=name=${login}`,
-    `=password=${password}`,
-    `=profile=${profile}`,
-    `=limit-uptime=${uptimeLimit}`,
-    `=comment=ConectaVoucher ${uptimeLimit} exp:${expiresAt.toISOString()}`,
+    `=name=${login}`, `=password=${password}`, `=profile=${conn.hotspotProfile}`,
+    `=limit-uptime=${uptimeLimit}`, `=comment=ConectaVoucher ${uptimeLimit} exp:${expiresAt.toISOString()}`,
   ];
-  if (input.mac) params.push(`=mac-address=${input.mac}`); // 1 dispositivo
-  await run('/ip/hotspot/user/add', params);
+  if (input.mac) params.push(`=mac-address=${input.mac}`);
+  await run(conn, '/ip/hotspot/user/add', params);
 
-  // Pago: encerra a cortesia (bypass) do dispositivo para que o limit-uptime
-  // do voucher passe a valer. O portal faz o login do device com estas
-  // credenciais (ver docs/MIKROTIK.md).
   if (input.mac) {
-    await run('/ip/hotspot/ip-binding/remove', [`?mac-address=${input.mac}`]);
-    await run('/system/scheduler/remove', [`?name=${courtesySchedName(input.mac)}`]);
+    await run(conn, '/ip/hotspot/ip-binding/remove', [`?mac-address=${input.mac}`]);
+    await run(conn, '/system/scheduler/remove', [`?name=${courtesySchedName(input.mac)}`]);
   }
   console.log(`[mikrotik] hotspot user ${login} criado (limit-uptime=${uptimeLimit})`);
-  return { login, password, profile, uptimeLimit, expiresAt };
+  return { login, password, profile: conn.hotspotProfile, uptimeLimit, expiresAt };
 }
 
-/** Encerra e remove o voucher (usado no fim do tempo ou por cancelamento). */
-export async function revokeVoucher(login: string): Promise<void> {
-  await run('/ip/hotspot/active/remove', [`?user=${login}`]);
-  await run('/ip/hotspot/user/remove', [`?name=${login}`]);
+export async function revokeVoucher(conn: MkConn, login: string): Promise<void> {
+  await run(conn, '/ip/hotspot/active/remove', [`?user=${login}`]);
+  await run(conn, '/ip/hotspot/user/remove', [`?name=${login}`]);
 }
 
 // ----------------------------------------------------------------- cortesia
-
-/**
- * Cortesia: libera o MAC por `seconds` (ip-binding bypassed = internet ampla,
- * para o cliente pagar via app do banco). No fim, o scheduler remove o bypass.
- */
-export async function grantCourtesyAccess(mac: string, seconds: number): Promise<void> {
-  await run('/ip/hotspot/ip-binding/add', [
-    `=mac-address=${mac}`,
-    `=type=bypassed`,
-    `=comment=cortesia ${seconds}s`,
-  ]);
+export async function grantCourtesyAccess(conn: MkConn, mac: string, seconds: number): Promise<void> {
+  await run(conn, '/ip/hotspot/ip-binding/add', [`=mac-address=${mac}`, `=type=bypassed`, `=comment=cortesia ${seconds}s`]);
   const schedName = courtesySchedName(mac);
   const onEvent =
-    `/ip/hotspot/ip-binding/remove [find mac-address="${mac}"]; ` +
-    `/system/scheduler/remove [find name="${schedName}"]`;
-  await run('/system/scheduler/add', [
-    `=name=${schedName}`,
-    `=interval=${toRouterOSInterval(Math.ceil(seconds / 60))}`,
-    `=on-event=${onEvent}`,
-    `=comment=ConectaVoucher cortesia`,
+    `/ip/hotspot/ip-binding/remove [find mac-address="${mac}"]; /system/scheduler/remove [find name="${schedName}"]`;
+  await run(conn, '/system/scheduler/add', [
+    `=name=${schedName}`, `=interval=${toRouterOSInterval(Math.ceil(seconds / 60))}`,
+    `=on-event=${onEvent}`, `=comment=ConectaVoucher cortesia`,
   ]);
 }
-
-export async function revokeCourtesyAccess(mac: string): Promise<void> {
-  await run('/ip/hotspot/ip-binding/remove', [`?mac-address=${mac}`]);
+export async function revokeCourtesyAccess(conn: MkConn, mac: string): Promise<void> {
+  await run(conn, '/ip/hotspot/ip-binding/remove', [`?mac-address=${mac}`]);
 }
 
 // --------------------------------------------------------------- diagnóstico
-
-export async function listActiveSessions(): Promise<any[]> {
-  return run('/ip/hotspot/active/print');
+export async function listActiveSessions(conn: MkConn): Promise<any[]> {
+  return run(conn, '/ip/hotspot/active/print');
 }
-
-/** Testa a conexão com o roteador (usado no /status e no painel). */
-export async function pingRouter(): Promise<{ ok: boolean; identity?: string; error?: string }> {
-  if (!mikrotikConfigured) return { ok: false, error: 'mikrotik não configurado (modo mock)' };
+export async function pingRouter(conn: MkConn): Promise<{ ok: boolean; identity?: string; error?: string }> {
+  if (!configured(conn)) return { ok: false, error: 'mikrotik não configurado (modo mock)' };
   try {
-    const res = await run('/system/identity/print');
+    const res = await run(conn, '/system/identity/print');
     return { ok: true, identity: res?.[0]?.name };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? String(e) };

@@ -3,7 +3,7 @@ import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import api from './routes/api';
-import { seedPlans, ensureSettings } from './store';
+import { ensureDefaultOrganizer, ensureDefaultEvent } from './store';
 import { ensureAdmin } from './auth';
 
 const app = express();
@@ -22,9 +22,9 @@ app.use(express.static(prototypeDir));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 async function start() {
-  await ensureSettings();  // cria a linha de settings (id=1) se faltar
-  await seedPlans();       // semeia os planos padrão na primeira execução
-  await ensureAdmin();     // cria o admin inicial se não houver nenhum
+  const org = await ensureDefaultOrganizer();  // organizador padrão (conta Efí do .env)
+  await ensureDefaultEvent(org.id);            // evento padrão + planos semeados
+  await ensureAdmin(org.id);                   // admin inicial sob o organizador
   app.listen(PORT, () => {
     console.log(`ConectaVoucher rodando em http://localhost:${PORT}`);
     console.log(`Entrada:  http://localhost:${PORT}/            (escolhe Cliente ou Administrador)`);

@@ -80,13 +80,14 @@ Vendas, Relatórios e Configurações**. Aberto como arquivo (sem backend), entr
 em modo demonstração. Responsivo:
 menu lateral no desktop, barra inferior no celular. Destaques:
 
-- **Vendas:** resumo (faturamento, pagos, aguardando, ticket), filtros e
-  exportação **CSV** (dados ao vivo via `/api/admin/sales` quando há backend).
-- **Relatórios:** KPIs, gráfico de faturamento (7 dias) e vendas por plano
-  (`/api/admin/report`), com export CSV.
-- **Configurações:** formulário da **Efí** (salva em `/api/admin/settings`, sem
-  expor segredos) + **gerador de configuração da MikroTik** — preencha os campos
-  e baixe o `.rsc` pronto para importar no roteador, **sem digitar comandos**.
+- **Seletor de evento** no topo: todo o painel (dashboard, vendas, relatórios,
+  planos, gerador) é escopado ao evento escolhido.
+- **Eventos / Planos:** criar eventos e gerenciar os planos de cada um.
+- **Vendas / Relatórios:** resumo, filtros, gráficos e exportação **CSV**, por
+  evento (dados ao vivo via `/api/admin/events/:id/...`).
+- **Configurações:** **conta Efí** do organizador + **gerador de configuração da
+  MikroTik** por evento — preencha e baixe o `.rsc` e o `login.html` prontos
+  para importar no roteador, **sem digitar comandos**.
 
 ## Rodar servido pelo backend (opcional)
 
@@ -157,4 +158,5 @@ Passo a passo (Cloudflare, webhook e WireGuard) em [`docs/DEPLOY.md`](docs/DEPLO
 - [x] Empacotar para deploy (Docker + Compose + Caddy + WireGuard) na VPS
 - [x] Persistência (PostgreSQL + Prisma) para planos, pedidos, vendas e settings
 - [x] Autenticação do painel (login + token; rotas `/admin/*` protegidas)
-- [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
+- [x] Multi-tenant: organizador → eventos → planos; Efí por organizador,
+      MikroTik/rede por evento; dados isolados por evento
