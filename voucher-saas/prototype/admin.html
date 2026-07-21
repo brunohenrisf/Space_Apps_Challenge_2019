@@ -46,6 +46,7 @@
       <button class="nav-item" data-nav="eventos"><span class="ni-ico">🎪</span> Eventos</button>
       <button class="nav-item" data-nav="planos"><span class="ni-ico">🎟️</span> Planos</button>
       <button class="nav-item" data-nav="vendas"><span class="ni-ico">💳</span> Vendas</button>
+      <button class="nav-item" data-nav="relatorios"><span class="ni-ico">📈</span> Relatórios</button>
       <button class="nav-item" data-nav="config"><span class="ni-ico">⚙️</span> Configurações</button>
       <div class="side-foot">
         <button class="nav-item" id="logoutBtn"><span class="ni-ico">↩︎</span> Sair</button>
@@ -167,12 +168,29 @@
 
         <!-- ---------- VENDAS ---------- -->
         <section class="page" id="page-vendas">
+          <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat"><div class="lbl">Faturamento</div><div class="num g" id="sv-rev">R$ 1.240</div></div>
+            <div class="stat"><div class="lbl">Vouchers pagos</div><div class="num" id="sv-paid">98</div></div>
+            <div class="stat"><div class="lbl">Aguardando</div><div class="num" id="sv-pending">3</div></div>
+            <div class="stat"><div class="lbl">Ticket médio</div><div class="num" id="sv-ticket">R$ 12</div></div>
+          </div>
+
           <div class="panel">
-            <div class="panel-head"><h3>Vendas · Feira de Tecnologia 2026</h3><div class="spacer"></div><span class="li-sub">98 hoje · R$ 1.240</span></div>
+            <div class="panel-head">
+              <h3>Vendas</h3><div class="spacer"></div>
+              <button class="btn btn-sm btn-outline" id="salesExport">⬇ Exportar CSV</button>
+            </div>
+            <div class="panel-body">
+              <div class="tx-toolbar" id="salesFilters">
+                <button class="filter on" data-sfilter="all">Todas</button>
+                <button class="filter" data-sfilter="paid">Pagas</button>
+                <button class="filter" data-sfilter="pending">Aguardando</button>
+              </div>
+            </div>
             <div class="table-wrap">
               <table class="tbl">
-                <thead><tr><th>Voucher</th><th>Plano</th><th>Valor</th><th>Pix (txid)</th><th>Dispositivo</th><th>Status</th><th>Hora</th></tr></thead>
-                <tbody>
+                <thead><tr><th>Voucher</th><th>Plano</th><th>Valor</th><th>Pix (txid)</th><th>Dispositivo</th><th>Status</th><th>Quando</th></tr></thead>
+                <tbody id="salesBody">
                   <tr><td>evt-8F3A21</td><td>3 horas</td><td>R$ 10</td><td>DEMO9AF3…</td><td>A4:83:E7…</td><td><span class="pill on">Pago</span></td><td>14:02</td></tr>
                   <tr><td>evt-2B9C04</td><td>1 hora</td><td>R$ 5</td><td>DEMO3C7B…</td><td>F0:18:98…</td><td><span class="pill on">Pago</span></td><td>13:59</td></tr>
                   <tr><td>evt-77D1AA</td><td>6 horas</td><td>R$ 15</td><td>DEMO1D0A…</td><td>—</td><td><span class="pill wait">Aguardando</span></td><td>13:58</td></tr>
@@ -181,6 +199,32 @@
                   <tr><td>evt-55A0BE</td><td>24 horas</td><td>R$ 30</td><td>DEMO55A0…</td><td>B8:27:EB…</td><td><span class="pill on">Pago</span></td><td>13:47</td></tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- RELATÓRIOS ---------- -->
+        <section class="page" id="page-relatorios">
+          <div class="stat-grid">
+            <div class="stat"><div class="lbl">Faturamento total</div><div class="num g" id="rp-rev">R$ 3.860</div></div>
+            <div class="stat"><div class="lbl">Vouchers</div><div class="num" id="rp-vouchers">312</div></div>
+            <div class="stat"><div class="lbl">Ticket médio</div><div class="num" id="rp-ticket">R$ 12,40</div></div>
+            <div class="stat"><div class="lbl">Conversão</div><div class="num" id="rp-conv">64%</div></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head"><h3>Faturamento (7 dias)</h3></div>
+              <div class="panel-body">
+                <div class="cf" id="rp-bars"><!-- barras via JS --></div>
+                <div class="cf-legend"><span><i class="inc"></i> por dia</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Vendas por plano</h3><div class="spacer"></div>
+                <button class="btn btn-sm btn-outline" id="reportExport">⬇ CSV</button>
+              </div>
+              <div class="panel-body" id="rp-byplan"><!-- barras via JS --></div>
             </div>
           </div>
         </section>
@@ -212,39 +256,62 @@
             </div>
           </div>
 
+          <!-- Integração Efí -->
           <div class="panel">
-            <div class="panel-head"><h3>Integração Efí (Pix)</h3></div>
-            <div class="panel-body">
-              <div class="field"><label>Client ID</label><input type="text" placeholder="Client_Id_..." /></div>
-              <div class="field"><label>Client Secret</label><input type="password" placeholder="••••••••••••" /></div>
-              <div class="field"><label>Chave Pix recebedora</label><input type="text" placeholder="recebedor@evento.com" /></div>
-              <div class="row"><span class="k">Webhook</span><span class="v" style="color:var(--success)">● configurado</span></div>
+            <div class="panel-head"><h3>Integração Efí (Pix)</h3><div class="spacer"></div>
+              <span class="pill" id="efi-status">não configurado</span>
             </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head"><h3>Integração MikroTik (RouterOS)</h3></div>
             <div class="panel-body">
               <div class="grid-2">
-                <div class="field"><label>Host</label><input type="text" placeholder="192.168.88.1" /></div>
-                <div class="field"><label>Porta</label><input type="text" placeholder="8728" /></div>
-                <div class="field"><label>Usuário API</label><input type="text" placeholder="api" /></div>
-                <div class="field"><label>Senha</label><input type="password" placeholder="••••••••" /></div>
+                <div class="field"><label>Ambiente</label>
+                  <select id="efi-env"><option value="producao">Produção</option><option value="sandbox">Homologação</option></select>
+                </div>
+                <div class="field"><label>Chave Pix recebedora</label><input id="efi-pixKey" type="text" placeholder="recebedor@evento.com" /></div>
+                <div class="field"><label>Client ID</label><input id="efi-clientId" type="text" placeholder="Client_Id_..." /></div>
+                <div class="field"><label>Client Secret</label><input id="efi-clientSecret" type="password" placeholder="••••••••••••" /></div>
+                <div class="field"><label>Token do webhook (HMAC)</label><input id="efi-webhookToken" type="password" placeholder="segredo forte" /></div>
+                <div class="field"><label>Certificado (.p12)</label><input id="efi-cert" type="file" accept=".p12" /></div>
               </div>
-              <div class="field"><label>Profile Hotspot base</label><input type="text" placeholder="default" /></div>
-              <div class="row"><span class="k">Status da conexão</span><span class="v" style="color:var(--success)">● conectada</span></div>
+              <p class="helper" style="text-align:left">O certificado é enviado ao servidor (aqui no protótipo só registra o nome). As chaves ficam guardadas com segurança e não são exibidas de volta.</p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+                <button class="btn btn-sm btn-primary" id="efi-save" style="width:auto">Salvar Efí</button>
+                <button class="btn btn-sm btn-outline" id="efi-webhook" style="width:auto">Configurar webhook</button>
+                <span class="helper" id="efi-msg" style="margin:0;align-self:center"></span>
+              </div>
             </div>
           </div>
 
+          <!-- Gerador de configuração MikroTik -->
           <div class="panel">
-            <div class="panel-head"><h3>Regras de negócio</h3></div>
+            <div class="panel-head"><h3>Gerador de configuração MikroTik</h3></div>
             <div class="panel-body">
-              <div class="field"><label>Janela de cortesia (minutos)</label><input type="number" value="3" /></div>
-              <p class="helper" style="text-align:left">Tempo liberado só para o cliente pagar. Após pagar, não é descontado do voucher.</p>
+              <p class="helper" style="text-align:left;margin-top:0">Preencha os campos e gere o script <code>.rsc</code> pronto — é só importar no roteador (Winbox → Files ou <code>/import</code>). Sem digitar comandos.</p>
+              <div class="sec-title">Rede / Hotspot</div>
+              <div class="grid-2">
+                <div class="field"><label>Nome do Hotspot / SSID</label><input id="gen-hotspot" type="text" value="ConectaVoucher" /></div>
+                <div class="field"><label>Gateway/LAN (CIDR)</label><input id="gen-lan" type="text" value="10.10.0.1/24" /></div>
+                <div class="field"><label>DHCP início</label><input id="gen-dhcpFrom" type="text" value="10.10.0.10" /></div>
+                <div class="field"><label>DHCP fim</label><input id="gen-dhcpTo" type="text" value="10.10.0.254" /></div>
+                <div class="field"><label>DNS</label><input id="gen-dns" type="text" value="1.1.1.1,8.8.8.8" /></div>
+                <div class="field"><label>Domínio do portal (walled-garden)</label><input id="gen-portal" type="text" placeholder="conectavoucher.seudominio.com" /></div>
+                <div class="field"><label>Usuário da API</label><input id="gen-apiUser" type="text" value="api" /></div>
+                <div class="field"><label>Senha da API</label><input id="gen-apiPass" type="text" placeholder="senha forte" /></div>
+              </div>
+              <div class="sec-title">Túnel WireGuard (VPS)</div>
+              <div class="grid-2">
+                <div class="field"><label>IP público do VPS</label><input id="gen-wgEndpoint" type="text" placeholder="203.0.113.10" /></div>
+                <div class="field"><label>Porta do VPS</label><input id="gen-wgPort" type="text" value="51820" /></div>
+                <div class="field"><label>Chave pública do VPS</label><input id="gen-wgKey" type="text" placeholder="xxxx...=" /></div>
+                <div class="field"><label>IP da MikroTik no túnel</label><input id="gen-wgPeer" type="text" value="10.20.0.2" /></div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 6px">
+                <button class="btn btn-sm btn-primary" id="gen-run" style="width:auto">Gerar configuração</button>
+                <button class="btn btn-sm btn-outline" id="gen-copy" style="width:auto" disabled>Copiar</button>
+                <button class="btn btn-sm btn-outline" id="gen-download" style="width:auto" disabled>Baixar .rsc</button>
+              </div>
+              <pre id="gen-output" class="code-out" hidden></pre>
             </div>
           </div>
-
-          <button class="btn btn-primary" data-demo="Salvar configurações">Salvar configurações</button>
         </section>
 
       </div>
@@ -256,6 +323,7 @@
       <button class="bn-item" data-nav="eventos"><span class="bn-ico">🎪</span> Eventos</button>
       <button class="bn-item" data-nav="planos"><span class="bn-ico">🎟️</span> Planos</button>
       <button class="bn-item" data-nav="vendas"><span class="bn-ico">💳</span> Vendas</button>
+      <button class="bn-item" data-nav="relatorios"><span class="bn-ico">📈</span> Relatórios</button>
       <button class="bn-item" data-nav="config"><span class="bn-ico">⚙️</span> Config</button>
     </nav>
   </div>

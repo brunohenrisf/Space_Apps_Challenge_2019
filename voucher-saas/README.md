@@ -71,8 +71,16 @@ Portal captivo mobile. Use a **barra escura no topo** para pular entre estados:
 
 ### Acesso do Administrador (`admin.html`)
 Login simulado (é só clicar em **Entrar**) e o painel do organizador com
-**Dashboard, Eventos, Planos, Vendas e Configurações** (Efí + MikroTik).
-Responsivo: menu lateral no desktop, barra inferior no celular.
+**Dashboard, Eventos, Planos, Vendas, Relatórios e Configurações**. Responsivo:
+menu lateral no desktop, barra inferior no celular. Destaques:
+
+- **Vendas:** resumo (faturamento, pagos, aguardando, ticket), filtros e
+  exportação **CSV** (dados ao vivo via `/api/admin/sales` quando há backend).
+- **Relatórios:** KPIs, gráfico de faturamento (7 dias) e vendas por plano
+  (`/api/admin/report`), com export CSV.
+- **Configurações:** formulário da **Efí** (salva em `/api/admin/settings`, sem
+  expor segredos) + **gerador de configuração da MikroTik** — preencha os campos
+  e baixe o `.rsc` pronto para importar no roteador, **sem digitar comandos**.
 
 ## Rodar servido pelo backend (opcional)
 
