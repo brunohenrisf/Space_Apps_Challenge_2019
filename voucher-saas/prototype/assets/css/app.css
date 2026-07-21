@@ -144,6 +144,7 @@ body::before {
 .seg-theme button.on { background: var(--glass-hi); color: var(--ink); box-shadow: var(--shadow-sm); }
 
 .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 560px) { .theme-grid { grid-template-columns: 1fr 1fr; } }
 .theme-opt {
   display: flex; flex-direction: column; gap: 9px; padding: 11px;
   border: 1px solid var(--line); border-radius: 15px; background: var(--glass-2);

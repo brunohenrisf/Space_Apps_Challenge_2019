@@ -258,6 +258,30 @@ ${walledPortal}
 # Pegue a chave publica da MikroTik p/ cadastrar como peer no VPS:
 :put [/interface/wireguard/get wg-cv public-key]
 # No backend/.env:  MIKROTIK_HOST=${v.wgPeer}  MIKROTIK_USER=${v.apiUser}
+#
+# IMPORTANTE: suba tambem o login.html gerado (botao "Baixar login.html")
+# para a pasta /hotspot (Winbox -> Files). Ele redireciona o celular para o
+# portal de compra levando o MAC e os links do Hotspot.
+`;
+}
+
+function buildLoginHtml(portalDomain) {
+  const url = portalDomain
+    ? (/^https?:\/\//.test(portalDomain) ? portalDomain.replace(/\/$/, '') + '/portal.html' : 'https://' + portalDomain + '/portal.html')
+    : 'https://conectavoucher.seudominio.com/portal.html';
+  return `<!doctype html>
+<!-- ConectaVoucher — login do Hotspot: redireciona o celular para o portal. -->
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ConectaVoucher</title></head>
+<body>
+  <script type="text/javascript">
+    (function(){
+      var portal = "${url}";
+      var q = "?mac=$(mac)&ip=$(ip)&link-login-only=" + encodeURIComponent("$(link-login-only)") + "&link-orig=" + encodeURIComponent("$(link-orig)");
+      location.href = portal + q;
+    })();
+  </script>
+  <noscript><a href="${url}">Toque para comprar acesso à internet</a></noscript>
+</body></html>
 `;
 }
 
@@ -278,12 +302,21 @@ $('gen-run')?.addEventListener('click', () => {
     wgPeer: $('gen-wgPeer').value.trim() || '10.20.0.2',
   };
   lastRsc = buildRsc(v);
+  lastLoginHtml = buildLoginHtml(v.portal);
   const out = $('gen-output');
   out.textContent = lastRsc;
   out.hidden = false;
   $('gen-copy').disabled = false;
   $('gen-download').disabled = false;
+  $('gen-login').disabled = false;
 });
+let lastLoginHtml = '';
+function downloadText(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type: type || 'text/plain' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+$('gen-login')?.addEventListener('click', () => downloadText('login.html', lastLoginHtml, 'text/html'));
 $('gen-copy')?.addEventListener('click', () => {
   navigator.clipboard?.writeText(lastRsc);
   const b = $('gen-copy'); b.textContent = 'Copiado!'; setTimeout(() => (b.textContent = 'Copiar'), 1500);

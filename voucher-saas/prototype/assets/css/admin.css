@@ -71,7 +71,7 @@
 }
 .sidebar .side-foot { margin-top: auto; padding-top: 14px; }
 
-.main { min-height: 100vh; display: flex; flex-direction: column; }
+.main { min-height: 100vh; display: flex; flex-direction: column; min-width: 0; }
 .main-head {
   display: flex; align-items: center; gap: 12px; padding: 18px 24px;
   position: sticky; top: 0; z-index: 5;
@@ -85,7 +85,7 @@
   width: 34px; height: 34px; border-radius: 10px; background: var(--grad);
   color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; font-family: var(--display);
 }
-.main-body { padding: 22px 24px 90px; max-width: 960px; width: 100%; }
+.main-body { padding: 22px 24px 90px; max-width: 960px; width: 100%; min-width: 0; }
 
 .mobile-topbar, .bottom-nav { display: none; }
 
@@ -147,7 +147,7 @@ table.tbl tr:last-child td { border-bottom: none; }
 
 /* saída do gerador (.rsc) */
 .code-out {
-  margin-top: 12px; max-height: 320px; overflow: auto;
+  margin-top: 12px; max-height: 320px; max-width: 100%; overflow: auto;
   background: #070b16; border: 1px solid var(--line-strong); border-radius: 12px;
   padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11.5px; line-height: 1.55; color: #cbd5e1; white-space: pre;

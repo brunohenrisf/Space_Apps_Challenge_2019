@@ -19,8 +19,9 @@ Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc).
 
 ## Fluxo no Hotspot (captive portal)
 
-- O celular conecta no Wi-Fi, recebe IP por DHCP e cai no **captive portal**,
-  que o redireciona para a **página de compra**.
+- O celular conecta no Wi-Fi, recebe IP por DHCP e cai no **captive portal**.
+  A página de login do Hotspot é um **redirecionador** (ver "Redirect" abaixo)
+  que manda o aparelho para a **página de compra** levando o MAC e os links.
 - **Cortesia de 3 min:** ao conectar, o backend libera o dispositivo com um
   **`/ip/hotspot/ip-binding` `type=bypassed`** (internet ampla) + um
   `/system/scheduler` que remove o bypass ao fim do tempo. É "internet ampla"
@@ -32,6 +33,20 @@ Script pronto: [`../mikrotik/setup.rsc`](../mikrotik/setup.rsc).
   dispositivo** com as credenciais retornadas (ver "Handoff" abaixo), e a partir
   daí o `limit-uptime` conta o tempo do voucher — os 3 min de cortesia **não são
   descontados**, pois o relógio só corre enquanto autenticado como o voucher.
+
+### Redirect: Hotspot → portal
+A tela de login padrão do Hotspot é substituída por
+[`../mikrotik/hotspot/login.html`](../mikrotik/hotspot/login.html), que só
+redireciona o dispositivo para o portal, repassando as variáveis do MikroTik:
+
+```
+https://<portal>/portal.html?mac=$(mac)&ip=$(ip)&link-login-only=<...>&link-orig=<...>
+```
+
+Suba esse arquivo para a pasta `/hotspot` do roteador (Winbox → Files). O
+**gerador do painel** produz o `login.html` já com a URL do portal preenchida
+(botão "Baixar login.html"). Sem ele, o aparelho pararia na tela padrão do
+MikroTik e o portal não receberia o MAC.
 
 ### Handoff: portal → login do Hotspot
 Depois que o status vira `paid`, o portal recebe `voucherLogin`/`voucherPassword`

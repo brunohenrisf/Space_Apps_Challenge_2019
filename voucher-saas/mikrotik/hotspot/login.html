@@ -1,0 +1,34 @@
+<!doctype html>
+<!--
+  ConectaVoucher — página de login do Hotspot (MikroTik).
+  Substitui a tela de login padrão: redireciona o dispositivo para o portal de
+  compra, levando o MAC e os links do Hotspot que o portal precisa para pagar
+  e depois autenticar o aparelho.
+
+  Instalação: envie este arquivo para /hotspot no roteador (Winbox → Files),
+  ou aponte o html-directory do profile do Hotspot para a pasta que contém ele.
+  Troque __PORTAL_URL__ pela URL pública do portal (ex.:
+  https://conectavoucher.seudominio.com/portal.html). O gerador do painel já
+  produz este arquivo com a URL preenchida.
+
+  $(mac), $(ip), $(link-login-only), $(link-orig) são substituídos pelo Hotspot.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ConectaVoucher</title>
+</head>
+<body>
+  <script type="text/javascript">
+    (function () {
+      var portal = "__PORTAL_URL__";
+      var q = "?mac=$(mac)&ip=$(ip)"
+        + "&link-login-only=" + encodeURIComponent("$(link-login-only)")
+        + "&link-orig=" + encodeURIComponent("$(link-orig)");
+      location.href = portal + q;
+    })();
+  </script>
+  <noscript><a href="__PORTAL_URL__">Toque para comprar acesso à internet</a></noscript>
+</body>
+</html>

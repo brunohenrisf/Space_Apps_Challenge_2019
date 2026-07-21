@@ -294,6 +294,8 @@ document.getElementById('devbar').addEventListener('click', (e) => {
 
 // ---------- Init ----------
 async function init() {
+  // Esconde a barra de atalhos (dev) num dispositivo real do Hotspot.
+  if (hotspot.mac) { const d = document.getElementById('devbar'); if (d) d.style.display = 'none'; }
   if (apiOk) {
     try {
       const [{ plans }, status] = await Promise.all([
