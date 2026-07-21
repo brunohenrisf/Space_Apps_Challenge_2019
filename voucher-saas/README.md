@@ -39,11 +39,18 @@ voucher-saas/
 │   ├── tsconfig.json
 │   └── .env.example
 ├── mikrotik/
-│   └── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 Hotspot p/ UniFi
+│   ├── setup.rsc           # Config do RouterOS: ether1 WAN, ether2 Hotspot p/ UniFi
+│   └── wireguard.rsc       # Túnel WireGuard MikroTik ↔ VPS
+├── Dockerfile              # Imagem de produção (backend serve portal + painel + API)
+├── docker-compose.yml      # Stack VPS: app + Postgres + Caddy
+├── Caddyfile               # Reverse proxy + TLS
+├── .env.vps.example        # Variáveis de produção
+├── scripts/setup-env.sh    # Gera o .env com segredos
 └── docs/
     ├── ARQUITETURA.md      # Fluxo detalhado e decisões técnicas
     ├── MIKROTIK.md         # Topologia, Hotspot e integração
-    └── EFI.md              # Credenciais, cobrança Pix e webhook
+    ├── EFI.md              # Credenciais, cobrança Pix e webhook
+    └── DEPLOY.md           # Deploy na VPS (Docker + Cloudflare + WireGuard)
 ```
 
 ---
@@ -109,11 +116,27 @@ usando o **Hotspot** (captive portal para celular):
 > [`docs/MIKROTIK.md`](docs/MIKROTIK.md); config do roteador em
 > [`mikrotik/setup.rsc`](mikrotik/setup.rsc).
 
+## Deploy (produção)
+
+Backend central na VPS via **Docker** (o container serve portal + painel + API),
+com **Postgres** e **Caddy** (TLS), atrás do **Cloudflare**. Cada evento tem só a
+MikroTik + UniFi; a MikroTik se conecta ao VPS por um **túnel WireGuard**, por
+onde o backend provisiona o Hotspot.
+
+```bash
+cd voucher-saas
+CV_HOST=conectavoucher.seudominio.com bash scripts/setup-env.sh
+docker compose up -d --build
+```
+
+Passo a passo (Cloudflare, webhook e WireGuard) em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ## Próximos passos
 
 - [x] Implementar a RouterOS API (`node-routeros`) em `services/mikrotik.ts`
 - [x] Integrar a Efí (SDK `sdk-node-apis-efi`) em `services/efi.ts` + webhook
 - [x] Auto-login do portal no Hotspot após o pagamento
+- [x] Empacotar para deploy (Docker + Compose + Caddy + WireGuard) na VPS
 - [ ] Persistência (PostgreSQL + Prisma) para eventos, planos, pedidos e vouchers
 - [ ] Multi-tenant: cada organizador com seus eventos, planos e conta Efí
 - [ ] Autenticação do painel do organizador

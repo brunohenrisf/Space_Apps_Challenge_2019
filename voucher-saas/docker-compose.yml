@@ -1,0 +1,102 @@
+# ConectaVoucher — stack de produção na VPS (Docker + Postgres + Caddy).
+#
+# Topologia:
+#   Cloudflare (DNS) ─► Caddy (80/443, TLS) ─► cv-app:3000  (portal + painel + /api)
+#                                                 │ (rede interna)
+#                                              cv-db (Postgres)
+#   cv-app ─(WireGuard, via host)─► MikroTik (RouterOS API na LAN do evento)
+#
+# A MikroTik fica numa LAN privada; o VPS a alcança por um túnel WireGuard
+# (RouterOS 7 tem WG nativo). Ver docs/DEPLOY.md (§ WireGuard).
+#
+# Variáveis: copie .env.vps.example para .env (ao lado deste arquivo) e preencha,
+# ou rode `bash scripts/setup-env.sh` para gerar os segredos.
+
+services:
+  cv-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cv-app
+    restart: unless-stopped
+    depends_on:
+      cv-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      PUBLIC_URL: "https://${CV_HOST}"
+      COURTESY_WINDOW_SECONDS: "${COURTESY_WINDOW_SECONDS:-180}"
+      # Persistência (pronto p/ o Prisma; hoje o app usa memória — ver DEPLOY.md)
+      DATABASE_URL: "postgresql://conectavoucher:${CV_DB_PASSWORD}@cv-db:5432/conectavoucher"
+      # Efí (Pix) — o certificado .p12 é montado em /certs
+      EFI_ENV: "${EFI_ENV:-producao}"
+      EFI_CLIENT_ID: "${EFI_CLIENT_ID}"
+      EFI_CLIENT_SECRET: "${EFI_CLIENT_SECRET}"
+      EFI_CERT_PATH: "/certs/efi.p12"
+      EFI_PIX_KEY: "${EFI_PIX_KEY}"
+      EFI_WEBHOOK_TOKEN: "${EFI_WEBHOOK_TOKEN}"
+      # MikroTik (via WireGuard: use o IP do peer no túnel, ex. 10.20.0.2)
+      MIKROTIK_HOST: "${MIKROTIK_HOST}"
+      MIKROTIK_PORT: "${MIKROTIK_PORT:-8728}"
+      MIKROTIK_USER: "${MIKROTIK_USER:-api}"
+      MIKROTIK_PASSWORD: "${MIKROTIK_PASSWORD}"
+      MIKROTIK_TLS: "${MIKROTIK_TLS:-false}"
+      MIKROTIK_HOTSPOT_PROFILE: "${MIKROTIK_HOTSPOT_PROFILE:-default}"
+    volumes:
+      - ./certs:/certs:ro   # coloque aqui o efi.p12 (e origin.pem/key se usar)
+    networks:
+      internal: {}
+      web: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  cv-db:
+    image: postgres:16-alpine
+    container_name: cv-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: conectavoucher
+      POSTGRES_PASSWORD: ${CV_DB_PASSWORD}
+      POSTGRES_DB: conectavoucher
+    volumes:
+      - cv_pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conectavoucher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: cv-caddy
+    restart: unless-stopped
+    depends_on:
+      - cv-app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CV_HOST: "${CV_HOST}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+networks:
+  internal:
+  web:
+
+volumes:
+  cv_pgdata:
+  caddy_data:
+  caddy_config:

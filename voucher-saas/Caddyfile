@@ -1,0 +1,15 @@
+# ConectaVoucher — reverse proxy + TLS.
+# CV_HOST vem do .env (ex.: conectavoucher.seudominio.com).
+
+{$CV_HOST} {
+	encode zstd gzip
+	reverse_proxy cv-app:3000
+
+	# TLS automático (Let's Encrypt) — padrão.
+	# Requer DNS "DNS only" (nuvem CINZA) no Cloudflare e portas 80/443 abertas.
+	#
+	# Se o DNS estiver "proxied" (nuvem LARANJA) no Cloudflare, o desafio HTTP
+	# falha; use um Origin Certificate do Cloudflare (monte em ./certs) e troque
+	# o TLS automático por:
+	#   tls /certs/origin.pem /certs/origin.key
+}
