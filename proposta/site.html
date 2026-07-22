@@ -190,22 +190,39 @@
   @media(max-width:640px){
     .wrap{padding:0 18px}
     .promo{font-size:11.5px;line-height:1.5;padding:8px 12px}
-    section{padding:56px 0}
-    .hero{padding:40px 0 34px}
-    .hero h1{margin:18px 0 14px}
-    .head{margin-bottom:32px}
+    section{padding:52px 0}
+    .btn{width:100%;justify-content:center}
+    .nav .btn{width:auto}
+
+    /* framed, centered hero */
+    .hero{padding:36px 0 32px;text-align:center}
+    .hero h1{font-size:clamp(30px,9vw,40px);margin:16px 0 14px}
+    .hero .lead{font-size:16px;margin-left:auto;margin-right:auto}
+    .priceline{justify-content:center;margin:24px 0 10px;flex-wrap:wrap}
+    .freeinstall{max-width:100%}
+    .hero .actions{justify-content:center;margin-top:22px}
+    .hero .actions .btn{width:100%}
+    /* mini indicators become one bordered frame with dividers */
+    .hero .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:28px;
+      border:1px solid var(--brd);border-radius:14px;overflow:hidden;background:var(--glass)}
+    .hero .mini div{padding:14px 8px;text-align:center;font-size:10.5px;line-height:1.35}
+    .hero .mini div + div{border-left:1px solid var(--brd)}
+    .hero .mini b{font-size:14px;margin-bottom:2px}
+    .mapcard{margin-top:8px}
+
+    /* centered, framed section headings */
+    .head{text-align:center;margin-inline:auto;margin-bottom:30px}
+    .head p{margin-inline:auto}
     .head h2{font-size:clamp(24px,7vw,32px)}
-    .priceline{margin:22px 0 8px;flex-wrap:wrap}
+
     .cards,.steps{gap:14px}
     .card,.step{padding:22px 20px}
     .plan{padding:30px 22px}
     .plan .price .v{font-size:48px}
-    .aside{padding:26px 22px}
+    .aside{padding:24px 20px}
     .cta{padding:44px 22px}
-    .contact{gap:14px;flex-direction:column}
-    .btn{width:100%;justify-content:center}
-    .hero .actions .btn,.cta .actions .btn{width:100%}
-    .nav .btn{width:auto}
+    .cta .actions .btn{width:100%}
+    .contact{gap:12px;flex-direction:column}
   }
 
   /* floating whatsapp */
