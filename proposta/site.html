@@ -186,6 +186,28 @@
   @media(prefers-reduced-motion:reduce){html.js .rise{opacity:1;transform:none;transition:none}}
   :focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:6px}
 
+  /* ---- MOBILE REFINEMENTS ---- */
+  @media(max-width:640px){
+    .wrap{padding:0 18px}
+    .promo{font-size:11.5px;line-height:1.5;padding:8px 12px}
+    section{padding:56px 0}
+    .hero{padding:40px 0 34px}
+    .hero h1{margin:18px 0 14px}
+    .head{margin-bottom:32px}
+    .head h2{font-size:clamp(24px,7vw,32px)}
+    .priceline{margin:22px 0 8px;flex-wrap:wrap}
+    .cards,.steps{gap:14px}
+    .card,.step{padding:22px 20px}
+    .plan{padding:30px 22px}
+    .plan .price .v{font-size:48px}
+    .aside{padding:26px 22px}
+    .cta{padding:44px 22px}
+    .contact{gap:14px;flex-direction:column}
+    .btn{width:100%;justify-content:center}
+    .hero .actions .btn,.cta .actions .btn{width:100%}
+    .nav .btn{width:auto}
+  }
+
   /* floating whatsapp */
   .wa-float{position:fixed;right:20px;bottom:20px;z-index:80;width:58px;height:58px;border-radius:50%;
     background:linear-gradient(180deg,#25D366,#12a850);display:grid;place-items:center;font-size:28px;
