@@ -1,0 +1,3 @@
+# Redireciona caminhos antigos/variações para a home
+/home    /    301
+/site    /    301
