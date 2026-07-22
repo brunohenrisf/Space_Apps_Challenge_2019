@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRC Track — Rastreamento Veicular em Santa Inês / MA</title>
+<meta name="description" content="Rastreamento veicular em Santa Inês - MA. Mensalidade de R$ 49,90, instalação grátis para os 100 primeiros clientes e busca do veículo em domicílio.">
+<style>
+  :root{
+    --bg:#0A0C12; --bg-2:#0E1119; --surface:#141A27; --surface-2:#10141F;
+    --glass:rgba(255,255,255,.05); --brd:rgba(255,255,255,.10);
+    --ink:#EDF1F8; --muted:#9AA3B4; --muted-2:#606a7c;
+    --red:#FF2A32; --red-deep:#C40E16; --red-glow:rgba(255,42,50,.5);
+    --blue:#2E8BFF; --green:#22C79B;
+    --mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,monospace;
+    --sans:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    --r:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.65;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  img{max-width:100%}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3,h4{font-weight:800;letter-spacing:-.02em;line-height:1.12;text-wrap:balance}
+  .wrap{width:100%;max-width:1140px;margin:0 auto;padding:0 24px}
+  .metal{background:linear-gradient(180deg,#fff,#d5dbe6 48%,#98a1b2 64%,#eef2f8);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .red{color:var(--red)} .grn{color:var(--green)}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .center{text-align:center}
+
+  .btn{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:15px;
+    padding:14px 26px;border-radius:12px;cursor:pointer;border:1px solid transparent;
+    background:linear-gradient(180deg,var(--red),var(--red-deep));color:#fff;
+    box-shadow:0 12px 30px -12px var(--red-glow);transition:transform .16s,box-shadow .2s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 18px 38px -12px var(--red-glow)}
+  .btn.wa{background:linear-gradient(180deg,#25D366,#12a850);box-shadow:0 12px 30px -12px rgba(37,211,102,.5)}
+  .btn.ghost{background:var(--glass);border-color:var(--brd);color:#fff;box-shadow:none}
+  .btn.ghost:hover{border-color:rgba(255,255,255,.3)}
+
+  /* PROMO BAR */
+  .promo{background:linear-gradient(90deg,var(--red-deep),var(--red));color:#fff;font-weight:700;
+    font-size:13.5px;text-align:center;padding:9px 16px;letter-spacing:.01em}
+  .promo b{background:rgba(0,0,0,.22);padding:2px 9px;border-radius:100px;margin:0 4px}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:60;background:rgba(10,12,18,.8);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--brd)}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800}
+  .brand .mk{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;
+    background:radial-gradient(circle at 50% 30%,rgba(255,42,50,.25),rgba(255,42,50,.03));border:1px solid rgba(255,42,50,.35)}
+  .brand b{font-size:18px}.brand b em{font-style:normal;color:var(--red)}
+  .nav-links{display:flex;gap:28px;font-size:14px;font-weight:600}
+  .nav-links a{color:var(--muted);transition:.2s}.nav-links a:hover{color:#fff}
+  @media(max-width:840px){.nav-links{display:none}}
+
+  /* HERO */
+  .hero{position:relative;padding:72px 0 48px;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(1000px 460px at 82% -8%,rgba(255,42,50,.14),transparent 55%),
+              radial-gradient(820px 480px at 0% 25%,rgba(46,139,255,.10),transparent 55%)}
+  .hero .grid{position:relative;z-index:1;display:grid;grid-template-columns:1.08fr .92fr;gap:52px;align-items:center}
+  @media(max-width:920px){.hero .grid{grid-template-columns:1fr;gap:38px}}
+  .loc{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);background:var(--glass);border:1px solid var(--brd);
+    padding:7px 14px;border-radius:100px}
+  .loc .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .hero h1{font-size:clamp(34px,5.6vw,60px);margin:22px 0 18px}
+  .hero .lead{font-size:18px;color:var(--muted);max-width:520px}
+  .priceline{display:flex;align-items:baseline;gap:10px;margin:28px 0 8px}
+  .priceline .from{font-size:14px;color:var(--muted);font-weight:600}
+  .priceline .v{font-size:clamp(40px,7vw,58px);font-weight:800;letter-spacing:-.03em;color:#fff}
+  .priceline .v small{font-size:20px;vertical-align:top}
+  .priceline .per{color:var(--muted);font-size:15px}
+  .freeinstall{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--green);
+    background:rgba(34,199,155,.10);border:1px solid rgba(34,199,155,.3);padding:8px 14px;border-radius:100px}
+  .hero .actions{display:flex;gap:13px;flex-wrap:wrap;margin-top:26px}
+  .hero .mini{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px}
+  .hero .mini div{font-size:13px;color:var(--muted)}
+  .hero .mini b{display:block;font-size:16px;color:#fff}
+
+  /* MAP CARD */
+  .mapcard{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--brd);
+    background:linear-gradient(160deg,#0e1422,#0a0d15);box-shadow:0 40px 90px -50px #000}
+  .mapcard svg{display:block;width:100%;height:auto}
+  .hud{position:absolute;inset:0;pointer-events:none}
+  .chip{position:absolute;font-family:var(--mono);font-size:11px;background:rgba(8,11,18,.74);
+    border:1px solid var(--brd);border-radius:10px;padding:6px 10px;backdrop-filter:blur(6px);color:#cfd6e2}
+  .chip b{color:#fff}.chip .k{color:var(--muted-2)}
+  .chip.tl{top:14px;left:14px}.chip.tr{top:14px;right:14px;color:var(--green)}
+  .chip.br{bottom:14px;right:14px}
+  .dashflow{stroke-dasharray:9 13;animation:flow 1.1s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-22}}
+  .halo{transform-origin:center;animation:halo 2.1s ease-out infinite}
+  @keyframes halo{0%{opacity:.55;transform:scale(.5)}70%,100%{opacity:0;transform:scale(2.3)}}
+  @media(prefers-reduced-motion:reduce){.dashflow,.halo,.loc .dot{animation:none}}
+
+  /* MARQUEE */
+  .strip{border-top:1px solid var(--brd);border-bottom:1px solid var(--brd);background:var(--bg-2);overflow:hidden;margin-top:52px}
+  .strip .row{display:flex;gap:46px;padding:18px 0;white-space:nowrap;animation:slide 28s linear infinite;
+    color:var(--muted);font-weight:700;font-size:13.5px}
+  .strip span{display:inline-flex;align-items:center;gap:9px}
+  .strip span::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--red)}
+  @keyframes slide{to{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){.strip .row{animation:none}}
+
+  /* SECTIONS */
+  section{padding:88px 0}
+  .head{max-width:620px;margin-bottom:48px}
+  .head.mid{margin-inline:auto;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--red);font-weight:600}
+  .head h2{font-size:clamp(27px,4.2vw,42px);margin:12px 0 12px}
+  .head p{color:var(--muted);font-size:16.5px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+  .card{border:1px solid var(--brd);border-radius:var(--r);padding:26px;background:var(--glass);
+    transition:transform .18s,border-color .2s}
+  .card:hover{transform:translateY(-4px);border-color:rgba(255,42,50,.4)}
+  .card .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;margin-bottom:15px;
+    background:radial-gradient(circle at 50% 30%,rgba(255,42,50,.2),rgba(255,42,50,.03));border:1px solid rgba(255,42,50,.28)}
+  .card h3{font-size:18px;margin-bottom:7px}
+  .card p{color:var(--muted);font-size:14.5px}
+  .card.hl{background:linear-gradient(160deg,rgba(46,139,255,.10),rgba(255,255,255,.02));border-color:rgba(46,139,255,.28)}
+  .card.hl:hover{border-color:rgba(46,139,255,.5)}
+  .card.hl .ic{background:radial-gradient(circle at 50% 30%,rgba(46,139,255,.22),rgba(46,139,255,.03));border-color:rgba(46,139,255,.3)}
+
+  /* STEPS */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+  .step{border:1px solid var(--brd);border-radius:var(--r);padding:26px 22px;background:var(--surface-2)}
+  .step .n{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-family:var(--mono);
+    font-weight:700;color:#fff;margin-bottom:16px;background:linear-gradient(180deg,var(--red),var(--red-deep));
+    box-shadow:0 10px 24px -10px var(--red-glow)}
+  .step h4{font-size:16px;margin-bottom:6px}.step p{color:var(--muted);font-size:14px}
+
+  /* PRICING */
+  .pricing{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:stretch}
+  @media(max-width:860px){.pricing{grid-template-columns:1fr;max-width:480px;margin:0 auto}}
+  .plan{position:relative;border:1px solid rgba(255,42,50,.5);border-radius:22px;padding:38px 34px;
+    background:linear-gradient(180deg,var(--surface),var(--surface-2));box-shadow:0 30px 70px -34px var(--red-glow);overflow:hidden}
+  .plan .ribbon{position:absolute;top:18px;right:-42px;transform:rotate(45deg);background:linear-gradient(90deg,var(--green),#12a86f);
+    color:#04160f;font-weight:800;font-size:11px;letter-spacing:.06em;padding:6px 52px;box-shadow:0 8px 20px -8px rgba(0,0,0,.5)}
+  .plan h3{font-size:22px}
+  .plan .d{color:var(--muted);font-size:14px;margin:6px 0 22px}
+  .plan .price{display:flex;align-items:baseline;gap:6px}
+  .plan .price .c{font-size:18px;color:var(--muted);font-weight:700}
+  .plan .price .v{font-size:56px;font-weight:800;letter-spacing:-.03em}
+  .plan .price .per{color:var(--muted);font-size:15px}
+  .plan .promoline{margin:12px 0 24px;font-size:13.5px;color:var(--green);font-weight:700;display:flex;align-items:center;gap:8px}
+  .plan ul{list-style:none;display:grid;gap:13px;margin-bottom:28px}
+  .plan li{display:flex;gap:11px;font-size:14.5px}
+  .plan li svg{flex:0 0 auto;margin-top:3px}
+  .aside{border:1px solid var(--brd);border-radius:22px;padding:34px;background:var(--surface-2);display:flex;flex-direction:column;gap:20px}
+  .aside .box{border:1px solid var(--brd);border-radius:14px;padding:20px;background:var(--glass)}
+  .aside .box h4{font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .aside .box p{color:var(--muted);font-size:13.5px}
+  .aside .btn{justify-content:center;margin-top:auto}
+
+  /* FAQ */
+  .faq{display:grid;gap:12px;max-width:760px;margin:0 auto}
+  details{border:1px solid var(--brd);border-radius:14px;background:var(--surface-2);overflow:hidden}
+  summary{cursor:pointer;padding:18px 22px;font-weight:700;font-size:15.5px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--red);font-size:22px;font-weight:700;transition:transform .2s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{padding:0 22px 20px;color:var(--muted);font-size:14.5px}
+
+  /* CTA */
+  .cta{border:1px solid rgba(255,42,50,.35);border-radius:26px;padding:60px 40px;text-align:center;position:relative;overflow:hidden;
+    background:radial-gradient(700px 340px at 50% -10%,rgba(255,42,50,.2),transparent 60%),linear-gradient(180deg,var(--surface),var(--surface-2))}
+  .cta h2{font-size:clamp(27px,4.4vw,40px);margin-bottom:14px}
+  .cta p{color:var(--muted);max-width:520px;margin:0 auto 28px;font-size:17px}
+  .cta .actions{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+  .contact{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:32px;font-family:var(--mono);font-size:13.5px;color:var(--muted)}
+  .contact b{color:#fff}
+
+  footer{border-top:1px solid var(--brd);padding:38px 0;color:var(--muted-2);font-size:13px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
+
+  /* Reveal is progressive enhancement only: content is visible by default,
+     and hidden ONLY when JS is active (html.js), so it can never stay blank. */
+  html.js .rise{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  html.js .rise.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){html.js .rise{opacity:1;transform:none;transition:none}}
+  :focus-visible{outline:2px solid var(--red);outline-offset:3px;border-radius:6px}
+
+  /* floating whatsapp */
+  .wa-float{position:fixed;right:20px;bottom:20px;z-index:80;width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(180deg,#25D366,#12a850);display:grid;place-items:center;font-size:28px;
+    box-shadow:0 14px 34px -10px rgba(37,211,102,.6);transition:transform .16s}
+  .wa-float:hover{transform:scale(1.08)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="pin" viewBox="0 0 24 32">
+    <path d="M12 0C5.4 0 0 5.3 0 11.9 0 20.6 12 32 12 32s12-11.4 12-20.1C24 5.3 18.6 0 12 0z" fill="currentColor"/>
+    <circle cx="12" cy="11.6" r="4.4" fill="#0A0C12"/>
+  </symbol>
+</defs></svg>
+
+<div class="promo">🎉 PROMOÇÃO DE LANÇAMENTO — os <b>100 primeiros clientes</b> ganham <b>INSTALAÇÃO GRÁTIS</b></div>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#"><span class="mk"><svg width="15" height="20" style="color:var(--red)"><use href="#pin"/></svg></span><b>BRC<em>TRACK</em></b></a>
+    <div class="nav-links">
+      <a href="#diferenciais">Diferenciais</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#como">Como funciona</a>
+      <a href="#plano">Plano</a>
+      <a href="#faq">Dúvidas</a>
+      <a href="#contato">Contato</a>
+    </div>
+    <a href="#contato" class="btn" style="padding:11px 20px;font-size:14px">Contratar</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap grid">
+    <div>
+      <span class="loc"><span class="dot"></span>📍 Santa Inês — MA e região</span>
+      <h1>Seu veículo <span class="red">protegido</span> e na palma da sua mão.</h1>
+      <p class="lead">Rastreamento por GPS para carros e motos, com monitoramento em tempo real,
+      bloqueio remoto e a comodidade de <b class="metal">buscarmos seu veículo em domicílio</b> para a instalação.</p>
+
+      <div class="priceline">
+        <span class="from">a partir de</span>
+        <span class="v"><small>R$</small> 49<small>,90</small></span>
+        <span class="per">/mês</span>
+      </div>
+      <span class="freeinstall">✓ Instalação grátis para os 100 primeiros clientes</span>
+
+      <div class="actions">
+        <a href="#contato" class="btn wa">💬 Falar no WhatsApp</a>
+        <a href="#plano" class="btn ghost">Ver o plano</a>
+      </div>
+      <div class="mini">
+        <div><b class="mono">24h</b>central de monitoramento</div>
+        <div><b class="mono">Domicílio</b>buscamos seu veículo</div>
+        <div><b class="mono">Carros+Motos</b>para todo veículo</div>
+      </div>
+    </div>
+
+    <div class="mapcard rise">
+      <svg viewBox="0 0 600 440" role="img" aria-label="Rastreamento do veículo em tempo real">
+        <defs>
+          <linearGradient id="route" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#2E8BFF" stop-opacity=".2"/><stop offset="1" stop-color="#2E8BFF"/>
+          </linearGradient>
+          <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+            <stop offset="0" stop-color="#FF2A32" stop-opacity=".28"/><stop offset="1" stop-color="#FF2A32" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="600" height="440" fill="#0a0d15"/>
+        <g stroke="#1b2436" stroke-width="1.4"><path d="M0 90 H600 M0 185 H600 M0 280 H600 M0 375 H600"/><path d="M110 0 V440 M240 0 V440 M370 0 V440 M500 0 V440"/></g>
+        <g stroke="#233049" stroke-width="6" stroke-linecap="round" opacity=".7"><path d="M0 185 H600"/><path d="M240 0 V440"/></g>
+        <circle cx="465" cy="140" r="120" fill="url(#glow)"/>
+        <path d="M60,400 C150,330 150,240 250,215 S420,165 465,138 560,98 600,68" fill="none" stroke="#16233a" stroke-width="7" stroke-linecap="round"/>
+        <path d="M60,400 C150,330 150,240 250,215 S420,165 465,138 560,98 600,68" fill="none" stroke="url(#route)" stroke-width="4" stroke-linecap="round" class="dashflow"/>
+        <circle cx="60" cy="400" r="7" fill="#2E8BFF"/><circle cx="60" cy="400" r="7" fill="none" stroke="#2E8BFF" stroke-width="2" class="halo"/>
+        <g transform="translate(465,92)">
+          <circle cx="0" cy="46" r="20" fill="none" stroke="#FF2A32" stroke-width="2" class="halo"/>
+          <g transform="translate(-14,0)"><use href="#pin" width="28" height="37" color="#FF2A32"/></g>
+        </g>
+      </svg>
+      <div class="hud">
+        <div class="chip tl"><span class="k">VEÍCULO</span> <b>BRC-042</b></div>
+        <div class="chip tr">● AO VIVO</div>
+        <div class="chip br"><span class="k">Santa Inês/MA</span> · <b>62</b> km/h</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="strip" aria-hidden="true">
+  <div class="row">
+    <span>Rastreamento GPS 24h</span><span>Bloqueio remoto</span><span>Busca em domicílio</span><span>App iOS &amp; Android</span><span>Cerca virtual</span><span>Alertas em tempo real</span><span>Santa Inês — MA</span>
+    <span>Rastreamento GPS 24h</span><span>Bloqueio remoto</span><span>Busca em domicílio</span><span>App iOS &amp; Android</span><span>Cerca virtual</span><span>Alertas em tempo real</span><span>Santa Inês — MA</span>
+  </div>
+</div>
+
+<!-- DIFERENCIAIS -->
+<section id="diferenciais">
+  <div class="wrap">
+    <div class="head">
+      <span class="kicker">Por que a BRC Track</span>
+      <h2 class="metal">Proteção completa, sem complicação</h2>
+      <p>Tecnologia confiável e um atendimento próximo, feito para quem é de Santa Inês e região.</p>
+    </div>
+    <div class="cards">
+      <div class="card hl rise"><div class="ic">🚗</div><h3>Buscamos em domicílio</h3><p>Você não precisa sair de casa: nossa equipe busca o seu veículo, instala o rastreador e devolve pronto para uso.</p></div>
+      <div class="card rise"><div class="ic">🛰️</div><h3>Rastreamento 24h</h3><p>Localização em tempo real pelo app ou painel web, com histórico de trajetos e atualização a cada poucos segundos.</p></div>
+      <div class="card rise"><div class="ic">🔒</div><h3>Bloqueio remoto</h3><p>Em caso de furto, o veículo pode ser bloqueado com segurança direto do app ou pela nossa central.</p></div>
+      <div class="card rise"><div class="ic">🤝</div><h3>Atendimento local</h3><p>Suporte humano e próximo, aqui de Santa Inês — MA. Você fala com gente que conhece você e a região.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section id="servicos">
+  <div class="wrap">
+    <div class="head">
+      <span class="kicker">O que está incluso</span>
+      <h2 class="metal">Tudo o que você precisa para andar tranquilo</h2>
+    </div>
+    <div class="cards">
+      <div class="card rise"><div class="ic">📍</div><h3>Localização em tempo real</h3><p>Veja onde seu veículo está a qualquer momento, com rota e velocidade.</p></div>
+      <div class="card rise"><div class="ic">📱</div><h3>App iOS &amp; Android</h3><p>Todo o controle no celular: posição, alertas e comandos com poucos toques.</p></div>
+      <div class="card rise"><div class="ic">🚨</div><h3>Alertas inteligentes</h3><p>Avisos de velocidade, cerca virtual (geofence) e movimentação suspeita.</p></div>
+      <div class="card rise"><div class="ic">🏍️</div><h3>Carros e motos</h3><p>Módulos compactos e resistentes, ideais para automóveis e motocicletas.</p></div>
+      <div class="card rise"><div class="ic">🗺️</div><h3>Histórico de trajetos</h3><p>Consulte por onde o veículo passou e os horários de cada percurso.</p></div>
+      <div class="card rise"><div class="ic">📊</div><h3>Gestão de frota</h3><p>Para empresas: relatórios de uso, KM e condução de vários veículos.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como">
+  <div class="wrap">
+    <div class="head mid">
+      <span class="kicker">Simples e rápido</span>
+      <h2 class="metal">Do contato ao veículo monitorado</h2>
+    </div>
+    <div class="steps">
+      <div class="step rise"><div class="n">01</div><h4>Fale conosco</h4><p>Chame no WhatsApp e garanta sua vaga entre os 100 primeiros com instalação grátis.</p></div>
+      <div class="step rise"><div class="n">02</div><h4>Buscamos o veículo</h4><p>Agendamos e buscamos seu carro ou moto em domicílio, sem você sair de casa.</p></div>
+      <div class="step rise"><div class="n">03</div><h4>Instalação e ativação</h4><p>Instalamos o rastreador, configuramos seu app e testamos tudo na hora.</p></div>
+      <div class="step rise"><div class="n">04</div><h4>Monitoramento 24h</h4><p>Devolvemos o veículo pronto. A partir daí, você e a central acompanham tudo.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANO -->
+<section id="plano">
+  <div class="wrap">
+    <div class="head mid">
+      <span class="kicker">Plano &amp; investimento</span>
+      <h2 class="metal">Uma mensalidade, proteção completa</h2>
+      <p>Sem letras miúdas. Condições especiais para frotas sob consulta.</p>
+    </div>
+    <div class="pricing">
+      <div class="plan rise">
+        <div class="ribbon">100 PRIMEIROS</div>
+        <h3>Plano BRC Track</h3>
+        <div class="d">Rastreamento, monitoramento e app — tudo incluso.</div>
+        <div class="price"><span class="c">R$</span><span class="v">49<span style="font-size:26px">,90</span></span><span class="per">/mês</span></div>
+        <div class="promoline">🎁 Instalação GRÁTIS para os 100 primeiros clientes</div>
+        <ul>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>Rastreamento GPS em tempo real</li>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>Central de monitoramento 24h</li>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>Bloqueio &amp; desbloqueio remoto</li>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>App iOS &amp; Android + alertas</li>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>Cerca virtual e histórico de trajetos</li>
+          <li><svg width="14" height="18" style="color:var(--red)"><use href="#pin"/></svg>Busca do veículo em domicílio</li>
+        </ul>
+        <a href="#contato" class="btn wa" style="justify-content:center">💬 Garantir minha vaga</a>
+      </div>
+
+      <div class="aside rise">
+        <div class="box">
+          <h4>🚗 Comodidade total</h4>
+          <p>Buscamos e devolvemos seu veículo em domicílio, em Santa Inês e região — instalação sem transtorno.</p>
+        </div>
+        <div class="box">
+          <h4>🏢 Tem uma frota?</h4>
+          <p>Empresas e frotistas têm condições especiais por volume de veículos. Fale com um consultor.</p>
+        </div>
+        <div class="box">
+          <h4>⏳ Vagas limitadas</h4>
+          <p>A instalação grátis é válida apenas para os 100 primeiros clientes. Garanta a sua enquanto há vaga.</p>
+        </div>
+        <a href="#contato" class="btn ghost">Falar com consultor</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="head mid">
+      <span class="kicker">Tire suas dúvidas</span>
+      <h2 class="metal">Perguntas frequentes</h2>
+    </div>
+    <div class="faq">
+      <details class="rise"><summary>Preciso levar meu veículo até vocês?</summary><p>Não! Uma das nossas vantagens é buscar o seu veículo em domicílio, em Santa Inês e região. Agendamos, buscamos, instalamos e devolvemos pronto para uso.</p></details>
+      <details class="rise"><summary>Como funciona a instalação grátis?</summary><p>Os 100 primeiros clientes não pagam nada pela instalação — apenas a mensalidade de R$ 49,90. Depois de atingir esse número, a promoção de lançamento é encerrada.</p></details>
+      <details class="rise"><summary>Serve para carro e para moto?</summary><p>Sim. Trabalhamos com módulos específicos e resistentes tanto para automóveis quanto para motocicletas.</p></details>
+      <details class="rise"><summary>Consigo bloquear o veículo pelo celular?</summary><p>Sim. Pelo app ou pela nossa central 24h você pode bloquear e desbloquear o veículo com segurança em caso de furto ou emergência.</p></details>
+      <details class="rise"><summary>Quais regiões vocês atendem?</summary><p>Atendemos Santa Inês — MA e cidades da região. Fale conosco no WhatsApp para confirmar a cobertura na sua cidade.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / CONTATO -->
+<section id="contato">
+  <div class="wrap">
+    <div class="cta rise">
+      <span class="kicker">Vagas limitadas</span>
+      <h2 class="metal" style="margin-top:12px">Garanta sua instalação grátis</h2>
+      <p>Fale agora com a BRC Track pelo WhatsApp, garanta sua vaga entre os 100 primeiros e proteja seu veículo por apenas R$ 49,90/mês.</p>
+      <div class="actions">
+        <a href="#" class="btn wa">💬 Chamar no WhatsApp</a>
+        <a href="#" class="btn ghost">Solicitar contato</a>
+      </div>
+      <div class="contact">
+        <span>📍 <b>Santa Inês — MA</b></span>
+        <span>📞 <b>(00) 00000-0000</b></span>
+        <span>✉️ <b>contato@brctrack.com.br</b></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="mk"><svg width="15" height="20" style="color:var(--red)"><use href="#pin"/></svg></span><b>BRC<em style="font-style:normal;color:var(--red)">TRACK</em></b> <span style="color:var(--muted-2);font-weight:600">· Rastreamento Veicular · Santa Inês — MA</span></div>
+    <div>© <span id="yr"></span> BRC Track. Todos os direitos reservados.</div>
+  </div>
+</footer>
+
+<a class="wa-float" href="#contato" aria-label="Falar no WhatsApp">💬</a>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  var items = document.querySelectorAll('.rise');
+  if('IntersectionObserver' in window){
+    document.documentElement.classList.add('js'); // enable hidden state only if we can reveal it
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+    items.forEach(function(el){io.observe(el);});
+    // Fail-safe: reveal everything after 2s no matter what.
+    setTimeout(function(){items.forEach(function(el){el.classList.add('in');});},2000);
+  }
+</script>
+</body>
+</html>
