@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposta Comercial — BRC Track | Rastreamento Veicular</title>
+<style>
+  :root{
+    --red:#ED1C24;
+    --red-dark:#B30E14;
+    --red-glow:rgba(237,28,36,.55);
+    --blue:#1E6FE0;
+    --blue-neon:#00A3FF;
+    --ink:#05070D;
+    --ink-2:#0C1220;
+    --panel:#111A2B;
+    --panel-2:#0E1524;
+    --silver-1:#ffffff;
+    --silver-2:#c9d0da;
+    --silver-3:#8b94a3;
+    --line:rgba(255,255,255,.09);
+    --text:#e9edf4;
+    --muted:#9aa5b6;
+    --ok:#27c093;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--ink);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{line-height:1.15;font-weight:800;letter-spacing:.3px}
+  .metal{
+    background:linear-gradient(180deg,#ffffff 0%,#dfe5ee 40%,#9aa4b4 60%,#eef2f8 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .red{color:var(--red)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  section{position:relative}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(5,7,13,.82);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:1px}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--red);box-shadow:0 0 14px var(--red-glow)}
+  .brand b{font-size:19px}
+  .brand b span{color:var(--red)}
+  .nav{display:flex;gap:26px}
+  .nav a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;transition:.2s}
+  .nav a:hover{color:#fff}
+  .btn{
+    display:inline-block;font-weight:800;letter-spacing:.5px;text-decoration:none;
+    padding:13px 26px;border-radius:10px;font-size:14px;cursor:pointer;border:none;
+    background:linear-gradient(180deg,var(--red) 0%,var(--red-dark) 100%);
+    color:#fff;box-shadow:0 8px 24px -8px var(--red-glow);transition:transform .15s,box-shadow .2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px var(--red-glow)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:#fff;box-shadow:none}
+  .btn.ghost:hover{border-color:var(--silver-3)}
+  @media(max-width:760px){.nav{display:none}}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:90px 0 80px;text-align:center;overflow:hidden;
+    background:
+      radial-gradient(900px 420px at 50% -10%,rgba(237,28,36,.20),transparent 60%),
+      radial-gradient(700px 400px at 12% 30%,rgba(30,111,224,.18),transparent 60%),
+      linear-gradient(180deg,#05070D 0%,#080B14 100%);
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;opacity:.35;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(700px 400px at 50% 20%,#000,transparent 75%);
+            mask-image:radial-gradient(700px 400px at 50% 20%,#000,transparent 75%);
+  }
+  .hero .wrap{position:relative;z-index:2}
+  .hero img.logo{width:230px;max-width:64vw;margin:0 auto 26px;display:block;
+    filter:drop-shadow(0 20px 40px rgba(237,28,36,.30))}
+  .eyebrow{
+    display:inline-block;font-size:12.5px;font-weight:800;letter-spacing:3px;text-transform:uppercase;
+    color:var(--silver-2);border:1px solid var(--line);border-radius:100px;padding:7px 18px;margin-bottom:22px;
+    background:rgba(255,255,255,.03);
+  }
+  .hero h1{font-size:clamp(30px,5.5vw,56px);margin-bottom:18px}
+  .hero p.lead{max-width:640px;margin:0 auto 32px;color:var(--muted);font-size:18px}
+  .hero .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .meta-row{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:54px}
+  .meta-row div{text-align:center}
+  .meta-row .n{font-size:30px;font-weight:800}
+  .meta-row .l{font-size:12.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+  /* ---------- Section shell ---------- */
+  .sec{padding:84px 0;border-top:1px solid var(--line)}
+  .sec-head{text-align:center;max-width:680px;margin:0 auto 54px}
+  .kicker{color:var(--red);font-weight:800;letter-spacing:3px;text-transform:uppercase;font-size:12.5px}
+  .sec-head h2{font-size:clamp(26px,4vw,40px);margin:12px 0 14px}
+  .sec-head p{color:var(--muted);font-size:16.5px}
+
+  /* ---------- About / problem ---------- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  @media(max-width:820px){.split{grid-template-columns:1fr;gap:30px}}
+  .split ul{list-style:none;margin-top:18px;display:grid;gap:14px}
+  .split li{display:flex;gap:12px;align-items:flex-start;color:var(--muted)}
+  .split li b{color:#fff;font-weight:700}
+  .check{flex:0 0 22px;width:22px;height:22px;border-radius:6px;margin-top:3px;
+    background:linear-gradient(180deg,var(--red),var(--red-dark));display:grid;place-items:center;
+    color:#fff;font-size:13px;font-weight:900;box-shadow:0 6px 16px -6px var(--red-glow)}
+  .panel-visual{
+    border:1px solid var(--line);border-radius:20px;padding:34px;position:relative;overflow:hidden;
+    background:linear-gradient(160deg,var(--panel) 0%,var(--panel-2) 100%);
+  }
+  .panel-visual .beam{position:absolute;top:-40%;right:-30%;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(30,111,224,.35),transparent 60%);filter:blur(10px)}
+  .radar{position:relative;z-index:2;text-align:center}
+  .radar .ping{font-size:48px}
+  .radar .row{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:14px 0;font-size:14px}
+  .radar .row:first-of-type{margin-top:18px}
+  .radar .row span:last-child{color:#fff;font-weight:700}
+  .live{display:inline-flex;gap:8px;align-items:center;font-size:12px;letter-spacing:1px;color:var(--ok);text-transform:uppercase;font-weight:800}
+  .live::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- Services grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}}
+  .card{
+    border:1px solid var(--line);border-radius:16px;padding:28px;
+    background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+    transition:transform .18s,border-color .2s;position:relative;overflow:hidden;
+  }
+  .card:hover{transform:translateY(-4px);border-color:rgba(237,28,36,.5)}
+  .card .ic{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;font-size:24px;margin-bottom:18px;
+    background:linear-gradient(180deg,rgba(237,28,36,.18),rgba(237,28,36,.04));border:1px solid rgba(237,28,36,.28)}
+  .card h3{font-size:18px;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14.5px}
+
+  /* ---------- How it works ---------- */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  @media(max-width:820px){.steps{grid-template-columns:1fr 1fr}}
+  @media(max-width:460px){.steps{grid-template-columns:1fr}}
+  .step{text-align:center;padding:26px 18px;border:1px solid var(--line);border-radius:16px;background:var(--panel-2)}
+  .step .num{width:46px;height:46px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:18px;
+    color:#fff;background:linear-gradient(180deg,var(--red),var(--red-dark));box-shadow:0 8px 22px -8px var(--red-glow)}
+  .step h4{font-size:16px;margin-bottom:6px}
+  .step p{color:var(--muted);font-size:13.5px}
+
+  /* ---------- Pricing ---------- */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch}
+  @media(max-width:900px){.plans{grid-template-columns:1fr;max-width:460px;margin:0 auto}}
+  .plan{
+    border:1px solid var(--line);border-radius:20px;padding:34px 30px;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);position:relative;
+  }
+  .plan.pop{border:1px solid rgba(237,28,36,.6);box-shadow:0 24px 60px -30px var(--red-glow)}
+  .plan.pop::before{content:"MAIS POPULAR";position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(180deg,var(--red),var(--red-dark));color:#fff;font-size:11px;font-weight:900;letter-spacing:1.5px;
+    padding:6px 16px;border-radius:100px;box-shadow:0 8px 20px -8px var(--red-glow)}
+  .plan h3{font-size:20px}
+  .plan .desc{color:var(--muted);font-size:13.5px;margin:6px 0 20px;min-height:38px}
+  .plan .price{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+  .plan .price .cur{font-size:16px;color:var(--silver-3);font-weight:700}
+  .plan .price .val{font-size:44px;font-weight:900}
+  .plan .price .per{color:var(--muted);font-size:14px}
+  .plan .setup{font-size:12.5px;color:var(--silver-3);margin-bottom:22px}
+  .plan ul{list-style:none;display:grid;gap:12px;margin-bottom:26px}
+  .plan li{display:flex;gap:10px;font-size:14px;color:var(--text)}
+  .plan li i{color:var(--red);font-style:normal;font-weight:900}
+  .plan li.off{color:var(--silver-3);opacity:.55}
+  .plan .btn{margin-top:auto;text-align:center}
+  .plan.pop .btn{background:linear-gradient(180deg,var(--red),var(--red-dark))}
+  .plan .btn.ghost{background:transparent;border:1px solid var(--line);color:#fff}
+
+  /* ---------- Diferenciais banner ---------- */
+  .band{background:
+      radial-gradient(600px 300px at 80% 0%,rgba(30,111,224,.16),transparent 60%),
+      linear-gradient(180deg,#080B14,#05070D)}
+  .band .grid .card{background:linear-gradient(160deg,rgba(30,111,224,.06),rgba(255,255,255,.01))}
+  .band .card:hover{border-color:rgba(30,111,224,.5)}
+
+  /* ---------- CTA ---------- */
+  .cta-box{
+    border:1px solid rgba(237,28,36,.35);border-radius:24px;padding:56px 40px;text-align:center;
+    background:
+      radial-gradient(600px 300px at 50% 0%,rgba(237,28,36,.20),transparent 65%),
+      linear-gradient(180deg,var(--panel),var(--panel-2));
+    position:relative;overflow:hidden;
+  }
+  .cta-box h2{font-size:clamp(26px,4vw,38px);margin-bottom:14px}
+  .cta-box p{color:var(--muted);max-width:560px;margin:0 auto 30px;font-size:17px}
+  .contact-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:34px;color:var(--muted);font-size:14px}
+  .contact-row a{color:var(--text);text-decoration:none;font-weight:700}
+
+  /* ---------- Footer ---------- */
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--silver-3);font-size:13px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;align-items:center}
+  .validity{font-size:12.5px;color:var(--silver-3);margin-top:8px}
+
+  .fade{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  .fade.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><b>BRC<span>TRACK</span></b></div>
+    <nav class="nav">
+      <a href="#sobre">Sobre</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#como">Como funciona</a>
+      <a href="#planos">Planos</a>
+      <a href="#contato">Contato</a>
+    </nav>
+    <a href="#planos" class="btn">Solicitar Proposta</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <img class="logo" src="assets/brctrack-logo-dark.png" alt="BRC Track — Rastreamento Veicular">
+    <div class="eyebrow">Proposta Comercial · Rastreamento Veicular</div>
+    <h1><span class="metal">Proteja sua frota.</span><br><span class="red">Monitore em tempo real.</span></h1>
+    <p class="lead">Tecnologia de rastreamento GPS para carros e motos, com monitoramento 24h,
+    bloqueio remoto e resposta imediata. Segurança que acompanha cada quilômetro.</p>
+    <div class="cta">
+      <a href="#planos" class="btn">Ver planos e valores</a>
+      <a href="#contato" class="btn ghost">Falar com um consultor</a>
+    </div>
+    <div class="meta-row">
+      <div><div class="n metal">24h</div><div class="l">Central de Monitoramento</div></div>
+      <div><div class="n red">100%</div><div class="l">Cobertura GPS/GSM</div></div>
+      <div><div class="n metal">&lt;10s</div><div class="l">Atualização de Posição</div></div>
+      <div><div class="n red">App</div><div class="l">iOS &amp; Android</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section class="sec" id="sobre">
+  <div class="wrap split fade">
+    <div>
+      <div class="kicker">Quem somos</div>
+      <h2 class="metal">Rastreamento inteligente para quem não pode parar</h2>
+      <p style="color:var(--muted);margin-top:14px">A BRC Track é especialista em segurança e rastreamento veicular.
+      Unimos hardware confiável, uma plataforma intuitiva e uma central de monitoramento ativa 24 horas por dia
+      para dar a você controle total sobre seu veículo — onde quer que ele esteja.</p>
+      <ul>
+        <li><span class="check">✓</span><span><b>Carros e motos:</b> soluções sob medida para cada tipo de veículo e uso.</span></li>
+        <li><span class="check">✓</span><span><b>Localização em tempo real:</b> acompanhe pelo app ou pelo painel web, a qualquer momento.</span></li>
+        <li><span class="check">✓</span><span><b>Bloqueio remoto:</b> em caso de furto, o veículo pode ser bloqueado com segurança.</span></li>
+        <li><span class="check">✓</span><span><b>Instalação profissional:</b> equipe técnica qualificada, discreta e ágil.</span></li>
+      </ul>
+    </div>
+    <div class="panel-visual">
+      <div class="beam"></div>
+      <div class="radar">
+        <div class="live">Sinal ativo</div>
+        <div class="ping">📍</div>
+        <div style="font-weight:800;font-size:18px;margin-top:6px">Veículo #BRC-4021</div>
+        <div style="color:var(--muted);font-size:13px">Av. Paulista, São Paulo · SP</div>
+        <div class="row"><span>Velocidade</span><span>0 km/h</span></div>
+        <div class="row"><span>Ignição</span><span style="color:var(--ok)">Ligada</span></div>
+        <div class="row"><span>Bateria do módulo</span><span>98%</span></div>
+        <div class="row"><span>Última atualização</span><span>há 4s</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section class="sec" id="servicos">
+  <div class="wrap">
+    <div class="sec-head fade">
+      <div class="kicker">O que oferecemos</div>
+      <h2 class="metal">Serviços BRC Track</h2>
+      <p>Uma solução completa de rastreamento e gestão, do módulo instalado no veículo à central que responde por você.</p>
+    </div>
+    <div class="grid">
+      <div class="card fade"><div class="ic">🛰️</div><h3>Rastreamento GPS 24h</h3><p>Localização precisa e contínua do veículo, com histórico de trajetos e atualização em tempo real.</p></div>
+      <div class="card fade"><div class="ic">🔒</div><h3>Bloqueio &amp; Desbloqueio</h3><p>Comando remoto de bloqueio do veículo em situações de risco, direto pelo app ou pela central.</p></div>
+      <div class="card fade"><div class="ic">📱</div><h3>App iOS &amp; Android</h3><p>Todo o controle na palma da mão: posição, alertas e comandos em um aplicativo simples e rápido.</p></div>
+      <div class="card fade"><div class="ic">🚨</div><h3>Alertas Inteligentes</h3><p>Notificações de velocidade, cerca virtual (geofence), movimentação suspeita e desconexão do módulo.</p></div>
+      <div class="card fade"><div class="ic">🏍️</div><h3>Carros &amp; Motos</h3><p>Módulos compactos e resistentes, ideais tanto para automóveis quanto para motocicletas.</p></div>
+      <div class="card fade"><div class="ic">📊</div><h3>Gestão de Frota</h3><p>Relatórios de uso, quilometragem e comportamento de condução para empresas e frotistas.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="sec" id="como">
+  <div class="wrap">
+    <div class="sec-head fade">
+      <div class="kicker">Simples e rápido</div>
+      <h2 class="metal">Como funciona</h2>
+      <p>Do primeiro contato ao veículo monitorado em poucos passos.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade"><div class="num">1</div><h4>Contato</h4><p>Você fala com um consultor e escolhe o plano ideal para seu veículo.</p></div>
+      <div class="step fade"><div class="num">2</div><h4>Instalação</h4><p>Nossa equipe técnica instala o módulo de forma discreta e profissional.</p></div>
+      <div class="step fade"><div class="num">3</div><h4>Ativação</h4><p>Seu acesso ao app e ao painel é configurado e testado na hora.</p></div>
+      <div class="step fade"><div class="num">4</div><h4>Monitoramento</h4><p>Pronto! Seu veículo é acompanhado 24h pela central e por você.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="sec" id="planos">
+  <div class="wrap">
+    <div class="sec-head fade">
+      <div class="kicker">Planos &amp; Investimento</div>
+      <h2 class="metal">Escolha a proteção ideal</h2>
+      <p>Valores de referência. Condições especiais para frotas e contratos anuais.</p>
+    </div>
+    <div class="plans">
+      <div class="plan fade">
+        <h3>Essencial</h3>
+        <div class="desc">Ideal para quem quer rastreamento confiável no dia a dia.</div>
+        <div class="price"><span class="cur">R$</span><span class="val">59</span><span class="per">,90/mês</span></div>
+        <div class="setup">+ instalação a partir de R$ 149</div>
+        <ul>
+          <li><i>✓</i> Rastreamento GPS em tempo real</li>
+          <li><i>✓</i> App iOS &amp; Android</li>
+          <li><i>✓</i> Histórico de trajetos (7 dias)</li>
+          <li><i>✓</i> Alertas de movimentação</li>
+          <li class="off"><i>–</i> Bloqueio remoto</li>
+          <li class="off"><i>–</i> Central de monitoramento 24h</li>
+        </ul>
+        <a href="#contato" class="btn ghost">Quero este plano</a>
+      </div>
+
+      <div class="plan pop fade">
+        <h3>Protegido</h3>
+        <div class="desc">O plano mais escolhido — segurança completa com bloqueio remoto.</div>
+        <div class="price"><span class="cur">R$</span><span class="val">89</span><span class="per">,90/mês</span></div>
+        <div class="setup">+ instalação a partir de R$ 149</div>
+        <ul>
+          <li><i>✓</i> Tudo do plano Essencial</li>
+          <li><i>✓</i> Bloqueio &amp; desbloqueio remoto</li>
+          <li><i>✓</i> Central de monitoramento 24h</li>
+          <li><i>✓</i> Cerca virtual (geofence)</li>
+          <li><i>✓</i> Histórico de trajetos (90 dias)</li>
+          <li><i>✓</i> Suporte prioritário</li>
+        </ul>
+        <a href="#contato" class="btn">Contratar agora</a>
+      </div>
+
+      <div class="plan fade">
+        <h3>Frota &amp; Empresas</h3>
+        <div class="desc">Gestão inteligente para múltiplos veículos.</div>
+        <div class="price"><span class="val">Sob</span><span class="per">consulta</span></div>
+        <div class="setup">Valores por volume de veículos</div>
+        <ul>
+          <li><i>✓</i> Tudo do plano Protegido</li>
+          <li><i>✓</i> Painel de gestão de frota</li>
+          <li><i>✓</i> Relatórios personalizados</li>
+          <li><i>✓</i> Controle de condução e KM</li>
+          <li><i>✓</i> Múltiplos usuários</li>
+          <li><i>✓</i> Gerente de conta dedicado</li>
+        </ul>
+        <a href="#contato" class="btn ghost">Falar com consultor</a>
+      </div>
+    </div>
+    <p class="validity" style="text-align:center;margin-top:26px">
+      * Valores de referência sujeitos à análise técnica do veículo. Proposta válida por 15 dias a partir da data de emissão.
+    </p>
+  </div>
+</section>
+
+<!-- DIFERENCIAIS -->
+<section class="sec band">
+  <div class="wrap">
+    <div class="sec-head fade">
+      <div class="kicker">Por que BRC Track</div>
+      <h2 class="metal">Diferenciais que fazem a diferença</h2>
+      <p>Não vendemos apenas um rastreador — entregamos tranquilidade.</p>
+    </div>
+    <div class="grid">
+      <div class="card fade"><div class="ic">⚡</div><h3>Resposta Imediata</h3><p>Central ativa 24h que aciona os protocolos de segurança em minutos.</p></div>
+      <div class="card fade"><div class="ic">🛠️</div><h3>Tecnologia Confiável</h3><p>Equipamentos homologados, com redundância GPS/GSM e antifurto.</p></div>
+      <div class="card fade"><div class="ic">🤝</div><h3>Atendimento Humano</h3><p>Suporte de verdade, com pessoas que conhecem você e seu veículo.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / CONTATO -->
+<section class="sec" id="contato">
+  <div class="wrap">
+    <div class="cta-box fade">
+      <div class="kicker">Vamos começar</div>
+      <h2 class="metal">Pronto para proteger seu veículo?</h2>
+      <p>Fale agora com um consultor BRC Track e receba uma proposta personalizada para o seu carro, moto ou frota.</p>
+      <div class="cta" style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <a href="#" class="btn">Solicitar proposta personalizada</a>
+        <a href="#" class="btn ghost">Agendar instalação</a>
+      </div>
+      <div class="contact-row">
+        <span>📞 <a href="#">(00) 00000-0000</a></span>
+        <span>✉️ <a href="mailto:contato@brctrack.com.br">contato@brctrack.com.br</a></span>
+        <span>🌐 <a href="#">www.brctrack.com.br</a></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><b>BRC<span style="color:var(--red)">TRACK</span></b> · <span style="color:var(--silver-3);font-weight:600;letter-spacing:1px">Rastreamento Veicular</span></div>
+    <div>© <span id="yr"></span> BRC Track. Todos os direitos reservados. · Proposta comercial confidencial.</div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  // reveal on scroll
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  },{threshold:.14});
+  document.querySelectorAll('.fade').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
