@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP32 Block Coder — programação em blocos</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="chip">ESP32</span>
+    <span class="brand-name">Block Coder</span>
+  </div>
+
+  <input id="project-name" class="project-name" type="text" aria-label="Nome do projeto" placeholder="Nome do projeto">
+
+  <div class="toolbar">
+    <button id="btn-new" class="btn">Novo</button>
+    <button id="btn-open" class="btn">Abrir</button>
+    <input id="file-open" type="file" accept=".json,application/json" hidden>
+    <button id="btn-save" class="btn">Salvar</button>
+
+    <div class="menu-wrap">
+      <button id="btn-examples" class="btn">Exemplos ▾</button>
+      <div id="examples-menu" class="menu hidden"></div>
+    </div>
+
+    <span class="sep"></span>
+    <button id="btn-undo" class="btn icon" title="Desfazer (Ctrl+Z)">↶</button>
+    <button id="btn-redo" class="btn icon" title="Refazer (Ctrl+Shift+Z)">↷</button>
+    <button id="btn-clean" class="btn" title="Apaga blocos soltos e alinha as pilhas">Organizar</button>
+
+    <span class="sep"></span>
+    <label class="core-label" title="Versão do núcleo Arduino-ESP32 instalado na sua IDE">
+      core
+      <select id="core-select">
+        <option value="3">3.x</option>
+        <option value="2">2.x</option>
+      </select>
+    </label>
+    <button id="btn-help" class="btn">Ajuda</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <aside id="palette" class="palette">
+    <nav id="cat-nav" class="cat-nav"></nav>
+    <div id="palette-blocks" class="palette-blocks"></div>
+  </aside>
+
+  <section class="workspace">
+    <div id="canvas" class="canvas">
+      <div id="surface" class="surface">
+        <div id="drag-layer"></div>
+      </div>
+    </div>
+
+    <div class="canvas-tools">
+      <button id="btn-zoom-out" class="btn icon" title="Diminuir">−</button>
+      <span id="zoom-label" class="zoom-label">100%</span>
+      <button id="btn-zoom-in" class="btn icon" title="Aumentar">+</button>
+      <button id="btn-zoom-reset" class="btn icon" title="Zoom normal">⤢</button>
+    </div>
+
+    <div id="trash" class="trash" title="Arraste um bloco aqui para apagar">
+      <span class="trash-icon">🗑</span>
+      <span class="trash-label">soltar para apagar</span>
+    </div>
+  </section>
+
+  <aside class="codepanel">
+    <div class="code-head">
+      <h2>Código gerado</h2>
+      <div class="code-actions">
+        <button id="btn-copy" class="btn btn-small">Copiar</button>
+        <button id="btn-ino" class="btn btn-small btn-accent">Baixar .ino</button>
+      </div>
+    </div>
+
+    <pre class="code-wrap"><code id="code" class="code"></code></pre>
+
+    <div class="notice hidden">
+      <h3>Atenção</h3>
+      <ul id="warnings"></ul>
+    </div>
+
+    <div class="notice libs hidden">
+      <h3>Bibliotecas necessárias</h3>
+      <ul id="libs"></ul>
+    </div>
+
+    <div class="code-foot">
+      <span id="code-stats"></span>
+    </div>
+  </aside>
+</main>
+
+<div id="ctx-menu" class="menu hidden"></div>
+
+<div id="help-modal" class="modal hidden">
+  <div class="modal-box">
+    <button id="help-close" class="modal-close" aria-label="Fechar">×</button>
+    <h2>Como usar</h2>
+
+    <h3>Montando o programa</h3>
+    <ul>
+      <li>Arraste blocos da coluna da esquerda para a área do meio.</li>
+      <li>Comandos se encaixam <strong>um embaixo do outro</strong>; blocos arredondados
+        (valores) entram <strong>dentro dos espaços</strong> dos outros blocos.</li>
+      <li>Só entra no código o que estiver dentro de <strong>ao iniciar</strong> (roda uma vez)
+        ou <strong>repetir para sempre</strong> (roda sem parar).</li>
+      <li>Ao arrastar um comando, tudo que estiver abaixo dele vai junto.</li>
+      <li>Para apagar: arraste até a lixeira, ou selecione e aperte <kbd>Delete</kbd>.</li>
+      <li>Clique com o botão direito num bloco para duplicar ou apagar.</li>
+      <li>Arraste o fundo da tela para mover a área de trabalho.</li>
+    </ul>
+
+    <h3>Gravando na placa</h3>
+    <ol>
+      <li>Clique em <strong>Baixar .ino</strong> e abra o arquivo na Arduino IDE
+        (ou cole o código com <strong>Copiar</strong>).</li>
+      <li>Na IDE, instale o suporte ao ESP32 em <em>Ferramentas → Placa → Gerenciador de placas
+        → “esp32”</em>.</li>
+      <li>Selecione a placa (<em>ESP32 Dev Module</em>) e a porta COM/USB correta.</li>
+      <li>Se o painel mostrar <em>Bibliotecas necessárias</em>, instale-as em
+        <em>Ferramentas → Gerenciar bibliotecas</em>.</li>
+      <li>Clique em Carregar. Se a gravação não começar, segure o botão <em>BOOT</em> da placa.</li>
+    </ol>
+
+    <h3>core 2.x ou 3.x?</h3>
+    <p>O seletor <strong>core</strong> na barra de cima muda como o PWM e o buzzer são gerados.
+      Veja a versão instalada em <em>Gerenciador de placas → esp32</em>: se começar com 3,
+      deixe em 3.x; se começar com 2, mude para 2.x.</p>
+
+    <h3>Dicas de pinos</h3>
+    <ul>
+      <li>Os pinos <strong>34, 35, 36 e 39</strong> são só de entrada — não servem para LED.</li>
+      <li>Os pinos <strong>6 a 11</strong> são usados pela memória interna: não use.</li>
+      <li>A leitura analógica dos pinos <strong>ADC2</strong> (0, 2, 4, 12–15, 25–27)
+        não funciona enquanto o Wi-Fi estiver ligado; prefira 32–39.</li>
+      <li>O LED embutido costuma ser o pino <strong>2</strong>.</li>
+    </ul>
+
+    <p class="muted">Seu projeto fica salvo neste navegador automaticamente. Use
+      <strong>Salvar</strong> para guardar um arquivo <code>.json</code> e
+      <strong>Abrir</strong> para continuar depois ou em outro computador.</p>
+  </div>
+</div>
+
+<script src="js/blocks.js"></script>
+<script src="js/model.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/render.js"></script>
+<script src="js/drag.js"></script>
+<script src="js/examples.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
