@@ -1,11 +1,22 @@
-# ⚡ Elyon Engenharia — Plataforma de Orçamentos, Propostas e Laudos
+# ⚡ Elyon Engenharia — Plataforma SaaS de Orçamentos, Propostas e Laudos
 
-Plataforma completa para **precificação e geração de propostas comerciais** de serviços de
-engenharia elétrica, com a identidade visual da **Elyon Engenharia**, e módulo de
-**laudos técnicos** (NR-10, instalações elétricas, SPDA e medição de aterramento).
+Plataforma no **formato SaaS** para **precificação e geração de propostas comerciais** de
+serviços de engenharia elétrica, com a identidade visual da **Elyon Engenharia**, e módulo
+de **laudos técnicos** (NR-10, instalações elétricas, SPDA e medição de aterramento).
 
-100% funcional em qualquer navegador, sem instalar nada: basta abrir o `index.html`.
-Os dados ficam no `localStorage` do navegador, com backup/restauração em JSON.
+100% funcional em qualquer navegador, sem instalar nada. O fluxo é o de um SaaS:
+
+1. **`site.html`** — landing page do produto, com recursos e planos (Essencial, Profissional, Escritório)
+2. **`entrar.html`** — tela de login do espaço de trabalho (autenticação simulada no protótipo)
+3. **`index.html`** — o aplicativo: shell SaaS com sidebar, topbar, usuário logado e os 6 módulos
+
+> Comece por `site.html` para a experiência completa, ou vá direto ao `entrar.html`
+> e use **"Entrar em modo demonstração"**. A arquitetura de produção (multi-tenant,
+> planos, aceite online, stack sugerida) está desenhada em
+> **[`docs/arquitetura-saas.md`](docs/arquitetura-saas.md)**, com diagramas.
+
+No protótipo os dados ficam no `localStorage` do navegador, com backup/restauração em JSON —
+a migração para banco multi-tenant está mapeada no documento de arquitetura.
 
 ---
 
@@ -98,22 +109,27 @@ identidade da Elyon, numeração automática (LAU-ANO-NNN), campo de ART e assin
 
 ```
 elyon-engenharia/
-├── index.html      # Interface (6 módulos em abas)
-├── css/style.css   # Identidade visual + layout de impressão dos documentos
-├── js/data.js      # Catálogo padrão, fatores e modelos de laudo (edite aqui os padrões)
-└── js/app.js       # Motor de cálculo, estado, persistência e geração de documentos
+├── site.html                  # Landing page do SaaS (recursos + planos)
+├── entrar.html                # Login do espaço de trabalho (sessão simulada)
+├── index.html                 # Aplicativo: shell SaaS (sidebar/topbar) + 6 módulos
+├── css/style.css              # Identidade visual + layout de impressão dos documentos
+├── js/data.js                 # Catálogo padrão, fatores e modelos de laudo
+├── js/app.js                  # Motor de cálculo, sessão, persistência e documentos
+└── docs/arquitetura-saas.md   # Desenho SaaS: arquitetura, ERD, fluxos, planos, fases
 ```
 
 > A pasta `plataforma-orcamento-eletrico/` contém o MVP inicial que deu origem a esta
 > versão — mantida como referência.
 
-## Roadmap sugerido
+## Roadmap para o SaaS em produção
 
-1. **Calibração contínua**: registrar horas reais por projeto e ajustar o catálogo.
-2. **Backend multiusuário** (Node/FastAPI + PostgreSQL) mantendo este front.
-3. **Fotos nos laudos** (upload e inclusão no relatório fotográfico).
-4. **Envio direto** da proposta por e-mail/WhatsApp e aceite eletrônico.
-5. **Integrações**: emissão de NF, ART via CREA, agenda de inspeções periódicas.
+O plano completo (com diagramas e estimativas) está em `docs/arquitetura-saas.md`:
+
+1. **Fase 1** — Auth + PostgreSQL multi-tenant (dados saem do localStorage), 1 tenant.
+2. **Fase 2** — PDF no servidor, envio por e-mail/WhatsApp e **aceite online da proposta**.
+3. **Fase 3** — Billing (Pix/boleto/cartão) + planos + cadastro self-service → SaaS aberto.
+4. **Fase 4** — PWA offline para inspeções, fotos nos laudos e **calibração automática**
+   comparando horas previstas × horas reais por serviço.
 
 ## Aviso
 

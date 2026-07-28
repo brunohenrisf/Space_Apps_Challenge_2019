@@ -13,6 +13,7 @@ const STORE = {
   orcamentos: 'elyon.orcamentos.v1',
   laudos: 'elyon.laudos.v1',
   seq: 'elyon.seq.v1',
+  sessao: 'elyon.sessao.v1',
 };
 
 function carregarObj(chave, padrao) {
@@ -116,6 +117,42 @@ function chipParecer(parecerId) {
   const p = achar(PARECERES, parecerId);
   return `<span class="chip chip-parecer-${esc(p.id)}">${esc(p.nome)}</span>`;
 }
+
+/* ---------------- sessão (protótipo SaaS) ----------------
+   No protótipo o login é simulado (entrar.html grava a sessão no
+   localStorage). Na versão em produção este bloco é substituído
+   pelo provedor de autenticação — ver docs/arquitetura-saas.md. */
+function carregarSessao() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE.sessao)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function encerrarSessao() {
+  localStorage.removeItem(STORE.sessao);
+  location.replace('entrar.html');
+}
+
+function renderUsuario(sessao) {
+  const nome = sessao.nome || 'Engenheiro(a)';
+  const iniciais = nome.split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((parte) => parte[0].toUpperCase()).join('') || 'EL';
+  el('user-avatar').textContent = iniciais;
+  el('user-nome').textContent = nome;
+  el('user-email').textContent = sessao.email || '';
+  el('user-plano').textContent = sessao.plano || 'Profissional';
+}
+
+const TITULOS_ABAS = {
+  dashboard: 'Início',
+  orcamentos: 'Orçamentos',
+  laudos: 'Laudos técnicos',
+  horatecnica: 'Hora técnica',
+  catalogo: 'Catálogo de serviços',
+  config: 'Configurações',
+};
 
 /* =================================================================
    MOTOR DE CÁLCULO
@@ -1068,6 +1105,7 @@ function restaurarPadroes() {
 function trocarAba(nome) {
   document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('active', b.dataset.tab === nome));
   document.querySelectorAll('.tab').forEach((s) => s.classList.toggle('active', s.id === `tab-${nome}`));
+  el('titulo-pagina').textContent = TITULOS_ABAS[nome] || 'Elyon Engenharia';
 
   if (nome === 'dashboard') renderDashboard();
   else if (nome === 'orcamentos') { if (editorOrc) { renderItensOrc(); renderResumoOrc(); } else renderListaOrc(); }
@@ -1088,6 +1126,14 @@ function renderTudo() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // guarda de sessão: sem login, volta para a tela de entrada
+  const sessao = carregarSessao();
+  if (!sessao) {
+    location.replace('entrar.html');
+    return;
+  }
+  renderUsuario(sessao);
+
   renderTudo();
 
   // popula selects estáticos do editor de laudo (útil antes da primeira edição)
@@ -1098,6 +1144,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('nav button').forEach((botao) => {
     botao.addEventListener('click', () => trocarAba(botao.dataset.tab));
   });
+
+  // shell SaaS: ação rápida da topbar e logout
+  el('tb-novo-orc').addEventListener('click', () => { trocarAba('orcamentos'); novoOrcamento(); });
+  el('btn-sair').addEventListener('click', encerrarSessao);
 
   // dashboard — atalhos
   el('d-novo-orc').addEventListener('click', () => { trocarAba('orcamentos'); novoOrcamento(); });

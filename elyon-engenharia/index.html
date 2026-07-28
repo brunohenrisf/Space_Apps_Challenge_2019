@@ -3,38 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Elyon Engenharia — Orçamentos e Laudos</title>
+  <title>Elyon Engenharia — Plataforma</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,4 92,27 92,73 50,96 8,73 8,27' fill='%230d2b45'/><path d='M55 22 L33 55 h14 L45 78 L69 44 h-15 z' fill='%23f0a500'/></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="app">
-  <header>
-    <div class="topo">
-      <div class="brand">
-        <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
-          <polygon points="50,4 92,27 92,73 50,96 8,73 8,27" fill="#f0a500"/>
-          <polygon points="50,10 87,30 87,70 50,90 13,70 13,30" fill="#0d2b45"/>
-          <path d="M55 22 L33 55 h14 L45 78 L69 44 h-15 z" fill="#f0a500"/>
-        </svg>
-        <div>
-          <h1>ELYON <span>ENGENHARIA</span></h1>
-          <small>Plataforma de Orçamentos, Propostas e Laudos Técnicos</small>
-        </div>
+<div class="app shell">
+
+  <!-- ================= SIDEBAR (shell SaaS) ================= -->
+  <aside class="sidebar">
+    <div class="side-logo">
+      <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="50,4 92,27 92,73 50,96 8,73 8,27" fill="#f0a500"/>
+        <polygon points="50,10 87,30 87,70 50,90 13,70 13,30" fill="#0d2b45"/>
+        <path d="M55 22 L33 55 h14 L45 78 L69 44 h-15 z" fill="#f0a500"/>
+      </svg>
+      <div>
+        <h1>ELYON <span>ENG.</span></h1>
+        <small>Espaço de trabalho</small>
       </div>
     </div>
-    <nav>
-      <button data-tab="dashboard" class="active">Início</button>
-      <button data-tab="orcamentos">Orçamentos</button>
-      <button data-tab="laudos">Laudos</button>
-      <button data-tab="horatecnica">Hora técnica</button>
-      <button data-tab="catalogo">Catálogo de serviços</button>
-      <button data-tab="config">Configurações</button>
-    </nav>
-  </header>
 
-  <main>
+    <nav>
+      <button data-tab="dashboard" class="active"><span class="ico">🏠</span> Início</button>
+      <button data-tab="orcamentos"><span class="ico">💼</span> Orçamentos</button>
+      <button data-tab="laudos"><span class="ico">📋</span> Laudos</button>
+      <button data-tab="horatecnica"><span class="ico">⏱️</span> Hora técnica</button>
+      <button data-tab="catalogo"><span class="ico">🗂️</span> Catálogo</button>
+      <button data-tab="config"><span class="ico">⚙️</span> Configurações</button>
+    </nav>
+
+    <div class="side-user">
+      <div class="avatar" id="user-avatar">EE</div>
+      <div class="side-user-info">
+        <strong id="user-nome">—</strong>
+        <small id="user-email"></small>
+      </div>
+      <span class="plano-badge" id="user-plano">Profissional</span>
+      <button id="btn-sair" title="Encerrar sessão">Sair da conta</button>
+    </div>
+  </aside>
+
+  <!-- ================= CONTEÚDO ================= -->
+  <div class="conteudo">
+    <div class="topbar">
+      <h2 id="titulo-pagina">Início</h2>
+      <div class="topbar-acoes">
+        <button id="tb-novo-orc" class="primario">➕ Novo orçamento</button>
+      </div>
+    </div>
+
+    <main>
 
     <!-- ================= INÍCIO / DASHBOARD ================= -->
     <section id="tab-dashboard" class="tab active">
@@ -438,15 +458,16 @@
           <button id="cfg-restaurar" class="discreto">Restaurar padrões</button>
           <input type="file" id="cfg-file" accept="application/json" hidden>
         </div>
-        <p class="nota">Os dados ficam salvos apenas neste navegador (localStorage). Exporte um backup periodicamente — ele inclui configurações, catálogo, orçamentos e laudos.</p>
+        <p class="nota">Neste protótipo os dados ficam no navegador (localStorage). Na versão SaaS em produção, tudo é sincronizado no banco de dados multi-tenant — veja <em>docs/arquitetura-saas.md</em>.</p>
       </fieldset>
     </section>
 
-  </main>
+    </main>
 
-  <footer>
-    <span>Elyon Engenharia — plataforma interna de precificação, propostas e laudos. Revise cada documento antes de enviar.</span>
-  </footer>
+    <footer>
+      <span>Elyon Engenharia — plataforma de precificação, propostas e laudos · protótipo SaaS. Revise cada documento antes de enviar.</span>
+    </footer>
+  </div>
 </div>
 
 <!-- Área de impressão (proposta ou laudo) -->
