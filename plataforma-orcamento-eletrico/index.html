@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrçaElétrico — Orçamentos de Projetos Elétricos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>⚡ OrçaElétrico</h1>
+      <span>Plataforma de orçamentos para projetos elétricos</span>
+    </div>
+    <nav>
+      <button data-tab="orcamento" class="active">Novo orçamento</button>
+      <button data-tab="hora">Hora técnica</button>
+      <button data-tab="parametros">Parâmetros</button>
+      <button data-tab="salvos">Salvos (<span id="qtd-salvos">0</span>)</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ============ ABA: NOVO ORÇAMENTO ============ -->
+    <section id="tab-orcamento" class="tab active">
+      <div class="duas-colunas">
+        <div class="coluna-form">
+
+          <fieldset>
+            <legend>Identificação</legend>
+            <div class="grid-2">
+              <label>Cliente
+                <input type="text" id="o-cliente" placeholder="Nome do cliente">
+              </label>
+              <label>Obra / projeto
+                <input type="text" id="o-obra" placeholder="Ex.: Residência Rua das Flores, 120">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Escopo</legend>
+            <div class="grid-2">
+              <label>Tipo de projeto
+                <select id="o-tipo"></select>
+              </label>
+              <label>Área construída (m²)
+                <input type="number" id="o-area" value="150" min="0" step="any">
+              </label>
+              <label>Complexidade
+                <select id="o-complexidade"></select>
+              </label>
+              <label>Informações de entrada
+                <select id="o-info"></select>
+              </label>
+              <label>Prazo solicitado
+                <select id="o-urgencia"></select>
+              </label>
+              <label class="check">
+                <input type="checkbox" id="o-compat">
+                Compatibilização com outras disciplinas
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Esforço adicional</legend>
+            <div class="grid-3">
+              <label>Revisões extras previstas
+                <input type="number" id="o-revisoes" value="0" min="0" step="1">
+              </label>
+              <label>Visitas técnicas
+                <input type="number" id="o-visitas" value="1" min="0" step="1">
+              </label>
+              <label>Distância até a obra (km, ida)
+                <input type="number" id="o-km" value="10" min="0" step="any">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Custos diretos e condições comerciais</legend>
+            <div class="grid-3">
+              <label>ART / TRT (R$)
+                <input type="number" id="o-art" value="110" min="0" step="any">
+              </label>
+              <label>Plotagem / impressões (R$)
+                <input type="number" id="o-plotagem" value="0" min="0" step="any">
+              </label>
+              <label>Outros custos (R$)
+                <input type="number" id="o-outros" value="0" min="0" step="any">
+              </label>
+              <label>Desconto comercial (%)
+                <input type="number" id="o-desconto" value="0" min="0" max="100" step="any">
+              </label>
+              <label>Valor da hora manual (R$)
+                <input type="number" id="o-valorhora" value="0" min="0" step="any">
+                <small>Deixe 0 para usar o valor calculado na aba Hora técnica.</small>
+              </label>
+            </div>
+          </fieldset>
+
+        </div>
+
+        <aside class="coluna-resumo">
+          <div class="card resumo">
+            <h2>Resumo do orçamento</h2>
+
+            <div class="linha-destaque">
+              <span>Hora técnica aplicada</span>
+              <strong id="r-valorhora">—</strong>
+            </div>
+
+            <h3>Horas estimadas por etapa</h3>
+            <table>
+              <tbody id="r-etapas"></tbody>
+              <tfoot>
+                <tr><th>Total de horas</th><th id="r-horas">—</th></tr>
+              </tfoot>
+            </table>
+
+            <h3>Composição de valores</h3>
+            <table>
+              <tbody id="r-comp"></tbody>
+            </table>
+
+            <div class="total-final">
+              <span>Total da proposta</span>
+              <strong id="r-total">—</strong>
+            </div>
+
+            <div class="indicadores">
+              <div><small>Preço mínimo (custo)</small><span id="r-minimo">—</span></div>
+              <div><small>Preço por m²</small><span id="r-precom2">—</span></div>
+              <div><small>Prazo estimado</small><span id="r-prazo">—</span></div>
+            </div>
+
+            <div class="acoes">
+              <button id="b-salvar" class="primario">💾 Salvar orçamento</button>
+              <button id="b-proposta">🖨️ Gerar proposta</button>
+              <button id="b-limpar" class="discreto">Limpar</button>
+            </div>
+            <p class="nota">Os valores usam os parâmetros das abas <em>Hora técnica</em> e <em>Parâmetros</em>. Revise antes de enviar ao cliente.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ ABA: HORA TÉCNICA ============ -->
+    <section id="tab-hora" class="tab">
+      <div class="duas-colunas">
+        <div class="coluna-form">
+          <fieldset>
+            <legend>Custos mensais</legend>
+            <div class="grid-2">
+              <label>Pró-labore desejado (R$/mês)
+                <input type="number" id="c-prolabore" min="0" step="any">
+                <small>Quanto você quer "se pagar" por mês.</small>
+              </label>
+              <label>Custos fixos do escritório (R$/mês)
+                <input type="number" id="c-fixos" min="0" step="any">
+                <small>Aluguel, softwares, contador, energia, internet, anuidade CREA…</small>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Capacidade de trabalho</legend>
+            <div class="grid-3">
+              <label>Dias úteis por mês
+                <input type="number" id="c-dias" min="1" max="31" step="1">
+              </label>
+              <label>Horas por dia
+                <input type="number" id="c-horasdia" min="1" max="24" step="any">
+              </label>
+              <label>% de horas produtivas
+                <input type="number" id="c-produtivo" min="1" max="100" step="any">
+                <small>Parte do dia realmente faturável — o resto vai para comercial, e-mails, administrativo.</small>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Impostos e margem</legend>
+            <div class="grid-2">
+              <label>Impostos sobre a nota (%)
+                <input type="number" id="c-impostos" min="0" max="99" step="any">
+                <small>Ex.: Simples Nacional. Incide sobre o faturamento.</small>
+              </label>
+              <label>Margem de lucro (%)
+                <input type="number" id="c-margem" min="0" step="any">
+                <small>Lucro da empresa, além do seu pró-labore.</small>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+
+        <aside class="coluna-resumo">
+          <div class="card resumo">
+            <h2>Sua hora técnica</h2>
+            <div class="indicadores vertical">
+              <div><small>Horas faturáveis por mês</small><span id="h-out-horas">—</span></div>
+              <div><small>Custo mensal total</small><span id="h-out-custo">—</span></div>
+              <div><small>Custo da hora técnica</small><span id="h-out-custohora">—</span></div>
+            </div>
+            <div class="total-final">
+              <span>Valor de venda da hora</span>
+              <strong id="h-out-valorhora">—</strong>
+            </div>
+            <p class="nota">Valor de venda = custo da hora × (1 + margem) ÷ (1 − impostos). É este valor que alimenta os orçamentos.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ ABA: PARÂMETROS ============ -->
+    <section id="tab-parametros" class="tab">
+      <fieldset>
+        <legend>Seus dados (aparecem na proposta)</legend>
+        <div class="grid-3">
+          <label>Nome / razão social
+            <input type="text" id="p-nome" placeholder="Eng. Fulano de Tal">
+          </label>
+          <label>Registro profissional (CREA)
+            <input type="text" id="p-registro" placeholder="CREA-XX 000000000-0">
+          </label>
+          <label>Contato (e-mail / telefone)
+            <input type="text" id="p-contato" placeholder="voce@email.com · (00) 90000-0000">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tipos de projeto — horas base + horas por m²</legend>
+        <p class="nota">Horas estimadas = (base + h/m² × área) × fatores. Calibre com seus projetos reais.</p>
+        <table class="editavel">
+          <thead><tr><th>Tipo</th><th>Horas base</th><th>Horas por m²</th></tr></thead>
+          <tbody id="p-tipos"></tbody>
+        </table>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fatores de complexidade</legend>
+        <table class="editavel">
+          <thead><tr><th>Nível</th><th>Multiplicador</th></tr></thead>
+          <tbody id="p-complex"></tbody>
+        </table>
+      </fieldset>
+
+      <fieldset>
+        <legend>Distribuição das etapas (%)</legend>
+        <table class="editavel">
+          <thead><tr><th>Etapa</th><th>% das horas</th></tr></thead>
+          <tbody id="p-etapas"></tbody>
+        </table>
+        <p class="nota">Os percentuais são normalizados automaticamente se não somarem 100%.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Outros fatores</legend>
+        <div class="grid-4">
+          <label>Fator de compatibilização
+            <input type="number" id="p-fatorcompat" min="1" step="any">
+          </label>
+          <label>% de horas por revisão extra
+            <input type="number" id="p-percrevisao" min="0" step="any">
+          </label>
+          <label>Horas por visita técnica
+            <input type="number" id="p-horasvisita" min="0" step="any">
+          </label>
+          <label>Custo por km rodado (R$)
+            <input type="number" id="p-custokm" min="0" step="any">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Backup dos dados</legend>
+        <div class="acoes">
+          <button id="p-exportar">⬇️ Exportar dados (JSON)</button>
+          <button id="p-importar">⬆️ Importar dados</button>
+          <button id="p-restaurar" class="discreto">Restaurar padrões</button>
+          <input type="file" id="p-file" accept="application/json" hidden>
+        </div>
+        <p class="nota">Os dados ficam salvos apenas neste navegador (localStorage). Exporte um backup periodicamente.</p>
+      </fieldset>
+    </section>
+
+    <!-- ============ ABA: SALVOS ============ -->
+    <section id="tab-salvos" class="tab">
+      <div class="card">
+        <h2>Orçamentos salvos</h2>
+        <p id="s-vazio" class="nota">Nenhum orçamento salvo ainda. Monte um orçamento e clique em “Salvar orçamento”.</p>
+        <table id="s-tabela" hidden>
+          <thead>
+            <tr><th>Data</th><th>Cliente</th><th>Projeto</th><th>Horas</th><th>Total</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="s-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>OrçaElétrico — ferramenta de apoio à precificação. Os valores são estimativas: revise cada proposta antes de enviar.</span>
+  </footer>
+</div>
+
+<!-- Área de impressão da proposta -->
+<div id="proposta"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

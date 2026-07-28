@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elyon Engenharia — Plataforma SaaS de Orçamentos e Laudos Elétricos</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,4 92,27 92,73 50,96 8,73 8,27' fill='%230d2b45'/><path d='M55 22 L33 55 h14 L45 78 L69 44 h-15 z' fill='%23f0a500'/></svg>">
+  <style>
+    :root {
+      --navy: #0d2b45; --navy-2: #14395c; --navy-3: #1d4d7a; --amber: #f0a500;
+      --borda: #d8e1ea; --texto: #22303c; --suave: #64748b; --fundo: #f2f5f9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      color: var(--texto); background: #fff; line-height: 1.5;
+    }
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 22px; }
+
+    /* topo */
+    .nav-site {
+      position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--borda); z-index: 10;
+    }
+    .nav-site .container { display: flex; align-items: center; gap: 14px; padding-top: 10px; padding-bottom: 10px; }
+    .marca { display: flex; align-items: center; gap: 9px; font-weight: 800; letter-spacing: 1.5px; color: var(--navy); font-size: 16px; }
+    .marca svg { width: 30px; height: 30px; }
+    .marca span { color: var(--amber); font-weight: 600; }
+    .nav-links { margin-left: auto; display: flex; gap: 18px; align-items: center; font-size: 14px; }
+    .nav-links a { color: var(--texto); text-decoration: none; }
+    .nav-links a:hover { color: var(--navy-3); }
+    .nav-links a.btn-navy { color: #fff; }
+    .nav-links a.btn-navy:hover { color: #fff; }
+    .btn {
+      display: inline-block; border-radius: 8px; padding: 10px 18px; font-weight: 700;
+      text-decoration: none; font-size: 14.5px; border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-amber { background: var(--amber); color: var(--navy); }
+    .btn-amber:hover { background: #c98a00; color: #fff; }
+    .btn-ghost { border-color: rgba(255,255,255,0.5); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+    .btn-navy { background: var(--navy); color: #fff; }
+    .btn-navy:hover { background: var(--navy-3); }
+
+    /* hero */
+    .hero { background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; padding: 72px 0 84px; }
+    .hero .container { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: center; }
+    .hero h1 { font-size: 40px; line-height: 1.15; margin: 0 0 16px; }
+    .hero h1 em { color: var(--amber); font-style: normal; }
+    .hero p { font-size: 17px; opacity: 0.92; margin: 0 0 26px; max-width: 520px; }
+    .hero .acoes { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero small { display: block; margin-top: 14px; opacity: 0.7; font-size: 12.5px; }
+
+    /* mock de tela no hero */
+    .mock { background: #fff; border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,0.35); overflow: hidden; color: var(--texto); }
+    .mock-topo { background: #e9edf2; padding: 8px 12px; display: flex; gap: 6px; }
+    .mock-topo i { width: 10px; height: 10px; border-radius: 50%; background: #c5cfd8; display: inline-block; }
+    .mock-corpo { display: flex; }
+    .mock-side { background: var(--navy); width: 84px; padding: 10px 8px; display: flex; flex-direction: column; gap: 8px; }
+    .mock-side i { height: 10px; border-radius: 4px; background: rgba(255,255,255,0.25); display: block; }
+    .mock-side i.on { background: var(--amber); }
+    .mock-main { flex: 1; padding: 14px; }
+    .mock-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .mock-kpi { border: 1px solid var(--borda); border-radius: 8px; padding: 8px; font-size: 10px; color: var(--suave); }
+    .mock-kpi b { display: block; font-size: 13px; color: var(--navy); }
+    .mock-linha { height: 12px; border-radius: 4px; background: #eef1f5; margin: 8px 0; }
+    .mock-total { background: var(--navy); color: var(--amber); border-radius: 8px; padding: 9px 12px; font-weight: 800; font-size: 13px; display: flex; justify-content: space-between; }
+    .mock-total span { color: #fff; font-weight: 600; }
+
+    /* seções */
+    section { padding: 64px 0; }
+    section h2 { font-size: 28px; color: var(--navy); text-align: center; margin: 0 0 8px; }
+    section p.sub { text-align: center; color: var(--suave); margin: 0 auto 40px; max-width: 640px; }
+    .grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .recurso { border: 1px solid var(--borda); border-radius: 12px; padding: 20px; background: #fff; }
+    .recurso .ico { font-size: 26px; }
+    .recurso h3 { margin: 10px 0 6px; font-size: 16px; color: var(--navy); }
+    .recurso p { margin: 0; font-size: 13.5px; color: var(--suave); }
+
+    .faixa-cinza { background: var(--fundo); }
+    .passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: passo; }
+    .passo { background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 22px; position: relative; }
+    .passo::before {
+      counter-increment: passo; content: counter(passo);
+      position: absolute; top: -16px; left: 20px; width: 32px; height: 32px; border-radius: 50%;
+      background: var(--amber); color: var(--navy); font-weight: 800; display: flex; align-items: center; justify-content: center;
+    }
+    .passo h3 { margin: 8px 0 6px; font-size: 15.5px; color: var(--navy); }
+    .passo p { margin: 0; font-size: 13.5px; color: var(--suave); }
+
+    /* planos */
+    .planos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: stretch; }
+    .plano { border: 1px solid var(--borda); border-radius: 14px; padding: 26px 24px; background: #fff; display: flex; flex-direction: column; }
+    .plano.destaque { border: 2px solid var(--amber); box-shadow: 0 10px 34px rgba(240,165,0,0.18); position: relative; }
+    .plano.destaque::before {
+      content: "MAIS POPULAR"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--amber); color: var(--navy); font-size: 11px; font-weight: 800; letter-spacing: 1px;
+      border-radius: 999px; padding: 4px 12px;
+    }
+    .plano h3 { margin: 0; color: var(--navy); font-size: 17px; }
+    .preco { font-size: 34px; font-weight: 800; color: var(--navy); margin: 10px 0 2px; }
+    .preco small { font-size: 13px; color: var(--suave); font-weight: 400; }
+    .plano ul { list-style: none; padding: 0; margin: 16px 0 22px; display: grid; gap: 9px; flex: 1; }
+    .plano li { font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; }
+    .plano li::before { content: "✔"; color: var(--amber); font-weight: 700; }
+    .plano li.nao { color: #a9b4bf; }
+    .plano li.nao::before { content: "—"; color: #c5cfd8; }
+    .nota-planos { text-align: center; color: var(--suave); font-size: 12.5px; margin-top: 18px; }
+
+    /* cta final + rodapé */
+    .cta-final { background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; text-align: center; }
+    .cta-final h2 { color: #fff; }
+    .cta-final p { color: rgba(255,255,255,0.85); }
+    footer { border-top: 1px solid var(--borda); padding: 22px 0; font-size: 12.5px; color: var(--suave); text-align: center; }
+
+    @media (max-width: 880px) {
+      .hero .container, .grade, .passos, .planos { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 30px; }
+      .mock { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nav-site">
+    <div class="container">
+      <div class="marca">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <polygon points="50,4 92,27 92,73 50,96 8,73 8,27" fill="#f0a500"/>
+          <polygon points="50,10 87,30 87,70 50,90 13,70 13,30" fill="#0d2b45"/>
+          <path d="M55 22 L33 55 h14 L45 78 L69 44 h-15 z" fill="#f0a500"/>
+        </svg>
+        ELYON <span>ENGENHARIA</span>
+      </div>
+      <div class="nav-links">
+        <a href="#recursos">Recursos</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#planos">Planos</a>
+        <a class="btn btn-navy" href="entrar.html">Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="container">
+      <div>
+        <h1>Orçamentos, propostas e laudos de engenharia elétrica <em>em minutos</em>, não em noites.</h1>
+        <p>Precifique pelo custo real da sua hora técnica, combine vários serviços no mesmo orçamento — elétrico, SPDA, subestação, solar, automação — e envie propostas e laudos com a sua marca.</p>
+        <div class="acoes">
+          <a class="btn btn-amber" href="entrar.html">Começar agora — é grátis</a>
+          <a class="btn btn-ghost" href="entrar.html">Ver demonstração</a>
+        </div>
+        <small>Sem cartão de crédito · Seus parâmetros de precificação são só seus</small>
+      </div>
+      <div class="mock" aria-hidden="true">
+        <div class="mock-topo"><i></i><i></i><i></i></div>
+        <div class="mock-corpo">
+          <div class="mock-side"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          <div class="mock-main">
+            <div class="mock-kpis">
+              <div class="mock-kpi">Em negociação<b>R$ 84.320</b></div>
+              <div class="mock-kpi">Fechado no mês<b>R$ 52.552</b></div>
+              <div class="mock-kpi">Conversão<b>62%</b></div>
+            </div>
+            <div class="mock-linha" style="width:90%"></div>
+            <div class="mock-linha" style="width:75%"></div>
+            <div class="mock-linha" style="width:82%"></div>
+            <div class="mock-total"><span>Proposta ORC-2026-014</span>R$ 52.552,49</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="recursos">
+    <div class="container">
+      <h2>Feita por quem entende o dia a dia do projetista</h2>
+      <p class="sub">Cada tipo de projeto tem sua unidade, seus níveis de complexidade e seu escopo — a plataforma cuida da matemática e da apresentação.</p>
+      <div class="grade">
+        <div class="recurso"><div class="ico">⚡</div><h3>11 tipos de serviço prontos</h3><p>Elétrico BT, SPDA, subestação (kVA), fotovoltaico + homologação (kWp), automação (pontos), cabeamento, laudos e as-built — todos calibráveis.</p></div>
+        <div class="recurso"><div class="ico">🧮</div><h3>Precificação pela hora técnica</h3><p>Custos fixos, produtividade real, impostos e margem viram o valor da sua hora — e um alerta avisa se o desconto te levar ao prejuízo.</p></div>
+        <div class="recurso"><div class="ico">📑</div><h3>Proposta com a sua marca</h3><p>Escopo detalhado por serviço, investimento, condições e assinatura do RT. Numeração automática e PDF pronto para enviar.</p></div>
+        <div class="recurso"><div class="ico">📋</div><h3>Laudos por checklist</h3><p>NR-10, NBR 5410, SPDA e aterramento. Marque conforme/não conforme no local e a conclusão é redigida automaticamente.</p></div>
+        <div class="recurso"><div class="ico">📈</div><h3>Funil comercial</h3><p>Rascunho → enviada → aprovada/recusada. Veja pipeline, valor fechado e taxa de conversão no painel.</p></div>
+        <div class="recurso"><div class="ico">🎯</div><h3>Estimativas que aprendem</h3><p>Compare horas previstas × realizadas e calibre os coeficientes do catálogo — seus orçamentos ficam mais precisos a cada projeto.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faixa-cinza" id="como-funciona">
+    <div class="container">
+      <h2>Como funciona</h2>
+      <p class="sub">Três passos entre o pedido do cliente e a proposta na caixa de entrada dele.</p>
+      <div class="passos">
+        <div class="passo"><h3>Configure uma vez</h3><p>Sua hora técnica, os dados do escritório e o catálogo de serviços com complexidades — tudo editável, sem planilhas.</p></div>
+        <div class="passo"><h3>Monte o orçamento</h3><p>Escolha os serviços, informe área/kWp/kVA/pontos e a complexidade. Horas, prazo e preço aparecem na tela, ao vivo.</p></div>
+        <div class="passo"><h3>Envie e acompanhe</h3><p>Gere a proposta ou o laudo em PDF com um clique e acompanhe o status de cada negociação no painel.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="planos">
+    <div class="container">
+      <h2>Planos simples, sem surpresa</h2>
+      <p class="sub">Comece grátis e evolua quando a demanda crescer.</p>
+      <div class="planos">
+        <div class="plano">
+          <h3>Essencial</h3>
+          <div class="preco">R$ 0<small>/mês</small></div>
+          <ul>
+            <li>1 usuário</li>
+            <li>Até 10 orçamentos por mês</li>
+            <li>Catálogo completo de serviços</li>
+            <li>Propostas em PDF</li>
+            <li class="nao">Laudos técnicos</li>
+            <li class="nao">Marca própria nos documentos</li>
+          </ul>
+          <a class="btn btn-navy" href="entrar.html">Criar conta grátis</a>
+        </div>
+        <div class="plano destaque">
+          <h3>Profissional</h3>
+          <div class="preco">R$ 49<small>/mês</small></div>
+          <ul>
+            <li>1 usuário</li>
+            <li>Orçamentos e laudos ilimitados</li>
+            <li>Sua marca em propostas e laudos</li>
+            <li>Todos os 4 modelos de laudo</li>
+            <li>Funil comercial e indicadores</li>
+            <li>Backup e exportação de dados</li>
+          </ul>
+          <a class="btn btn-amber" href="entrar.html">Assinar Profissional</a>
+        </div>
+        <div class="plano">
+          <h3>Escritório</h3>
+          <div class="preco">R$ 149<small>/mês</small></div>
+          <ul>
+            <li>Até 5 usuários com permissões</li>
+            <li>Tudo do Profissional</li>
+            <li>Aceite online da proposta</li>
+            <li>Envio por e-mail e WhatsApp</li>
+            <li>Relatórios de produtividade</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <a class="btn btn-navy" href="entrar.html">Falar com a gente</a>
+        </div>
+      </div>
+      <p class="nota-planos">Preços sugeridos para o modelo SaaS (protótipo) — defina os valores finais na estratégia comercial. Detalhes técnicos em <em>docs/arquitetura-saas.md</em>.</p>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="container">
+      <h2>Pare de orçar de madrugada.</h2>
+      <p class="sub">Entre agora e monte seu primeiro orçamento multi-serviço em menos de 5 minutos.</p>
+      <a class="btn btn-amber" href="entrar.html">Acessar a plataforma →</a>
+    </div>
+  </section>
+
+  <footer>
+    Elyon Engenharia — Plataforma de Orçamentos, Propostas e Laudos Técnicos · protótipo SaaS
+  </footer>
+</body>
+</html>
