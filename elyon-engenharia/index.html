@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elyon Engenharia — Orçamentos e Laudos</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,4 92,27 92,73 50,96 8,73 8,27' fill='%230d2b45'/><path d='M55 22 L33 55 h14 L45 78 L69 44 h-15 z' fill='%23f0a500'/></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="topo">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+          <polygon points="50,4 92,27 92,73 50,96 8,73 8,27" fill="#f0a500"/>
+          <polygon points="50,10 87,30 87,70 50,90 13,70 13,30" fill="#0d2b45"/>
+          <path d="M55 22 L33 55 h14 L45 78 L69 44 h-15 z" fill="#f0a500"/>
+        </svg>
+        <div>
+          <h1>ELYON <span>ENGENHARIA</span></h1>
+          <small>Plataforma de Orçamentos, Propostas e Laudos Técnicos</small>
+        </div>
+      </div>
+    </div>
+    <nav>
+      <button data-tab="dashboard" class="active">Início</button>
+      <button data-tab="orcamentos">Orçamentos</button>
+      <button data-tab="laudos">Laudos</button>
+      <button data-tab="horatecnica">Hora técnica</button>
+      <button data-tab="catalogo">Catálogo de serviços</button>
+      <button data-tab="config">Configurações</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ================= INÍCIO / DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab active">
+      <div class="cards-kpi">
+        <div class="kpi"><small>Orçamentos criados</small><strong id="d-qtd-orc">0</strong></div>
+        <div class="kpi"><small>Em negociação (enviadas)</small><strong id="d-pipeline">R$ 0</strong></div>
+        <div class="kpi destaque"><small>Aprovado (fechado)</small><strong id="d-aprovado">R$ 0</strong></div>
+        <div class="kpi"><small>Taxa de conversão</small><strong id="d-conversao">—</strong></div>
+        <div class="kpi"><small>Laudos emitidos</small><strong id="d-qtd-laudos">0</strong></div>
+      </div>
+
+      <div class="card">
+        <div class="barra-topo">
+          <h2>Últimos orçamentos</h2>
+          <div class="acoes">
+            <button id="d-novo-orc" class="primario">➕ Novo orçamento</button>
+            <button id="d-novo-laudo">📋 Novo laudo</button>
+          </div>
+        </div>
+        <p id="d-recentes-vazio" class="nota">Nenhum orçamento ainda. Crie o primeiro para começar.</p>
+        <table id="d-recentes-tabela" hidden>
+          <thead><tr><th>Nº</th><th>Cliente</th><th>Obra</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody id="d-recentes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= ORÇAMENTOS ================= -->
+    <section id="tab-orcamentos" class="tab">
+
+      <!-- lista -->
+      <div id="orc-lista-view">
+        <div class="barra-topo">
+          <h2>Orçamentos</h2>
+          <button id="orc-novo" class="primario">➕ Novo orçamento</button>
+        </div>
+        <div class="card">
+          <p id="orc-vazio" class="nota">Nenhum orçamento salvo. Clique em “Novo orçamento” para montar o primeiro.</p>
+          <table id="orc-tabela" hidden>
+            <thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Obra</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="orc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- editor -->
+      <div id="orc-editor-view" hidden>
+        <div class="barra-topo">
+          <button id="orc-voltar" class="discreto">← Voltar</button>
+          <h2 id="orc-titulo">Novo orçamento</h2>
+          <label class="inline">Status
+            <select id="oe-status"></select>
+          </label>
+        </div>
+
+        <div class="duas-colunas">
+          <div class="coluna-form">
+
+            <fieldset>
+              <legend>Cliente e obra</legend>
+              <div class="grid-2">
+                <label>Cliente
+                  <input type="text" id="oe-cliente" placeholder="Nome do cliente / empresa">
+                </label>
+                <label>Contato
+                  <input type="text" id="oe-contato" placeholder="Telefone / e-mail">
+                </label>
+                <label>Obra / projeto
+                  <input type="text" id="oe-obra" placeholder="Ex.: Galpão logístico — ampliação">
+                </label>
+                <label>Endereço / cidade
+                  <input type="text" id="oe-endereco" placeholder="Endereço da obra">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Serviços do orçamento</legend>
+              <div id="oe-itens"></div>
+              <button id="oe-additem" type="button">➕ Adicionar serviço</button>
+              <p class="nota">Cada serviço tem sua própria unidade (m², kWp, kVA, pontos…) e níveis de complexidade. Combine quantos serviços precisar no mesmo orçamento.</p>
+            </fieldset>
+
+            <fieldset>
+              <legend>Condições e custos diretos</legend>
+              <div class="grid-3">
+                <label>Prazo solicitado
+                  <select id="oe-urgencia"></select>
+                </label>
+                <label>Visitas técnicas
+                  <input type="number" id="oe-visitas" min="0" step="1">
+                </label>
+                <label>Distância até a obra (km, ida)
+                  <input type="number" id="oe-km" min="0" step="any">
+                </label>
+                <label>ART / TRT (R$)
+                  <input type="number" id="oe-art" min="0" step="any">
+                </label>
+                <label>Plotagem / impressões (R$)
+                  <input type="number" id="oe-plotagem" min="0" step="any">
+                </label>
+                <label>Outros custos (R$)
+                  <input type="number" id="oe-outros" min="0" step="any">
+                </label>
+                <label>Desconto comercial (%)
+                  <input type="number" id="oe-desconto" min="0" max="100" step="any">
+                </label>
+                <label>Condição de pagamento
+                  <select id="oe-pagamento"></select>
+                </label>
+                <label>Validade da proposta (dias)
+                  <input type="number" id="oe-validade" min="1" step="1">
+                </label>
+              </div>
+              <label id="oe-pagamento-txt-wrap" hidden>Descreva a condição de pagamento
+                <input type="text" id="oe-pagamento-txt" placeholder="Ex.: 30% entrada + 3 parcelas mensais">
+              </label>
+            </fieldset>
+
+          </div>
+
+          <aside class="coluna-resumo">
+            <div class="card resumo">
+              <h2>Resumo</h2>
+              <div class="linha-destaque">
+                <span>Hora técnica aplicada</span>
+                <strong id="or-valorhora">—</strong>
+              </div>
+
+              <h3>Serviços</h3>
+              <table>
+                <tbody id="or-itens"></tbody>
+                <tfoot><tr><th>Total de horas</th><th id="or-horas">—</th></tr></tfoot>
+              </table>
+
+              <h3>Composição</h3>
+              <table><tbody id="or-comp"></tbody></table>
+
+              <div class="total-final">
+                <span>Total da proposta</span>
+                <strong id="or-total">—</strong>
+              </div>
+
+              <div class="indicadores">
+                <div><small>Preço mínimo (custo)</small><span id="or-minimo">—</span></div>
+                <div><small>Prazo estimado</small><span id="or-prazo">—</span></div>
+                <div><small>Nº de serviços</small><span id="or-qtd-itens">—</span></div>
+              </div>
+
+              <div class="acoes">
+                <button id="oe-salvar" class="primario">💾 Salvar</button>
+                <button id="oe-proposta">🖨️ Gerar proposta</button>
+              </div>
+              <p class="nota">A proposta comercial sai formatada com a identidade da Elyon Engenharia — use “Salvar como PDF” na janela de impressão.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LAUDOS ================= -->
+    <section id="tab-laudos" class="tab">
+
+      <!-- lista -->
+      <div id="lau-lista-view">
+        <div class="barra-topo">
+          <h2>Laudos e relatórios técnicos</h2>
+          <button id="lau-novo" class="primario">➕ Novo laudo</button>
+        </div>
+        <div class="card">
+          <p id="lau-vazio" class="nota">Nenhum laudo emitido. Clique em “Novo laudo” para preencher o primeiro checklist.</p>
+          <table id="lau-tabela" hidden>
+            <thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Cliente</th><th>Parecer</th><th>Ações</th></tr></thead>
+            <tbody id="lau-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- editor -->
+      <div id="lau-editor-view" hidden>
+        <div class="barra-topo">
+          <button id="lau-voltar" class="discreto">← Voltar</button>
+          <h2 id="lau-titulo">Novo laudo</h2>
+        </div>
+
+        <div class="duas-colunas">
+          <div class="coluna-form">
+
+            <fieldset>
+              <legend>Dados da inspeção</legend>
+              <div class="grid-3">
+                <label>Tipo de laudo
+                  <select id="le-tipo"></select>
+                </label>
+                <label>Cliente
+                  <input type="text" id="le-cliente" placeholder="Nome do cliente / empresa">
+                </label>
+                <label>Endereço / local
+                  <input type="text" id="le-endereco" placeholder="Local da inspeção">
+                </label>
+                <label>Data da inspeção
+                  <input type="date" id="le-data">
+                </label>
+                <label>Acompanhante do cliente
+                  <input type="text" id="le-acompanhante" placeholder="Quem acompanhou a inspeção">
+                </label>
+                <label>Instrumentos utilizados
+                  <input type="text" id="le-instrumentos" placeholder="Ex.: terrômetro XYZ nº série 123">
+                </label>
+                <label>Nº da ART
+                  <input type="text" id="le-art" placeholder="ART nº">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Checklist de verificação</legend>
+              <table class="checklist">
+                <thead><tr><th>Item verificado</th><th>Situação</th><th>Observação</th></tr></thead>
+                <tbody id="le-checklist"></tbody>
+              </table>
+            </fieldset>
+
+            <fieldset>
+              <legend>Conclusão e parecer</legend>
+              <div class="grid-2">
+                <label>Parecer final
+                  <select id="le-parecer"></select>
+                </label>
+                <label class="alinha-fim">
+                  <button id="le-sugerir" type="button">✨ Gerar conclusão automática</button>
+                </label>
+              </div>
+              <label>Texto da conclusão
+                <textarea id="le-conclusao" rows="5" placeholder="A conclusão pode ser gerada automaticamente a partir do checklist e ajustada aqui."></textarea>
+              </label>
+            </fieldset>
+
+          </div>
+
+          <aside class="coluna-resumo">
+            <div class="card resumo">
+              <h2>Resultado do checklist</h2>
+              <div class="indicadores">
+                <div><small>Conformes</small><span id="lr-c" class="ok">0</span></div>
+                <div><small>Não conformes</small><span id="lr-nc" class="ruim">0</span></div>
+                <div><small>Não aplicáveis</small><span id="lr-na">0</span></div>
+              </div>
+              <div class="linha-destaque" style="margin-top:12px">
+                <span>Parecer sugerido</span>
+                <strong id="lr-sugestao">—</strong>
+              </div>
+              <div class="acoes">
+                <button id="le-salvar" class="primario">💾 Salvar laudo</button>
+                <button id="le-doc">🖨️ Gerar documento</button>
+              </div>
+              <p class="nota">O documento sai com identificação, objetivo, normas de referência, metodologia, checklist, conclusão e campo de assinatura do responsável técnico.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HORA TÉCNICA ================= -->
+    <section id="tab-horatecnica" class="tab">
+      <div class="duas-colunas">
+        <div class="coluna-form">
+          <fieldset>
+            <legend>Custos mensais</legend>
+            <div class="grid-2">
+              <label>Pró-labore desejado (R$/mês)
+                <input type="number" id="ht-prolabore" min="0" step="any">
+                <small>Quanto você quer “se pagar” por mês.</small>
+              </label>
+              <label>Custos fixos do escritório (R$/mês)
+                <input type="number" id="ht-fixos" min="0" step="any">
+                <small>Aluguel, softwares, contador, energia, internet, anuidade CREA…</small>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Capacidade de trabalho</legend>
+            <div class="grid-3">
+              <label>Dias úteis por mês
+                <input type="number" id="ht-dias" min="1" max="31" step="1">
+              </label>
+              <label>Horas por dia
+                <input type="number" id="ht-horasdia" min="1" max="24" step="any">
+              </label>
+              <label>% de horas produtivas
+                <input type="number" id="ht-produtivo" min="1" max="100" step="any">
+                <small>Parte do expediente realmente faturável.</small>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Impostos e margem</legend>
+            <div class="grid-2">
+              <label>Impostos sobre a nota (%)
+                <input type="number" id="ht-impostos" min="0" max="99" step="any">
+                <small>Ex.: Simples Nacional — incide sobre o faturamento.</small>
+              </label>
+              <label>Margem de lucro (%)
+                <input type="number" id="ht-margem" min="0" step="any">
+                <small>Lucro da empresa, além do pró-labore.</small>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Visitas e deslocamento</legend>
+            <div class="grid-2">
+              <label>Horas por visita técnica
+                <input type="number" id="ht-horasvisita" min="0" step="any">
+              </label>
+              <label>Custo por km rodado (R$)
+                <input type="number" id="ht-custokm" min="0" step="any">
+              </label>
+            </div>
+          </fieldset>
+        </div>
+
+        <aside class="coluna-resumo">
+          <div class="card resumo">
+            <h2>Sua hora técnica</h2>
+            <div class="indicadores vertical">
+              <div><small>Horas faturáveis por mês</small><span id="ht-out-horas">—</span></div>
+              <div><small>Custo mensal total</small><span id="ht-out-custo">—</span></div>
+              <div><small>Custo da hora técnica</small><span id="ht-out-custohora">—</span></div>
+            </div>
+            <div class="total-final">
+              <span>Valor de venda da hora</span>
+              <strong id="ht-out-valorhora">—</strong>
+            </div>
+            <p class="nota">Valor de venda = custo da hora × (1 + margem) ÷ (1 − impostos). Este valor alimenta todos os orçamentos.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================= CATÁLOGO ================= -->
+    <section id="tab-catalogo" class="tab">
+      <div class="barra-topo">
+        <h2>Catálogo de serviços e precificação</h2>
+      </div>
+      <p class="nota">Cada serviço tem sua equação de horas — <strong>horas = (base + horas/unidade × quantidade) × complexidade × urgência</strong> — e seus próprios níveis de complexidade. Ajuste os coeficientes conforme o histórico real dos seus projetos; as alterações valem imediatamente para novos cálculos.</p>
+      <div id="cat-lista" class="catalogo-grid"></div>
+    </section>
+
+    <!-- ================= CONFIGURAÇÕES ================= -->
+    <section id="tab-config" class="tab">
+      <fieldset>
+        <legend>Dados da empresa (cabeçalho das propostas e laudos)</legend>
+        <div class="grid-3">
+          <label>Nome da empresa
+            <input type="text" id="cfg-nome">
+          </label>
+          <label>Slogan / atividade
+            <input type="text" id="cfg-slogan">
+          </label>
+          <label>CNPJ
+            <input type="text" id="cfg-cnpj" placeholder="00.000.000/0001-00">
+          </label>
+          <label>Endereço
+            <input type="text" id="cfg-endereco" placeholder="Rua, nº, bairro">
+          </label>
+          <label>Cidade / UF
+            <input type="text" id="cfg-cidade" placeholder="Cidade — UF">
+          </label>
+          <label>Telefone / WhatsApp
+            <input type="text" id="cfg-fone" placeholder="(00) 90000-0000">
+          </label>
+          <label>E-mail
+            <input type="text" id="cfg-email" placeholder="contato@elyon.eng.br">
+          </label>
+          <label>Site / Instagram
+            <input type="text" id="cfg-site" placeholder="@elyonengenharia">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Responsável técnico (assina propostas e laudos)</legend>
+        <div class="grid-2">
+          <label>Nome do responsável técnico
+            <input type="text" id="cfg-rt" placeholder="Eng. Eletricista Fulano de Tal">
+          </label>
+          <label>Registro CREA
+            <input type="text" id="cfg-crea" placeholder="CREA-XX 000000000-0">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Backup dos dados</legend>
+        <div class="acoes">
+          <button id="cfg-exportar">⬇️ Exportar tudo (JSON)</button>
+          <button id="cfg-importar">⬆️ Importar backup</button>
+          <button id="cfg-restaurar" class="discreto">Restaurar padrões</button>
+          <input type="file" id="cfg-file" accept="application/json" hidden>
+        </div>
+        <p class="nota">Os dados ficam salvos apenas neste navegador (localStorage). Exporte um backup periodicamente — ele inclui configurações, catálogo, orçamentos e laudos.</p>
+      </fieldset>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>Elyon Engenharia — plataforma interna de precificação, propostas e laudos. Revise cada documento antes de enviar.</span>
+  </footer>
+</div>
+
+<!-- Área de impressão (proposta ou laudo) -->
+<div id="documento"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
