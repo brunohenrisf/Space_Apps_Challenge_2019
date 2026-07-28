@@ -1,0 +1,340 @@
+/* ================= OrçaElétrico — estilos ================= */
+
+:root {
+  --azul: #0b3d66;
+  --azul-claro: #1470b8;
+  --amarelo: #f5a623;
+  --fundo: #f2f5f8;
+  --card: #ffffff;
+  --borda: #d9e2ea;
+  --texto: #23313d;
+  --texto-suave: #64748b;
+  --verde: #1a7f4e;
+  --vermelho: #b3372f;
+  --raio: 10px;
+  --sombra: 0 1px 3px rgba(16, 42, 67, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* ---------- cabeçalho ---------- */
+header {
+  background: var(--azul);
+  color: #fff;
+  padding: 14px 24px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: var(--sombra);
+}
+
+.brand h1 { margin: 0; font-size: 22px; letter-spacing: 0.3px; }
+.brand span { font-size: 13px; opacity: 0.85; }
+
+nav {
+  margin-top: 12px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+nav button {
+  background: transparent;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--raio) var(--raio) 0 0;
+  opacity: 0.8;
+}
+
+nav button:hover { opacity: 1; background: rgba(255, 255, 255, 0.08); }
+
+nav button.active {
+  background: var(--fundo);
+  color: var(--azul);
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* ---------- layout ---------- */
+main {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.tab { display: none; }
+.tab.active { display: block; }
+
+.duas-colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.coluna-resumo { position: sticky; top: 110px; }
+
+@media (max-width: 920px) {
+  .duas-colunas { grid-template-columns: 1fr; }
+  .coluna-resumo { position: static; }
+}
+
+/* ---------- formulários ---------- */
+fieldset {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px 18px 18px;
+  margin: 0 0 16px;
+  box-shadow: var(--sombra);
+}
+
+legend {
+  font-weight: 600;
+  color: var(--azul);
+  padding: 0 6px;
+  font-size: 14px;
+}
+
+.grid-2, .grid-3, .grid-4 {
+  display: grid;
+  gap: 12px 16px;
+}
+
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 700px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+label small {
+  font-weight: 400;
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  align-self: end;
+  padding-bottom: 8px;
+}
+
+input[type="text"], input[type="number"], select {
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--texto);
+  background: #fff;
+  width: 100%;
+}
+
+input:focus, select:focus {
+  outline: 2px solid var(--azul-claro);
+  outline-offset: 1px;
+  border-color: var(--azul-claro);
+}
+
+/* ---------- cartões e resumo ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 18px 20px;
+  box-shadow: var(--sombra);
+}
+
+.card h2 { margin: 0 0 12px; font-size: 17px; color: var(--azul); }
+.card h3 {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--texto-suave);
+}
+
+.linha-destaque {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: #eef4fa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.linha-destaque strong { color: var(--azul-claro); font-size: 16px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+td, th { padding: 5px 4px; text-align: left; }
+td:last-child, th:last-child { text-align: right; white-space: nowrap; }
+
+tbody tr { border-bottom: 1px dashed var(--borda); }
+tfoot th { border-top: 2px solid var(--borda); padding-top: 8px; font-size: 14px; }
+
+tr.subtotal td { border-top: 2px solid var(--borda); font-weight: 600; }
+tr.desconto td { color: var(--vermelho); }
+
+.total-final {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--azul);
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 14px;
+}
+
+.total-final strong { font-size: 20px; }
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.indicadores.vertical { grid-template-columns: 1fr; }
+
+.indicadores div {
+  background: #f7fafc;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.indicadores small { color: var(--texto-suave); font-size: 11px; }
+.indicadores span { font-weight: 600; font-size: 14px; }
+
+/* ---------- botões ---------- */
+.acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+button {
+  font-family: inherit;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+  background: #fff;
+  color: var(--texto);
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+button:hover { border-color: var(--azul-claro); color: var(--azul-claro); }
+
+button.primario {
+  background: var(--azul-claro);
+  border-color: var(--azul-claro);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.primario:hover { background: var(--azul); border-color: var(--azul); color: #fff; }
+
+button.discreto { border-color: transparent; color: var(--texto-suave); }
+button.perigo { color: var(--vermelho); }
+
+.nota { font-size: 12px; color: var(--texto-suave); margin: 10px 0 0; }
+
+/* ---------- tabelas editáveis (parâmetros) ---------- */
+table.editavel input { max-width: 140px; }
+table.editavel td, table.editavel th { padding: 6px 8px; }
+table.editavel input[type="text"] { max-width: none; width: 100%; }
+
+/* ---------- lista de salvos ---------- */
+#s-tabela td { padding: 8px 6px; }
+#s-tabela .acoes-linha { display: flex; gap: 6px; justify-content: flex-end; }
+#s-tabela .acoes-linha button { padding: 5px 9px; font-size: 12px; }
+
+/* ---------- rodapé ---------- */
+footer {
+  text-align: center;
+  padding: 18px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+/* ---------- proposta (impressão) ---------- */
+#proposta { display: none; }
+
+@media print {
+  .app { display: none !important; }
+  body { background: #fff; }
+  #proposta {
+    display: block;
+    font-size: 13px;
+    color: #111;
+    max-width: 180mm;
+    margin: 0 auto;
+  }
+  #proposta h1 {
+    font-size: 20px;
+    color: var(--azul);
+    border-bottom: 3px solid var(--amarelo);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  #proposta h2 {
+    font-size: 14px;
+    color: var(--azul);
+    margin: 18px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  #proposta table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  #proposta td, #proposta th {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    text-align: left;
+  }
+  #proposta td:last-child, #proposta th:last-child { text-align: right; }
+  #proposta tr.total td { font-weight: 700; background: #f0f4f8; font-size: 14px; }
+  #proposta .cabecalho-prof { font-size: 12px; color: #444; margin-bottom: 14px; }
+  #proposta .assinatura {
+    margin-top: 60px;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  #proposta .assinatura .linha {
+    border-top: 1px solid #333;
+    width: 70mm;
+    margin: 0 auto 4px;
+  }
+  #proposta ul { margin: 4px 0; padding-left: 18px; }
+  #proposta .nota-rodape { font-size: 11px; color: #555; margin-top: 16px; }
+}
