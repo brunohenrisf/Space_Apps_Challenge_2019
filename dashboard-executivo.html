@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurora Fibra — Raio-X Executivo</title>
+<style>
+  /* ============ Tokens (paleta validada — modo claro) ============ */
+  :root{
+    color-scheme: light;
+    --page:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7;
+    --border:rgba(11,11,11,.10);
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+    --div-pos:#2a78d6; --div-neg:#e34948; --div-mid:#f0efec;
+    --good-text:#006300; --bad-text:#d03b3b;
+    --track:#cde2fb;
+    --hm1:#cde2fb; --hm2:#9ec5f4; --hm3:#6da7ec; --hm4:#3987e5;
+    --hm5:#2a78d6; --hm6:#1c5cab; --hm7:#104281; --hm8:#0d366b;
+    --fn1:#86b6ef; --fn2:#5598e7; --fn3:#2a78d6; --fn4:#1c5cab;
+    --shadow:0 1px 2px rgba(11,11,11,.04), 0 10px 30px rgba(11,11,11,.06);
+    --blob-a:rgba(42,120,214,.07); --blob-b:rgba(27,175,122,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:#0d0d0d; --surface:#1a1a19;
+      --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835;
+      --border:rgba(255,255,255,.10);
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+      --div-pos:#3987e5; --div-neg:#e66767; --div-mid:#383835;
+      --good-text:#0ca30c; --bad-text:#e66767;
+      --track:#0d366b;
+      --hm1:#0d366b; --hm2:#104281; --hm3:#184f95; --hm4:#1c5cab;
+      --hm5:#256abf; --hm6:#3987e5; --hm7:#6da7ec; --hm8:#9ec5f4;
+      --fn1:#184f95; --fn2:#256abf; --fn3:#3987e5; --fn4:#6da7ec;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+      --blob-a:rgba(57,135,229,.10); --blob-b:rgba(25,158,112,.08);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835;
+    --border:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+    --div-pos:#3987e5; --div-neg:#e66767; --div-mid:#383835;
+    --good-text:#0ca30c; --bad-text:#e66767;
+    --track:#0d366b;
+    --hm1:#0d366b; --hm2:#104281; --hm3:#184f95; --hm4:#1c5cab;
+    --hm5:#256abf; --hm6:#3987e5; --hm7:#6da7ec; --hm8:#9ec5f4;
+    --fn1:#184f95; --fn2:#256abf; --fn3:#3987e5; --fn4:#6da7ec;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    --blob-a:rgba(57,135,229,.10); --blob-b:rgba(25,158,112,.08);
+  }
+
+  /* ============ Base ============ */
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--page); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .bg{
+    position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;
+  }
+  .blob{position:absolute; border-radius:50% 42% 56% 44% / 46% 54% 40% 58%; filter:blur(60px)}
+  .blob.a{width:640px;height:520px; top:-180px; right:-120px; background:var(--blob-a)}
+  .blob.b{width:560px;height:560px; bottom:-220px; left:-160px; background:var(--blob-b)}
+
+  .wrap{max-width:1200px; margin:0 auto; padding:28px 22px 64px}
+
+  /* ============ Header ============ */
+  header.top{display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; margin-bottom:10px}
+  .brand{display:flex; gap:14px; align-items:center}
+  .brand-mark{
+    width:46px; height:46px; flex:none;
+    background:linear-gradient(135deg,var(--s1),var(--s3));
+    border-radius:46% 54% 52% 48% / 52% 44% 56% 48%;
+  }
+  .brand h1{margin:0; font-size:22px; letter-spacing:-.01em}
+  .brand p{margin:2px 0 0; color:var(--ink-2); font-size:13.5px}
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .chips{display:flex; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px; box-shadow:var(--shadow)}
+  .chips button{
+    border:0; background:transparent; color:var(--ink-2); font:inherit; font-size:13px;
+    padding:6px 14px; border-radius:999px; cursor:pointer;
+  }
+  .chips button[aria-pressed="true"]{background:var(--s1); color:#fff}
+  .tgl{
+    border:1px solid var(--border); background:var(--surface); color:var(--ink-2);
+    font:inherit; font-size:13px; padding:8px 14px; border-radius:999px; cursor:pointer; box-shadow:var(--shadow);
+  }
+  nav.jump{display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 26px}
+  nav.jump a{
+    font-size:13px; color:var(--ink-2); text-decoration:none;
+    border:1px solid var(--border); background:var(--surface);
+    padding:6px 13px; border-radius:999px;
+  }
+  nav.jump a:hover{color:var(--ink)}
+
+  /* ============ Sections & cards ============ */
+  section{margin:34px 0 0}
+  .sec-head{display:flex; align-items:baseline; gap:10px; margin:0 4px 14px}
+  .sec-head .dot{width:11px;height:11px; flex:none; border-radius:50% 42% 58% 46%/48% 56% 44% 52%; transform:translateY(-1px)}
+  .sec-head h2{margin:0; font-size:17px; letter-spacing:-.01em}
+  .sec-head p{margin:0; color:var(--muted); font-size:13px}
+
+  .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
+  .card{
+    grid-column:span 12;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:22px; box-shadow:var(--shadow);
+    padding:18px 18px 14px; min-width:0;
+  }
+  .card.half{grid-column:span 6}
+  .card.third{grid-column:span 4}
+  .card.twothird{grid-column:span 8}
+  @media (max-width:900px){ .card.half,.card.third,.card.twothird{grid-column:span 12} }
+
+  .card > header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px}
+  .card h3{margin:0; font-size:15px}
+  .card .sub{margin:2px 0 0; color:var(--muted); font-size:12.5px}
+  .tbtn{
+    border:1px solid var(--border); background:transparent; color:var(--ink-2);
+    font:inherit; font-size:12px; padding:4px 11px; border-radius:999px; cursor:pointer; flex:none;
+  }
+  .tbtn[aria-pressed="true"]{background:var(--s1); border-color:var(--s1); color:#fff}
+  .c-note{margin:10px 2px 2px; font-size:12.5px; color:var(--ink-2)}
+  .c-note .k{font-weight:600}
+
+  /* ============ KPI tiles ============ */
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(172px,1fr)); gap:14px}
+  @media (min-width:980px){ .tiles{grid-template-columns:repeat(7,1fr)} }
+  .tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    box-shadow:var(--shadow); padding:15px 16px 12px; min-width:0;
+  }
+  .tile .lbl{font-size:12.5px; color:var(--ink-2)}
+  .tile .val{font-size:26px; font-weight:600; letter-spacing:-.01em; margin-top:3px}
+  .tile.hero{grid-column:span 2}
+  .tile.hero .val{font-size:48px; line-height:1.05; white-space:nowrap}
+  @media (max-width:520px){ .tile.hero{grid-column:auto} .tile.hero .val{font-size:34px} }
+  .tile .delta{font-size:12.5px; margin-top:2px; color:var(--ink-2)}
+  .tile .delta b{font-weight:600}
+  .delta .up-good,.delta .down-good-neg{color:var(--good-text)}
+  .delta .up-bad,.delta .down-bad{color:var(--bad-text)}
+  .tile .spark{margin-top:8px}
+  .mini-tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:6px}
+  .mini{border:1px solid var(--border); border-radius:16px; padding:10px 12px}
+  .mini .lbl{font-size:12px; color:var(--ink-2)}
+  .mini .val{font-size:19px; font-weight:600; margin-top:1px}
+  .mini .delta{font-size:11.5px; color:var(--ink-2); margin-top:1px}
+
+  /* ============ Chart internals (SVG) ============ */
+  .c-viz{position:relative}
+  .c-viz svg{display:block; width:100%; height:auto}
+  svg text{font-family:inherit}
+  .ax{font-size:11px; fill:var(--muted); font-variant-numeric:tabular-nums}
+  .grid-ln{stroke:var(--grid); stroke-width:1}
+  .base-ln{stroke:var(--axis); stroke-width:1}
+  .target-ln{stroke:var(--muted); stroke-width:1; stroke-dasharray:4 4}
+  .target-lbl{font-size:11px; fill:var(--muted)}
+  .end-lbl{font-size:12px; font-weight:600; fill:var(--ink)}
+  .end-sub{font-size:10.5px; fill:var(--muted)}
+  .ln{fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .ln.k1{stroke:var(--s1)} .ln.k2{stroke:var(--s2)} .ln.k3{stroke:var(--s3)}
+  .ar.k1{fill:var(--s1)} .ar.k2{fill:var(--s2)} .ar.k3{fill:var(--s3)} .ar{opacity:.1}
+  .dot{stroke:var(--surface); stroke-width:2}
+  .dot.k1{fill:var(--s1)} .dot.k2{fill:var(--s2)} .dot.k3{fill:var(--s3)}
+  .bar.k1{fill:var(--s1)} .bar.k2{fill:var(--s2)} .bar.k3{fill:var(--s3)}
+  .bar.pos{fill:var(--div-pos)} .bar.neg{fill:var(--div-neg)}
+  .bar-lbl{font-size:11px; fill:var(--ink-2); font-variant-numeric:tabular-nums}
+  .row-lbl{font-size:12px; fill:var(--ink-2)}
+  .xhair{stroke:var(--axis); stroke-width:1}
+  .hover-band{fill:transparent; cursor:default}
+  .hm-cell{stroke:var(--surface); stroke-width:2; rx:3}
+  .hm-1{fill:var(--hm1)} .hm-2{fill:var(--hm2)} .hm-3{fill:var(--hm3)} .hm-4{fill:var(--hm4)}
+  .hm-5{fill:var(--hm5)} .hm-6{fill:var(--hm6)} .hm-7{fill:var(--hm7)} .hm-8{fill:var(--hm8)}
+  .fn-bar-1{fill:var(--fn1)} .fn-bar-2{fill:var(--fn2)} .fn-bar-3{fill:var(--fn3)} .fn-bar-4{fill:var(--fn4)}
+  .seg-det{fill:var(--div-neg)} .seg-neu{fill:var(--div-mid)} .seg-pro{fill:var(--div-pos)}
+  .seg-lbl{font-size:12px; font-weight:600}
+
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin:2px 2px 10px; font-size:12.5px; color:var(--ink-2)}
+  .legend .it{display:inline-flex; align-items:center; gap:7px}
+  .sw{width:11px;height:11px;border-radius:4px; flex:none}
+  .lk{width:16px;height:3px;border-radius:2px; flex:none}
+  .cw-1{background:var(--s1)} .cw-2{background:var(--s2)} .cw-3{background:var(--s3)}
+  .cw-pos{background:var(--div-pos)} .cw-neg{background:var(--div-neg)} .cw-mid{background:var(--div-mid); border:1px solid var(--border)}
+
+  .hm-legend{display:flex; align-items:center; gap:8px; margin-top:10px; font-size:11.5px; color:var(--muted)}
+  .hm-scale{display:flex; border-radius:6px; overflow:hidden}
+  .hm-scale i{width:22px; height:9px}
+
+  /* ============ Meter ============ */
+  .meter .big{font-size:44px; font-weight:600; letter-spacing:-.01em}
+  .meter .big small{font-size:15px; font-weight:400; color:var(--ink-2); margin-left:6px}
+  .meter-track{position:relative; height:14px; border-radius:999px; background:var(--track); margin:14px 0 6px}
+  .meter-fill{position:absolute; inset:0 auto 0 0; border-radius:999px; background:var(--s1)}
+  .meter-tick{position:absolute; top:-5px; bottom:-5px; width:2px; background:var(--ink-2); border-radius:2px}
+  .meter-scale{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .meter-cap{font-size:12.5px; color:var(--ink-2); margin-top:10px}
+
+  /* ============ Funnel / list rows ============ */
+  .fn-row{margin:12px 0}
+  .fn-meta{display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; margin-bottom:4px}
+  .fn-meta .nm{color:var(--ink-2)}
+  .fn-meta .nums{color:var(--ink); font-weight:600}
+  .fn-meta .conv{color:var(--muted); font-weight:400; margin-left:8px; font-size:11.5px}
+  .fn-track{height:16px; border-radius:5px; overflow:visible}
+  .fn-track i{display:block; height:100%; border-radius:4px}
+
+  /* ============ Tooltip ============ */
+  .tip{
+    position:fixed; z-index:50; pointer-events:none; opacity:0; transition:opacity .12s;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:var(--shadow); padding:9px 12px; font-size:12.5px; min-width:130px;
+  }
+  .tip.on{opacity:1}
+  .tip .t-title{color:var(--muted); font-size:11.5px; margin-bottom:5px}
+  .tip .t-row{display:flex; align-items:center; gap:8px; margin:3px 0}
+  .tip .t-row .lk,.tip .t-row .sw{flex:none}
+  .tip .t-val{font-weight:600; color:var(--ink); margin-left:auto; font-variant-numeric:tabular-nums}
+  .tip .t-name{color:var(--ink-2)}
+
+  /* ============ Tables ============ */
+  .c-table{overflow-x:auto}
+  .c-table table{border-collapse:collapse; width:100%; font-size:12.5px}
+  .c-table th,.c-table td{padding:6px 10px; text-align:right; border-bottom:1px solid var(--grid); white-space:nowrap}
+  .c-table th:first-child,.c-table td:first-child{text-align:left; color:var(--ink-2)}
+  .c-table td{font-variant-numeric:tabular-nums}
+  .c-table thead th{color:var(--muted); font-weight:600; font-size:11.5px}
+
+  footer.foot{margin-top:44px; color:var(--muted); font-size:12.5px; text-align:center}
+</style>
+</head>
+<body>
+<div class="bg"><i class="blob a"></i><i class="blob b"></i></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Aurora Fibra · Raio-X Executivo</h1>
+        <p>Visão mensal de finanças, operações, expansão, manutenção e atendimento · atualizado em 31/07/2026</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="chips" role="group" aria-label="Período">
+        <button data-range="3" aria-pressed="false">3M</button>
+        <button data-range="6" aria-pressed="false">6M</button>
+        <button data-range="12" aria-pressed="true">12M</button>
+      </div>
+      <button class="tgl" id="themeBtn" aria-pressed="false">Modo escuro</button>
+    </div>
+  </header>
+
+  <nav class="jump" aria-label="Seções">
+    <a href="#financeiro">Financeiro</a>
+    <a href="#operacoes">Operações &amp; Rede</a>
+    <a href="#expansao">Expansão</a>
+    <a href="#manutencao">Manutenção</a>
+    <a href="#atendimento">Atendimento</a>
+  </nav>
+
+  <!-- ============ Visão geral ============ -->
+  <section id="visao" aria-label="Visão geral">
+    <div class="tiles" id="kpiTiles"></div>
+  </section>
+
+  <!-- ============ Financeiro ============ -->
+  <section id="financeiro">
+    <div class="sec-head"><i class="dot" style="background:var(--s1)"></i><h2>Financeiro</h2><p>saúde de receita, custos e caixa</p></div>
+    <div class="grid">
+
+      <article class="card twothird" data-chart="finRev">
+        <header>
+          <div><h3>Receita vs. despesas</h3><p class="sub">R$ mil · mensal</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="legend">
+          <span class="it"><i class="lk cw-1"></i>Receita</span>
+          <span class="it"><i class="lk cw-2"></i>Despesas</span>
+        </div>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card third" data-chart="finMix">
+        <header>
+          <div><h3>Composição da receita</h3><p class="sub">R$ mil · por segmento</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="legend">
+          <span class="it"><i class="sw cw-1"></i>Residencial</span>
+          <span class="it"><i class="sw cw-2"></i>Empresarial</span>
+          <span class="it"><i class="sw cw-3"></i>Atacado</span>
+        </div>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card half" data-chart="finFcf">
+        <header>
+          <div><h3>Fluxo de caixa livre</h3><p class="sub">R$ mil · após CAPEX de expansão</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="legend">
+          <span class="it"><i class="sw cw-pos"></i>Geração</span>
+          <span class="it"><i class="sw cw-neg"></i>Consumo (meses de CAPEX pesado)</span>
+        </div>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card half">
+        <header><div><h3>Indicadores unitários</h3><p class="sub">referências do mês · Jul/26</p></div></header>
+        <div class="mini-tiles">
+          <div class="mini"><div class="lbl">ARPU</div><div class="val">R$ 88,90</div><div class="delta"><b class="up-good">▲ R$ 1,20</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Custo por assinante</div><div class="val">R$ 54,10</div><div class="delta"><b class="down-good-neg">▼ R$ 0,60</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Inadimplência (&gt;30d)</div><div class="val">2,9%</div><div class="delta"><b class="down-good-neg">▼ 0,3 p.p.</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">CAPEX no mês</div><div class="val">R$ 640 mil</div><div class="delta">14,8% da receita</div></div>
+          <div class="mini"><div class="lbl">Payback por cliente</div><div class="val">11,4 meses</div><div class="delta"><b class="down-good-neg">▼ 0,5 mês</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">LTV / CAC</div><div class="val">4,6×</div><div class="delta"><b class="up-good">▲ 0,2×</b> vs Jun/26</div></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ Operações & Rede ============ -->
+  <section id="operacoes">
+    <div class="sec-head"><i class="dot" style="background:var(--s3)"></i><h2>Operações &amp; Rede</h2><p>disponibilidade, tráfego e capacidade</p></div>
+    <div class="grid">
+
+      <article class="card third">
+        <header><div><h3>Disponibilidade da rede</h3><p class="sub">uptime médio ponderado · Jul/26</p></div></header>
+        <div class="meter" id="uptimeMeter"></div>
+      </article>
+
+      <article class="card twothird" data-chart="opsTraffic">
+        <header>
+          <div><h3>Pico de tráfego</h3><p class="sub">Gbps no horário de pico · mensal</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card" data-chart="opsHeat">
+        <header>
+          <div><h3>Utilização de capacidade por região</h3><p class="sub">% da capacidade contratada de backbone</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+        <p class="c-note"><span class="k">Sul a 88%</span> — acima do gatilho de 85%: priorizar upgrade de backbone no próximo ciclo de CAPEX.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ Expansão ============ -->
+  <section id="expansao">
+    <div class="sec-head"><i class="dot" style="background:var(--s2)"></i><h2>Expansão de rede</h2><p>construção, cobertura e conversão em clientes</p></div>
+    <div class="grid">
+
+      <article class="card half" data-chart="expAdds">
+        <header>
+          <div><h3>Ativações de novos assinantes</h3><p class="sub">instalações concluídas · mensal</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card half" data-chart="expKm">
+        <header>
+          <div><h3>Fibra construída por cidade</h3><p class="sub">km lançados no trimestre · Mai–Jul/26</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card" data-chart="expFunnel">
+        <header>
+          <div><h3>Funil de penetração da cobertura</h3><p class="sub">trimestre Mai–Jul/26 · da casa passada ao cliente instalado</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+        <p class="c-note">Take-up da base coberta: <span class="k">52,5%</span> das casas passadas já são clientes (meta de maturação: 55% em 24 meses).</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ Manutenção ============ -->
+  <section id="manutencao">
+    <div class="sec-head"><i class="dot" style="background:var(--s4)"></i><h2>Manutenção</h2><p>causas de falha, tempo de reparo e prevenção</p></div>
+    <div class="grid">
+
+      <article class="card half" data-chart="mntCauses">
+        <header>
+          <div><h3>Chamados por causa raiz</h3><p class="sub">ordens de serviço corretivas · Jul/26</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card half" data-chart="mntMttr">
+        <header>
+          <div><h3>Tempo médio de reparo (MTTR)</h3><p class="sub">horas · mensal · meta 6h</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+      </article>
+
+      <article class="card">
+        <header><div><h3>Saúde da manutenção</h3><p class="sub">referências do mês · Jul/26</p></div></header>
+        <div class="mini-tiles">
+          <div class="mini"><div class="lbl">Preventivas no prazo</div><div class="val">92%</div><div class="delta"><b class="up-good">▲ 3 p.p.</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Reincidência em 30 dias</div><div class="val">6,1%</div><div class="delta"><b class="down-good-neg">▼ 0,8 p.p.</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Backlog de O.S.</div><div class="val">37</div><div class="delta"><b class="down-good-neg">▼ 9</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Produtividade</div><div class="val">5,2 O.S./téc./dia</div><div class="delta"><b class="up-good">▲ 0,3</b> vs Jun/26</div></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ Atendimento ============ -->
+  <section id="atendimento">
+    <div class="sec-head"><i class="dot" style="background:var(--s5)"></i><h2>Atendimento</h2><p>volume por canal, eficiência e satisfação</p></div>
+    <div class="grid">
+
+      <article class="card twothird" data-chart="atdVol">
+        <header>
+          <div><h3>Atendimentos por canal</h3><p class="sub">interações concluídas · mensal</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="legend">
+          <span class="it"><i class="sw cw-1"></i>WhatsApp</span>
+          <span class="it"><i class="sw cw-2"></i>Telefone</span>
+          <span class="it"><i class="sw cw-3"></i>App / Portal</span>
+        </div>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+        <p class="c-note">Canais digitais já respondem por <span class="k">74%</span> do volume — o telefone cai há 12 meses seguidos.</p>
+      </article>
+
+      <article class="card third" data-chart="atdNps">
+        <header>
+          <div><h3>NPS · Jul/26</h3><p class="sub">pesquisa pós-atendimento · 2.140 respostas</p></div>
+          <button class="tbtn" aria-pressed="false">Tabela</button>
+        </header>
+        <div class="c-viz"></div>
+        <div class="c-table" hidden></div>
+        <div class="mini-tiles" style="margin-top:14px">
+          <div class="mini"><div class="lbl">TMA</div><div class="val">4m32s</div><div class="delta"><b class="down-good-neg">▼ 18s</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Resolução no 1º contato</div><div class="val">78%</div><div class="delta"><b class="up-good">▲ 2 p.p.</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">CSAT</div><div class="val">4,6 / 5</div><div class="delta"><b class="up-good">▲ 0,1</b> vs Jun/26</div></div>
+          <div class="mini"><div class="lbl">Espera média</div><div class="val">38s</div><div class="delta"><b class="down-good-neg">▼ 6s</b> vs Jun/26</div></div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer class="foot">
+    Modelo de dashboard executivo · dados fictícios apenas para demonstração de estrutura e design · Aurora Fibra (empresa ilustrativa)
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ================= Dados (fictícios, 12 meses: Ago/25 → Jul/26) ================= */
+const MONTHS = ['Ago/25','Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26','Mar/26','Abr/26','Mai/26','Jun/26','Jul/26'];
+const D = {
+  receita:   [3720,3785,3850,3905,3980,4030,4085,4120,4180,4230,4270,4310],
+  despesas:  [2510,2560,2620,2590,2710,2680,2650,2705,2740,2760,2795,2820],
+  fcf:       [320,280,-150,410,190,-80,350,390,420,260,440,480],
+  resid:     [2680,2720,2760,2790,2840,2870,2900,2920,2960,2990,3010,3040],
+  emp:       [810,830,850,870,890,900,920,930,950,965,980,995],
+  atac:      [230,235,240,245,250,260,265,270,270,275,280,275],
+  assin:     [44230,44680,45160,45590,46080,46520,46980,47370,47760,48090,48320,48520],
+  churn:     [2.10,2.05,1.98,2.02,1.95,1.90,1.88,1.85,1.80,1.78,1.75,1.72],
+  ebitda:    [35.9,36.2,36.0,36.8,36.5,37.0,37.4,37.2,37.8,38.0,38.1,38.4],
+  uptime:    [99.81,99.84,99.79,99.88,99.90,99.86,99.91,99.89,99.93,99.90,99.94,99.92],
+  nps:       [54,55,57,58,58,60,61,61,62,63,63,64],
+  trafego:   [182,189,196,204,215,224,219,228,236,242,251,258],
+  mttr:      [7.8,7.4,7.9,6.9,6.5,6.8,6.1,5.9,5.6,5.4,5.1,4.8],
+  ativacoes: [680,705,740,690,772,745,720,715,755,730,700,712],
+  wa:        [4120,4230,4370,4450,4620,4700,4820,4950,5080,5180,5290,5400],
+  tel:       [3060,3010,2950,2980,2890,2840,2780,2720,2660,2610,2560,2510],
+  app:       [980,1040,1110,1180,1260,1330,1410,1500,1590,1690,1790,1900],
+};
+const REGIOES = ['Centro','Norte','Sul','Leste','Oeste'];
+const UTIL = [
+  [62,63,65,66,68,70,71,72,74,76,77,79],
+  [48,49,51,52,54,55,57,58,60,61,63,64],
+  [71,72,74,75,77,79,80,82,84,85,87,88],
+  [41,42,43,45,46,47,49,50,52,53,55,56],
+  [55,57,58,60,62,64,65,67,69,71,72,74],
+];
+const KM_CIDADES = [
+  {label:'São Bento do Vale', value:84},
+  {label:'Riacho Verde', value:62},
+  {label:'Porto Alto', value:47},
+  {label:'Boa Vista do Sul', value:35},
+  {label:'Lagoa Clara', value:22},
+];
+const CAUSAS = [
+  {label:'Rompimento de fibra', value:148},
+  {label:'Queda de energia', value:96},
+  {label:'Equipamento do cliente (CPE)', value:82},
+  {label:'Configuração / lógico', value:54},
+  {label:'Outros', value:31},
+];
+const FUNIL = [
+  {label:'Casas passadas (HPs viáveis)', value:92400},
+  {label:'Leads qualificados', value:8940},
+  {label:'Propostas aceitas', value:4120},
+  {label:'Clientes instalados', value:3410},
+];
+const NPS_MIX = {det:8, neu:20, pro:72};
+
+/* ================= Estado & utilidades ================= */
+const state = {range:12};
+const sl = a => a.slice(-state.range);
+const NSVG = 'http://www.w3.org/2000/svg';
+const nf0 = new Intl.NumberFormat('pt-BR');
+const nf1 = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fmtInt = v => nf0.format(Math.round(v));
+const fmt1 = v => nf1.format(v);
+
+function sv(tag, attrs){
+  const e = document.createElementNS(NSVG, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function hEl(tag, cls, text){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(text != null) e.textContent = text;
+  return e;
+}
+function niceTicks(min, max, n){
+  n = n || 4;
+  const span = (max - min) || 1;
+  const step0 = span / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const norm = step0 / mag;
+  const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  const lo = Math.floor(min / step) * step;
+  const out = [];
+  for(let v = lo; v <= max + step * 0.5001; v += step) out.push(+v.toFixed(6));
+  return out;
+}
+function smoothPath(p){
+  if(p.length < 3) return 'M' + p.map(q => q[0] + ',' + q[1]).join('L');
+  let d = 'M' + p[0][0] + ',' + p[0][1];
+  for(let i = 0; i < p.length - 1; i++){
+    const p0 = p[Math.max(0, i - 1)], p1 = p[i], p2 = p[i + 1], p3 = p[Math.min(p.length - 1, i + 2)];
+    d += `C${p1[0]+(p2[0]-p0[0])/6},${p1[1]+(p2[1]-p0[1])/6} ${p2[0]-(p3[0]-p1[0])/6},${p2[1]-(p3[1]-p1[1])/6} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+// mostra o rótulo do mês i sem colidir com o rótulo fixo do último mês
+function showMonth(i, n, step){
+  return i === n - 1 || (i % step === 0 && (n - 1 - i) >= step);
+}
+function topRound(x, y, w, h, r){
+  r = Math.max(0, Math.min(r, w / 2, h));
+  return `M${x},${y+h} V${y+r} Q${x},${y} ${x+r},${y} H${x+w-r} Q${x+w},${y} ${x+w},${y+r} V${y+h} Z`;
+}
+function botRound(x, y, w, h, r){
+  r = Math.max(0, Math.min(r, w / 2, h));
+  return `M${x},${y} V${y+h-r} Q${x},${y+h} ${x+r},${y+h} H${x+w-r} Q${x+w},${y+h} ${x+w},${y+h-r} V${y} Z`;
+}
+
+/* ================= Tooltip (única, reutilizada) ================= */
+const tip = hEl('div','tip');
+document.body.appendChild(tip);
+function tipShow(evt, title, rows){
+  tip.textContent = '';
+  if(title) tip.appendChild(hEl('div','t-title', title));
+  rows.forEach(r => {
+    const row = hEl('div','t-row');
+    if(r.cls){ const key = hEl('i', (r.line ? 'lk ' : 'sw ') + r.cls); row.appendChild(key); }
+    row.appendChild(hEl('span','t-name', r.name));
+    row.appendChild(hEl('span','t-val', r.value));
+    tip.appendChild(row);
+  });
+  tip.classList.add('on');
+  tipMove(evt);
+}
+function tipMove(evt){
+  const pad = 14, r = tip.getBoundingClientRect();
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  if(x + r.width > innerWidth - 8) x = evt.clientX - r.width - pad;
+  if(y + r.height > innerHeight - 8) y = evt.clientY - r.height - pad;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function tipHide(){ tip.classList.remove('on'); }
+
+/* ================= Renderizadores ================= */
+// Linhas (multi-série) com crosshair + tooltip; opcional área e linha de meta
+function lineChart(el, cfg){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 280), H = cfg.height || 240;
+  const m = {t:14, r: cfg.endLabels ? 82 : 20, b:26, l:46};
+  const months = sl(MONTHS), n = months.length;
+  const all = cfg.series.flatMap(s => sl(s.values));
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if(cfg.target != null){ lo = Math.min(lo, cfg.target); hi = Math.max(hi, cfg.target); }
+  if(cfg.zero) lo = 0; else lo -= (hi - lo) * 0.12 || 1;
+  const tks = niceTicks(lo, hi, 4);
+  lo = tks[0]; hi = Math.max(tks[tks.length - 1], hi);
+  const X = i => m.l + (n === 1 ? 0.5 : i / (n - 1)) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (v - lo) / (hi - lo)) * (H - m.t - m.b);
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label': cfg.label || ''});
+
+  tks.forEach(t => {
+    svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(t), y2:Y(t), class:'grid-ln'}));
+    const tx = sv('text',{x:m.l-8, y:Y(t)+4, 'text-anchor':'end', class:'ax'});
+    tx.textContent = cfg.tickFmt ? cfg.tickFmt(t) : fmtInt(t);
+    svg.appendChild(tx);
+  });
+  const step = Math.max(1, Math.ceil(n / 6));
+  months.forEach((mo, i) => {
+    if(showMonth(i, n, step)){
+      const tx = sv('text',{x:X(i), y:H-8, 'text-anchor':'middle', class:'ax'});
+      tx.textContent = mo; svg.appendChild(tx);
+    }
+  });
+  if(cfg.target != null){
+    svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(cfg.target), y2:Y(cfg.target), class:'target-ln'}));
+    const tl = sv('text',{x:W-m.r, y:Y(cfg.target)-5, 'text-anchor':'end', class:'target-lbl'});
+    tl.textContent = cfg.targetLabel || ('meta ' + cfg.fmt(cfg.target)); svg.appendChild(tl);
+  }
+
+  cfg.series.forEach(s => {
+    const vals = sl(s.values);
+    const pts = vals.map((v, i) => [X(i), Y(v)]);
+    if(s.area){
+      const a = sv('path',{d: smoothPath(pts) + ` L${X(n-1)},${Y(lo)} L${X(0)},${Y(lo)} Z`, class:'ar ' + s.k});
+      svg.appendChild(a);
+    }
+    svg.appendChild(sv('path',{d: smoothPath(pts), class:'ln ' + s.k}));
+    svg.appendChild(sv('circle',{cx:pts[n-1][0], cy:pts[n-1][1], r:4.5, class:'dot ' + s.k}));
+    if(cfg.endLabels){
+      const v = vals[n-1];
+      const t1 = sv('text',{x:pts[n-1][0]+10, y:pts[n-1][1]+4, class:'end-lbl'});
+      t1.textContent = (cfg.endFmt || cfg.fmt)(v);
+      svg.appendChild(t1);
+    }
+  });
+
+  // camada de hover: crosshair encontra o X
+  const xh = sv('line',{y1:m.t, y2:H-m.b, class:'xhair', visibility:'hidden'});
+  svg.appendChild(xh);
+  const ov = sv('rect',{x:m.l, y:m.t, width:W-m.l-m.r, height:H-m.t-m.b, class:'hover-band'});
+  ov.addEventListener('pointermove', e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    let idx = 0, best = 1e9;
+    for(let i = 0; i < n; i++){ const d = Math.abs(X(i) - px); if(d < best){ best = d; idx = i; } }
+    xh.setAttribute('x1', X(idx)); xh.setAttribute('x2', X(idx));
+    xh.setAttribute('visibility','visible');
+    tipShow(e, months[idx], cfg.series.map(s => ({name:s.name, cls:'cw-' + s.k.slice(1), line:true, value:cfg.fmt(sl(s.values)[idx])})));
+  });
+  ov.addEventListener('pointerleave', () => { xh.setAttribute('visibility','hidden'); tipHide(); });
+  svg.appendChild(ov);
+  el.appendChild(svg);
+}
+
+// Colunas (1 série ou empilhado) — pontas arredondadas, vãos de 2px, hover por mês
+function colChart(el, cfg){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 280), H = cfg.height || 240;
+  const m = {t:14, r:14, b:26, l:46};
+  const months = sl(MONTHS), n = months.length;
+  const totals = months.map((_, i) => cfg.series.reduce((a, s) => a + sl(s.values)[i], 0));
+  const hi = Math.max(...totals);
+  const tks = niceTicks(0, hi, 4);
+  const top = Math.max(tks[tks.length - 1], hi);
+  const plotH = H - m.t - m.b;
+  const Y = v => m.t + (1 - v / top) * plotH;
+  const band = (W - m.l - m.r) / n;
+  const bw = Math.min(24, band * 0.55);
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label': cfg.label || ''});
+
+  tks.forEach(t => {
+    if(t === 0) return;
+    svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(t), y2:Y(t), class:'grid-ln'}));
+    const tx = sv('text',{x:m.l-8, y:Y(t)+4, 'text-anchor':'end', class:'ax'});
+    tx.textContent = cfg.tickFmt ? cfg.tickFmt(t) : fmtInt(t);
+    svg.appendChild(tx);
+  });
+  svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(0), y2:Y(0), class:'base-ln'}));
+  const step = Math.max(1, Math.ceil(n / 6));
+
+  months.forEach((mo, i) => {
+    const cx = m.l + band * (i + 0.5);
+    if(showMonth(i, n, step)){
+      const tx = sv('text',{x:cx, y:H-8, 'text-anchor':'middle', class:'ax'});
+      tx.textContent = mo; svg.appendChild(tx);
+    }
+    let acc = 0;
+    cfg.series.forEach((s, si) => {
+      const v = sl(s.values)[i];
+      const y0 = Y(acc + v), y1 = Y(acc);
+      const gap = si < cfg.series.length - 1 ? 2 : 0; // vão de 2px na cor da superfície
+      const hpx = Math.max(0, y1 - y0 - gap);
+      const isTop = si === cfg.series.length - 1;
+      const d = isTop ? topRound(cx - bw/2, y0, bw, hpx, 4)
+                      : `M${cx-bw/2},${y0} H${cx+bw/2} V${y0+hpx} H${cx-bw/2} Z`;
+      svg.appendChild(sv('path',{d, class:'bar ' + s.k}));
+      acc += v;
+    });
+    if(cfg.capLabel && (i === n - 1)){
+      const nearEdge = cx + 34 > W - m.r;
+      const tx = sv('text',{x: nearEdge ? cx + bw/2 : cx, y:Y(totals[i]) - 7,
+        'text-anchor': nearEdge ? 'end' : 'middle', class:'bar-lbl'});
+      tx.textContent = (cfg.capFmt || cfg.fmt)(totals[i]); svg.appendChild(tx);
+    }
+    const hb = sv('rect',{x:m.l + band*i, y:m.t, width:band, height:plotH, class:'hover-band'});
+    hb.addEventListener('pointermove', e => {
+      const rows = cfg.series.map(s => ({name:s.name, cls:'cw-' + s.k.slice(1), value:cfg.fmt(sl(s.values)[i])}));
+      if(cfg.series.length > 1) rows.push({name:'Total', value:cfg.fmt(totals[i])});
+      tipShow(e, mo, rows);
+    });
+    hb.addEventListener('pointerleave', tipHide);
+    svg.appendChild(hb);
+  });
+  el.appendChild(svg);
+}
+
+// Barras divergentes (positivo/negativo em torno de zero)
+function divChart(el, cfg){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 280), H = cfg.height || 230;
+  const m = {t:14, r:14, b:26, l:46};
+  const months = sl(MONTHS), n = months.length;
+  const vals = sl(cfg.values);
+  const hi = Math.max(...vals, 0), lo = Math.min(...vals, 0);
+  const tks = niceTicks(lo, hi, 4);
+  const top = Math.max(tks[tks.length-1], hi), bot = Math.min(tks[0], lo);
+  const plotH = H - m.t - m.b;
+  const Y = v => m.t + (1 - (v - bot) / (top - bot)) * plotH;
+  const band = (W - m.l - m.r) / n;
+  const bw = Math.min(24, band * 0.55);
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label': cfg.label || ''});
+
+  tks.forEach(t => {
+    if(t === 0) return;
+    svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(t), y2:Y(t), class:'grid-ln'}));
+    const tx = sv('text',{x:m.l-8, y:Y(t)+4, 'text-anchor':'end', class:'ax'});
+    tx.textContent = fmtInt(t); svg.appendChild(tx);
+  });
+  svg.appendChild(sv('line',{x1:m.l, x2:W-m.r, y1:Y(0), y2:Y(0), class:'base-ln'}));
+  const step = Math.max(1, Math.ceil(n / 6));
+
+  months.forEach((mo, i) => {
+    const cx = m.l + band * (i + 0.5);
+    if(showMonth(i, n, step)){
+      const tx = sv('text',{x:cx, y:H-8, 'text-anchor':'middle', class:'ax'});
+      tx.textContent = mo; svg.appendChild(tx);
+    }
+    const v = vals[i];
+    const d = v >= 0
+      ? topRound(cx - bw/2, Y(v), bw, Y(0) - Y(v), 4)
+      : botRound(cx - bw/2, Y(0), bw, Y(v) - Y(0), 4);
+    svg.appendChild(sv('path',{d, class:'bar ' + (v >= 0 ? 'pos' : 'neg')}));
+    const hb = sv('rect',{x:m.l + band*i, y:m.t, width:band, height:plotH, class:'hover-band'});
+    hb.addEventListener('pointermove', e => tipShow(e, mo, [
+      {name: v >= 0 ? 'Geração' : 'Consumo', cls: v >= 0 ? 'cw-pos' : 'cw-neg', value: cfg.fmt(v)}
+    ]));
+    hb.addEventListener('pointerleave', tipHide);
+    svg.appendChild(hb);
+  });
+  el.appendChild(svg);
+}
+
+// Barras horizontais ranqueadas (1 matiz), valor na ponta
+function hbarChart(el, cfg){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 280);
+  const rowH = 36, m = {t:6, r:52, b:6, l: cfg.labelW || 172};
+  const rows = cfg.rows;
+  const H = m.t + rows.length * rowH + m.b;
+  const hi = Math.max(...rows.map(r => r.value));
+  const X = v => m.l + (v / hi) * (W - m.l - m.r);
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label': cfg.label || ''});
+  rows.forEach((r, i) => {
+    const cy = m.t + rowH * i + rowH / 2;
+    const lb = sv('text',{x:m.l - 10, y:cy + 4, 'text-anchor':'end', class:'row-lbl'});
+    lb.textContent = r.label; svg.appendChild(lb);
+    const w = Math.max(2, X(r.value) - m.l);
+    const bh = 14;
+    const d = `M${m.l},${cy - bh/2} H${m.l + w - 4} Q${m.l + w},${cy - bh/2} ${m.l + w},${cy - bh/2 + 4} V${cy + bh/2 - 4} Q${m.l + w},${cy + bh/2} ${m.l + w - 4},${cy + bh/2} H${m.l} Z`;
+    svg.appendChild(sv('path',{d, class:'bar k1'}));
+    const vl = sv('text',{x:m.l + w + 8, y:cy + 4, class:'bar-lbl'});
+    vl.textContent = cfg.fmt(r.value); svg.appendChild(vl);
+    const hb = sv('rect',{x:0, y:m.t + rowH * i, width:W, height:rowH, class:'hover-band'});
+    hb.addEventListener('pointermove', e => tipShow(e, r.label, [{name: cfg.unit || '', cls:'cw-1', value: cfg.fmt(r.value)}]));
+    hb.addEventListener('pointerleave', tipHide);
+    svg.appendChild(hb);
+  });
+  el.appendChild(svg);
+}
+
+// Mapa de calor região × mês (rampa sequencial em 8 degraus)
+function heatChart(el){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 320);
+  const months = sl(MONTHS), n = months.length;
+  const m = {t:8, r:8, b:26, l:78};
+  const cellH = 30;
+  const H = m.t + REGIOES.length * cellH + m.b;
+  const cellW = (W - m.l - m.r) / n;
+  const bin = v => Math.max(1, Math.min(8, 1 + Math.floor((v - 40) / (96 - 40) * 8)));
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label':'Utilização de capacidade por região e mês'});
+  REGIOES.forEach((rg, ri) => {
+    const ly = m.t + cellH * ri + cellH / 2 + 4;
+    const lb = sv('text',{x:m.l - 10, y:ly, 'text-anchor':'end', class:'row-lbl'});
+    lb.textContent = rg; svg.appendChild(lb);
+    sl(UTIL[ri]).forEach((v, ci) => {
+      const rc = sv('rect',{
+        x: m.l + cellW * ci + 1, y: m.t + cellH * ri + 1,
+        width: Math.max(1, cellW - 2), height: cellH - 2, rx:5,
+        class:'hm-cell hm-' + bin(v)
+      });
+      rc.addEventListener('pointermove', e => tipShow(e, rg + ' · ' + months[ci], [{name:'Utilização', value: fmtInt(v) + '%'}]));
+      rc.addEventListener('pointerleave', tipHide);
+      svg.appendChild(rc);
+    });
+  });
+  const step = Math.max(1, Math.ceil(n / 6));
+  months.forEach((mo, i) => {
+    if(showMonth(i, n, step)){
+      const tx = sv('text',{x:m.l + cellW * (i + 0.5), y:H - 8, 'text-anchor':'middle', class:'ax'});
+      tx.textContent = mo; svg.appendChild(tx);
+    }
+  });
+  el.appendChild(svg);
+  const lg = hEl('div','hm-legend');
+  lg.appendChild(hEl('span', null, '40%'));
+  const scale = hEl('div','hm-scale');
+  for(let i = 1; i <= 8; i++){ const sw = hEl('i'); sw.style.background = `var(--hm${i})`; scale.appendChild(sw); }
+  lg.appendChild(scale);
+  lg.appendChild(hEl('span', null, '95%+'));
+  el.appendChild(lg);
+}
+
+// Funil (rampa ordinal, 4 estágios)
+function funnelChart(el){
+  el.textContent = '';
+  const max = FUNIL[0].value;
+  FUNIL.forEach((st, i) => {
+    const row = hEl('div','fn-row');
+    const meta = hEl('div','fn-meta');
+    meta.appendChild(hEl('span','nm', st.label));
+    const nums = hEl('span','nums', fmtInt(st.value));
+    if(i > 0){
+      const conv = hEl('span','conv', '· ' + fmt1(st.value / FUNIL[i-1].value * 100) + '% do estágio anterior');
+      nums.appendChild(conv);
+    }
+    meta.appendChild(nums);
+    row.appendChild(meta);
+    const track = hEl('div','fn-track');
+    const bar = hEl('i');
+    bar.style.width = Math.max(3, st.value / max * 100) + '%';
+    bar.style.background = `var(--fn${i + 1})`;
+    track.appendChild(bar);
+    row.appendChild(track);
+    row.addEventListener('pointermove', e => tipShow(e, st.label, [{name:'Volume', value: fmtInt(st.value)}]));
+    row.addEventListener('pointerleave', tipHide);
+    el.appendChild(row);
+  });
+}
+
+// NPS — barra empilhada divergente centrada no neutro
+function npsChart(el){
+  el.textContent = '';
+  const W = Math.max(el.clientWidth, 240), H = 112;
+  const m = {l:8, r:8};
+  const iw = W - m.l - m.r;
+  const {det, neu, pro} = NPS_MIX;
+  const cx = m.l + iw * ((det + neu / 2) / 100); // centro visual no meio dos neutros
+  const y = 34, bh = 26;
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, role:'img', 'aria-label':'Distribuição NPS: detratores, neutros e promotores'});
+  const npsVal = pro - det;
+  const hero = sv('text',{x:m.l, y:20, class:'end-lbl', style:'font-size:22px'});
+  hero.textContent = 'NPS ' + npsVal;
+  svg.appendChild(hero);
+  const zone = sv('text',{x:W - m.r, y:20, 'text-anchor':'end', class:'end-sub'});
+  zone.textContent = 'zona de qualidade: 50–74';
+  svg.appendChild(zone);
+
+  const segs = [
+    {k:'seg-det', name:'Detratores (0–6)', pct:det, cw:'cw-neg'},
+    {k:'seg-neu', name:'Neutros (7–8)',   pct:neu, cw:'cw-mid'},
+    {k:'seg-pro', name:'Promotores (9–10)',pct:pro, cw:'cw-pos'},
+  ];
+  let ax = m.l;
+  segs.forEach(s => {
+    const w = Math.max(0, iw * s.pct / 100 - 2);
+    const rc = sv('rect',{x:ax, y, width:w, height:bh, rx:5, class:s.k});
+    rc.addEventListener('pointermove', e => tipShow(e, 'NPS · Jul/26', segs.map(g => ({name:g.name, cls:g.cw, value:fmtInt(g.pct) + '%'}))));
+    rc.addEventListener('pointerleave', tipHide);
+    svg.appendChild(rc);
+    if(w > 40){
+      const tl = sv('text',{x:ax + w/2, y:y + bh/2 + 4, 'text-anchor':'middle', class:'seg-lbl',
+        fill: s.k === 'seg-neu' ? 'var(--ink-2)' : '#fff'});
+      tl.textContent = fmtInt(s.pct) + '%';
+      svg.appendChild(tl);
+    }
+    ax += iw * s.pct / 100;
+  });
+  svg.appendChild(sv('line',{x1:cx, x2:cx, y1:y - 6, y2:y + bh + 6, class:'base-ln'}));
+  const cap = sv('text',{x:m.l, y:y + bh + 24, class:'end-sub'});
+  cap.textContent = 'Detratores 8% · Neutros 20% · Promotores 72%';
+  svg.appendChild(cap);
+  const cap2 = sv('text',{x:m.l, y:y + bh + 40, class:'end-sub'});
+  cap2.textContent = '+10 pts em 12 meses';
+  svg.appendChild(cap2);
+  el.appendChild(svg);
+}
+
+// Medidor (uptime vs SLA)
+function meterRender(){
+  const el = document.getElementById('uptimeMeter');
+  el.textContent = '';
+  const val = 99.92, sla = 99.5, lo = 99.0, hi = 100;
+  const pct = v => (v - lo) / (hi - lo) * 100;
+  const big = hEl('div','big','99,92%');
+  big.appendChild(hEl('small', null, 'em Jul/26'));
+  el.appendChild(big);
+  const track = hEl('div','meter-track');
+  const fill = hEl('div','meter-fill'); fill.style.width = pct(val) + '%';
+  const tick = hEl('div','meter-tick'); tick.style.left = pct(sla) + '%';
+  tick.title = 'SLA contratual: 99,50%';
+  track.appendChild(fill); track.appendChild(tick);
+  el.appendChild(track);
+  const scale = hEl('div','meter-scale');
+  scale.appendChild(hEl('span', null, '99,0%'));
+  scale.appendChild(hEl('span', null, 'SLA 99,5%'));
+  scale.appendChild(hEl('span', null, '100%'));
+  el.appendChild(scale);
+  el.appendChild(hEl('p','meter-cap','Equivale a ~35 min de indisponibilidade média por cliente no mês. 2 incidentes críticos (P1), ambos por rompimento de backbone — um a menos que em Jun/26.'));
+}
+
+/* ================= KPI tiles ================= */
+function sparkSvg(values, goodWhenDown){
+  const vals = sl(values);
+  const W = 120, H = 30, n = vals.length;
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const X = i => 3 + (n === 1 ? 0.5 : i / (n - 1)) * (W - 14);
+  const Y = v => 4 + (1 - (v - lo) / ((hi - lo) || 1)) * (H - 8);
+  const svg = sv('svg',{viewBox:`0 0 ${W} ${H}`, width:W, height:H, 'aria-hidden':'true'});
+  const pts = vals.map((v, i) => [X(i), Y(v)]);
+  svg.appendChild(sv('path',{d: smoothPath(pts), fill:'none', stroke:'var(--axis)', 'stroke-width':2, 'stroke-linecap':'round'}));
+  svg.appendChild(sv('circle',{cx:pts[n-1][0], cy:pts[n-1][1], r:3.5, fill:'var(--s1)', stroke:'var(--surface)', 'stroke-width':2}));
+  return svg;
+}
+function tile(o){
+  const t = hEl('div','tile' + (o.hero ? ' hero' : ''));
+  t.appendChild(hEl('div','lbl', o.label));
+  t.appendChild(hEl('div','val', o.value));
+  const d = hEl('div','delta');
+  const b = hEl('b', o.deltaCls, o.delta);
+  d.appendChild(b);
+  d.appendChild(document.createTextNode(' ' + o.vs));
+  t.appendChild(d);
+  if(o.spark){
+    const s = hEl('div','spark');
+    s.appendChild(sparkSvg(o.spark));
+    t.appendChild(s);
+  }
+  return t;
+}
+function renderTiles(){
+  const host = document.getElementById('kpiTiles');
+  host.textContent = '';
+  [
+    {hero:true, label:'Receita recorrente (MRR)', value:'R$ 4,31 mi', delta:'▲ 2,4%', deltaCls:'up-good', vs:'vs Jun/26', spark:D.receita},
+    {label:'Assinantes ativos', value:'48.520', delta:'▲ 1,8%', deltaCls:'up-good', vs:'vs Jun/26', spark:D.assin},
+    {label:'Churn mensal', value:'1,72%', delta:'▼ 0,03 p.p.', deltaCls:'down-good-neg', vs:'vs Jun/26', spark:D.churn},
+    {label:'Margem EBITDA', value:'38,4%', delta:'▲ 0,3 p.p.', deltaCls:'up-good', vs:'vs Jun/26', spark:D.ebitda},
+    {label:'Uptime da rede', value:'99,92%', delta:'▼ 0,02 p.p.', deltaCls:'up-bad', vs:'vs Jun/26 · SLA 99,5%', spark:D.uptime},
+    {label:'NPS', value:'64', delta:'▲ 1 pt', deltaCls:'up-good', vs:'vs Jun/26', spark:D.nps},
+  ].forEach(o => host.appendChild(tile(o)));
+}
+
+/* ================= Tabelas (gêmea acessível de cada gráfico) ================= */
+function monthTable(el, cols, fmt){
+  el.textContent = '';
+  const months = sl(MONTHS);
+  const tb = hEl('table');
+  const thead = hEl('thead'), hr = hEl('tr');
+  hr.appendChild(hEl('th', null, 'Mês'));
+  cols.forEach(c => hr.appendChild(hEl('th', null, c.name)));
+  thead.appendChild(hr); tb.appendChild(thead);
+  const body = hEl('tbody');
+  months.forEach((mo, i) => {
+    const tr = hEl('tr');
+    tr.appendChild(hEl('td', null, mo));
+    cols.forEach(c => tr.appendChild(hEl('td', null, fmt(sl(c.values)[i]))));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body); el.appendChild(tb);
+}
+function pairTable(el, rows, head, fmt){
+  el.textContent = '';
+  const tb = hEl('table');
+  const thead = hEl('thead'), hr = hEl('tr');
+  head.forEach(t => hr.appendChild(hEl('th', null, t)));
+  thead.appendChild(hr); tb.appendChild(thead);
+  const body = hEl('tbody');
+  rows.forEach(r => {
+    const tr = hEl('tr');
+    tr.appendChild(hEl('td', null, r.label));
+    tr.appendChild(hEl('td', null, fmt(r.value)));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body); el.appendChild(tb);
+}
+function regionTable(el){
+  el.textContent = '';
+  const months = sl(MONTHS);
+  const tb = hEl('table');
+  const thead = hEl('thead'), hr = hEl('tr');
+  hr.appendChild(hEl('th', null, 'Região'));
+  months.forEach(mo => hr.appendChild(hEl('th', null, mo)));
+  thead.appendChild(hr); tb.appendChild(thead);
+  const body = hEl('tbody');
+  REGIOES.forEach((rg, ri) => {
+    const tr = hEl('tr');
+    tr.appendChild(hEl('td', null, rg));
+    sl(UTIL[ri]).forEach(v => tr.appendChild(hEl('td', null, fmtInt(v) + '%')));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body); el.appendChild(tb);
+}
+
+/* ================= Registro de gráficos ================= */
+const R$m = v => 'R$ ' + fmtInt(v) + ' mil';
+const CHARTS = {
+  finRev:{
+    draw: el => lineChart(el, {series:[
+      {name:'Receita', k:'k1', values:D.receita},
+      {name:'Despesas', k:'k2', values:D.despesas},
+    ], fmt:R$m, tickFmt:fmtInt, endLabels:true, endFmt:v => 'R$ ' + fmtInt(v), height:250, label:'Receita e despesas mensais em R$ mil'}),
+    table: el => monthTable(el, [{name:'Receita (R$ mil)', values:D.receita},{name:'Despesas (R$ mil)', values:D.despesas}], fmtInt),
+  },
+  finMix:{
+    draw: el => colChart(el, {series:[
+      {name:'Residencial', k:'k1', values:D.resid},
+      {name:'Empresarial', k:'k2', values:D.emp},
+      {name:'Atacado', k:'k3', values:D.atac},
+    ], fmt:R$m, tickFmt:fmtInt, capLabel:true, capFmt:v => 'R$ ' + fmtInt(v), height:250, label:'Composição da receita por segmento'}),
+    table: el => monthTable(el, [
+      {name:'Residencial', values:D.resid},{name:'Empresarial', values:D.emp},{name:'Atacado', values:D.atac},
+    ], fmtInt),
+  },
+  finFcf:{
+    draw: el => divChart(el, {values:D.fcf, fmt:R$m, height:230, label:'Fluxo de caixa livre mensal'}),
+    table: el => monthTable(el, [{name:'FCL (R$ mil)', values:D.fcf}], fmtInt),
+  },
+  opsTraffic:{
+    draw: el => lineChart(el, {series:[
+      {name:'Pico de tráfego', k:'k3', values:D.trafego, area:true},
+    ], fmt:v => fmtInt(v) + ' Gbps', tickFmt:fmtInt, endLabels:true, height:220, label:'Pico de tráfego mensal em Gbps'}),
+    table: el => monthTable(el, [{name:'Pico (Gbps)', values:D.trafego}], fmtInt),
+  },
+  opsHeat:{
+    draw: el => heatChart(el),
+    table: el => regionTable(el),
+  },
+  expAdds:{
+    draw: el => colChart(el, {series:[
+      {name:'Ativações', k:'k1', values:D.ativacoes},
+    ], fmt:fmtInt, capLabel:true, height:230, label:'Ativações de novos assinantes por mês'}),
+    table: el => monthTable(el, [{name:'Ativações', values:D.ativacoes}], fmtInt),
+  },
+  expKm:{
+    draw: el => hbarChart(el, {rows:KM_CIDADES, fmt:v => fmtInt(v) + ' km', unit:'Fibra lançada', labelW:150, label:'Km de fibra construídos por cidade'}),
+    table: el => pairTable(el, KM_CIDADES, ['Cidade','Km no trimestre'], v => fmtInt(v) + ' km'),
+  },
+  expFunnel:{
+    draw: el => funnelChart(el),
+    table: el => pairTable(el, FUNIL, ['Estágio','Volume'], fmtInt),
+  },
+  mntCauses:{
+    draw: el => hbarChart(el, {rows:CAUSAS, fmt:fmtInt, unit:'Chamados', labelW:200, label:'Chamados corretivos por causa raiz'}),
+    table: el => pairTable(el, CAUSAS, ['Causa raiz','Chamados no mês'], fmtInt),
+  },
+  mntMttr:{
+    draw: el => lineChart(el, {series:[
+      {name:'MTTR', k:'k1', values:D.mttr},
+    ], fmt:v => fmt1(v) + ' h', tickFmt:fmt1, endLabels:true, target:6, targetLabel:'meta 6h', height:230, label:'Tempo médio de reparo mensal em horas'}),
+    table: el => monthTable(el, [{name:'MTTR (h)', values:D.mttr}], fmt1),
+  },
+  atdVol:{
+    draw: el => colChart(el, {series:[
+      {name:'WhatsApp', k:'k1', values:D.wa},
+      {name:'Telefone', k:'k2', values:D.tel},
+      {name:'App / Portal', k:'k3', values:D.app},
+    ], fmt:fmtInt, capLabel:true, height:250, label:'Atendimentos por canal por mês'}),
+    table: el => monthTable(el, [
+      {name:'WhatsApp', values:D.wa},{name:'Telefone', values:D.tel},{name:'App / Portal', values:D.app},
+    ], fmtInt),
+  },
+  atdNps:{
+    draw: el => npsChart(el),
+    table: el => pairTable(el, [
+      {label:'Detratores (0–6)', value:NPS_MIX.det},
+      {label:'Neutros (7–8)', value:NPS_MIX.neu},
+      {label:'Promotores (9–10)', value:NPS_MIX.pro},
+    ], ['Grupo','% das respostas'], v => fmtInt(v) + '%'),
+  },
+};
+
+function renderAll(){
+  renderTiles();
+  meterRender();
+  document.querySelectorAll('[data-chart]').forEach(card => {
+    const def = CHARTS[card.dataset.chart];
+    if(!def) return;
+    def.draw(card.querySelector('.c-viz'));
+    def.table(card.querySelector('.c-table'));
+  });
+}
+
+/* ================= Interações globais ================= */
+// alternância gráfico ⇄ tabela
+document.querySelectorAll('[data-chart]').forEach(card => {
+  const btn = card.querySelector('.tbtn');
+  if(!btn) return;
+  btn.addEventListener('click', () => {
+    const showTable = btn.getAttribute('aria-pressed') !== 'true';
+    btn.setAttribute('aria-pressed', String(showTable));
+    btn.textContent = showTable ? 'Gráfico' : 'Tabela';
+    card.querySelector('.c-viz').hidden = showTable;
+    card.querySelector('.c-table').hidden = !showTable;
+  });
+});
+// filtro de período — escopa todos os gráficos mensais abaixo
+document.querySelectorAll('.chips button').forEach(b => {
+  b.addEventListener('click', () => {
+    state.range = +b.dataset.range;
+    document.querySelectorAll('.chips button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderAll();
+  });
+});
+// tema claro/escuro
+const themeBtn = document.getElementById('themeBtn');
+function applyThemeLabel(){
+  const dark = document.documentElement.dataset.theme === 'dark' ||
+    (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+  themeBtn.textContent = dark ? 'Modo claro' : 'Modo escuro';
+  themeBtn.setAttribute('aria-pressed', String(dark));
+}
+themeBtn.addEventListener('click', () => {
+  const root = document.documentElement;
+  const nowDark = !(root.dataset.theme === 'dark' ||
+    (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches));
+  root.dataset.theme = nowDark ? 'dark' : 'light';
+  applyThemeLabel();
+});
+if(location.hash === '#dark') document.documentElement.dataset.theme = 'dark';
+applyThemeLabel();
+
+let rzT;
+addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(renderAll, 150); });
+renderAll();
+</script>
+</body>
+</html>
