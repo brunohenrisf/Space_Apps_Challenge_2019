@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inadimplência histórica — modelo de gráfico</title>
+
+<style>
+/* ==========================================================================
+   1. TOKENS — a única parte que muda para adotar a identidade visual da casa.
+      Os valores abaixo são uma paleta validada para daltonismo e contraste.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+  --plano:    #f9f9f7;   /* fundo da página */
+  --surface:  #fcfcfb;   /* fundo do cartão / do gráfico */
+  --texto:    #0b0b0b;
+  --texto-2:  #52514e;
+  --texto-3:  #898781;   /* eixos e rótulos */
+  --grid:     #e1e0d9;
+  --eixo:     #c3c2b7;
+  --borda:    rgba(11,11,11,.10);
+  --ghost:    rgba(11,11,11,.05);
+  --serie-1:  #2a78d6;   /* azul     */
+  --serie-2:  #eb6834;   /* laranja  */
+  --serie-3:  #1baf7a;   /* verde-água */
+  --bom:      #006300;
+  --ruim:     #d03b3b;
+  --sombra:   0 1px 2px rgba(11,11,11,.05), 0 10px 28px rgba(11,11,11,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --plano:   #0d0d0d;
+    --surface: #1a1a19;
+    --texto:   #ffffff;
+    --texto-2: #c3c2b7;
+    --texto-3: #898781;
+    --grid:    #2c2c2a;
+    --eixo:    #383835;
+    --borda:   rgba(255,255,255,.10);
+    --ghost:   rgba(255,255,255,.06);
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --serie-3: #199e70;
+    --bom:     #0ca30c;
+    --ruim:    #d03b3b;
+    --sombra:  0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plano:   #0d0d0d;
+  --surface: #1a1a19;
+  --texto:   #ffffff;
+  --texto-2: #c3c2b7;
+  --texto-3: #898781;
+  --grid:    #2c2c2a;
+  --eixo:    #383835;
+  --borda:   rgba(255,255,255,.10);
+  --ghost:   rgba(255,255,255,.06);
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --bom:     #0ca30c;
+  --ruim:    #d03b3b;
+  --sombra:  0 1px 2px rgba(0,0,0,.4);
+}
+
+/* ==========================================================================
+   2. Página
+   ========================================================================== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 28px 20px 48px;
+  background: var(--plano);
+  color: var(--texto);
+  font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.painel { max-width: 940px; margin: 0 auto; }
+
+.topo { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.topo h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.topo p  { margin: 0; color: var(--texto-2); font-size: 14px; max-width: 62ch; }
+
+/* --- controles (botões, toggles) ------------------------------------------ */
+.btn {
+  appearance: none; cursor: pointer;
+  border: 1px solid var(--borda); background: var(--surface); color: var(--texto-2);
+  font: inherit; font-size: 13px; line-height: 1;
+  padding: 8px 12px; border-radius: 8px;
+}
+.btn:hover { background: var(--ghost); color: var(--texto); }
+.btn:focus-visible { outline: 2px solid var(--serie-1); outline-offset: 2px; }
+.btn[aria-pressed="true"] { background: var(--texto); border-color: var(--texto); color: var(--surface); }
+.tema { margin-left: auto; flex: none; }
+
+/* uma única linha de filtros, acima de tudo que ela recorta */
+.filtros {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  margin-bottom: 18px;
+}
+.grupo { display: flex; align-items: center; gap: 8px; }
+.grupo > .rotulo { font-size: 12px; color: var(--texto-3); }
+.grupo .btn + .btn { margin-left: -1px; }
+.direita { margin-left: auto; }
+
+/* --- cartões e indicadores ------------------------------------------------ */
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+.tile {
+  background: var(--surface); border: 1px solid var(--borda); border-radius: 12px;
+  padding: 14px 16px; box-shadow: var(--sombra);
+}
+.tile .rotulo { font-size: 12px; color: var(--texto-2); margin-bottom: 6px; }
+.tile .valor  { font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.tile .apoio  { font-size: 12px; color: var(--texto-3); margin-top: 5px; }
+.delta { font-weight: 500; }
+.delta.bom  { color: var(--bom); }
+.delta.ruim { color: var(--ruim); }
+
+.cartao {
+  background: var(--surface); border: 1px solid var(--borda); border-radius: 12px;
+  padding: 18px 18px 12px; box-shadow: var(--sombra);
+}
+.cartao h2 { margin: 0 0 2px; font-size: 15px; font-weight: 600; }
+.cartao .sub { margin: 0 0 14px; font-size: 13px; color: var(--texto-2); }
+.oculto { display: none; }
+
+/* --- legenda -------------------------------------------------------------- */
+.legenda { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 10px; padding: 0; list-style: none; }
+.legenda li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-2); }
+.chave { width: 16px; height: 2px; border-radius: 2px; flex: none; }
+.chave.s1 { background: var(--serie-1); }
+.chave.s2 { background: var(--serie-2); }
+.chave.s3 { background: var(--serie-3); }
+
+/* --- área do gráfico ------------------------------------------------------ */
+.plot { position: relative; width: 100%; height: clamp(280px, 40vw, 360px); }
+.plot svg { display: block; width: 100%; height: 100%; touch-action: none; }
+.plot svg:focus-visible { outline: 2px solid var(--serie-1); outline-offset: 2px; border-radius: 6px; }
+.grade    { stroke: var(--grid); stroke-width: 1; }
+.eixo     { stroke: var(--eixo); stroke-width: 1; }
+.marca    { font-size: 12px; fill: var(--texto-3); font-variant-numeric: tabular-nums; }
+.rotulo-fim { font-size: 12px; fill: var(--texto-2); font-variant-numeric: tabular-nums; }
+.linha    { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.linha.s1, .ponto.s1 { stroke: var(--serie-1); }
+.linha.s2, .ponto.s2 { stroke: var(--serie-2); }
+.linha.s3, .ponto.s3 { stroke: var(--serie-3); }
+.ponto.s1 { fill: var(--serie-1); }
+.ponto.s2 { fill: var(--serie-2); }
+.ponto.s3 { fill: var(--serie-3); }
+.ponto    { stroke: var(--surface); stroke-width: 2; }   /* anel na cor da superfície */
+.mira     { stroke: var(--eixo); stroke-width: 1; }
+
+/* --- tooltip -------------------------------------------------------------- */
+.dica {
+  position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none;
+  min-width: 168px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--borda); border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.14);
+  opacity: 0; transition: opacity .1s ease;
+}
+.dica[data-visivel="1"] { opacity: 1; }
+.dica .quando { font-size: 12px; color: var(--texto-3); margin-bottom: 8px; }
+.dica dl { margin: 0; display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; }
+.dica .traco { width: 14px; height: 2px; border-radius: 2px; }
+.dica .traco.s1 { background: var(--serie-1); }
+.dica .traco.s2 { background: var(--serie-2); }
+.dica .traco.s3 { background: var(--serie-3); }
+.dica dt { font-size: 12px; color: var(--texto-2); white-space: nowrap; }
+.dica dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--texto); text-align: right;
+           font-variant-numeric: tabular-nums; }
+
+/* --- tabela (o par acessível do gráfico) ---------------------------------- */
+.rolagem { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+caption { text-align: left; font-size: 13px; color: var(--texto-2); padding-bottom: 10px; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+thead th { font-weight: 600; color: var(--texto-2); text-align: right; border-bottom-color: var(--eixo); }
+thead th:first-child, tbody th { text-align: left; font-weight: 400; color: var(--texto-2); }
+td { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: var(--ghost); }
+
+.nota { margin: 14px 2px 0; font-size: 12px; color: var(--texto-3); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 620px) {
+  .tiles { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* --- canal de reserva: quando a cor não chega (alto contraste, impressão) ---
+   o traço passa a distinguir as séries; a legenda repete o mesmo padrão.      */
+@media (forced-colors: active), print {
+  .linha.s2 { stroke-dasharray: 7 4; }
+  .linha.s3 { stroke-dasharray: 2 3; }
+  .chave.s2, .dica .traco.s2 { background: repeating-linear-gradient(90deg, var(--serie-2) 0 7px, transparent 7px 11px); }
+  .chave.s3, .dica .traco.s3 { background: repeating-linear-gradient(90deg, var(--serie-3) 0 2px, transparent 2px 5px); }
+}
+@media print {
+  body { padding: 0; background: #fff; }
+  .filtros, .tema { display: none; }
+  .cartao { box-shadow: none; break-inside: avoid; }
+  #cartao-tabela { display: block !important; margin-top: 16px; }
+}
+</style>
+</head>
+
+<body>
+<main class="painel">
+
+  <header class="topo">
+    <div>
+      <h1>Inadimplência histórica</h1>
+      <p id="subtitulo">Taxa de inadimplência sobre a carteira — participação dos valores vencidos há mais de 90 dias, por mês.</p>
+    </div>
+    <button class="btn tema" id="btn-tema" type="button" aria-label="Alternar tema claro e escuro">Tema</button>
+  </header>
+
+  <!-- uma linha de filtros, acima de tudo que ela recorta -->
+  <div class="filtros">
+    <div class="grupo" role="group" aria-label="Período">
+      <span class="rotulo">Período</span>
+      <button class="btn" type="button" data-periodo="12" aria-pressed="false">12 meses</button>
+      <button class="btn" type="button" data-periodo="24" aria-pressed="false">24 meses</button>
+      <button class="btn" type="button" data-periodo="tudo" aria-pressed="true">Todo o histórico</button>
+    </div>
+    <div class="grupo direita" role="group" aria-label="Visualização">
+      <button class="btn" type="button" data-vista="grafico" aria-pressed="true">Gráfico</button>
+      <button class="btn" type="button" data-vista="tabela" aria-pressed="false">Tabela</button>
+    </div>
+  </div>
+
+  <section class="tiles" id="tiles" aria-label="Resumo do período"></section>
+
+  <section class="cartao" id="cartao-grafico">
+    <h2 id="titulo-grafico">Taxa de inadimplência por segmento</h2>
+    <p class="sub" id="periodo-grafico"></p>
+    <ul class="legenda" id="legenda"></ul>
+    <div class="plot" id="plot">
+      <svg id="svg" role="img" tabindex="0" aria-labelledby="titulo-grafico" aria-describedby="leitura"></svg>
+      <div class="dica" id="dica" role="presentation"></div>
+    </div>
+    <p class="sr" id="leitura" aria-live="polite"></p>
+    <noscript><p class="nota">Este modelo desenha o gráfico com JavaScript. Sem ele, use a tabela de dados do arquivo.</p></noscript>
+  </section>
+
+  <section class="cartao oculto" id="cartao-tabela">
+    <div class="rolagem">
+      <table id="tabela">
+        <caption>Taxa de inadimplência (%) por mês e segmento.</caption>
+      </table>
+    </div>
+  </section>
+
+  <p class="nota" id="fonte"></p>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* ==========================================================================
+   3. DADOS — troque só este bloco pelos seus números.
+      mes: 'AAAA-MM'; demais chaves: taxa de inadimplência em % da carteira.
+      Os valores abaixo são FICTÍCIOS, apenas para demonstrar o modelo.
+   ========================================================================== */
+const DADOS = [
+  { mes: '2023-07', total: 4.8, pf: 6.2, pj: 3.1 },
+  { mes: '2023-08', total: 5.0, pf: 6.4, pj: 3.2 },
+  { mes: '2023-09', total: 5.1, pf: 6.5, pj: 3.3 },
+  { mes: '2023-10', total: 5.2, pf: 6.7, pj: 3.4 },
+  { mes: '2023-11', total: 5.2, pf: 6.6, pj: 3.5 },
+  { mes: '2023-12', total: 5.0, pf: 6.3, pj: 3.4 },
+  { mes: '2024-01', total: 5.6, pf: 7.1, pj: 3.7 },
+  { mes: '2024-02', total: 5.8, pf: 7.4, pj: 3.9 },
+  { mes: '2024-03', total: 5.7, pf: 7.2, pj: 3.8 },
+  { mes: '2024-04', total: 5.5, pf: 7.0, pj: 3.7 },
+  { mes: '2024-05', total: 5.4, pf: 6.8, pj: 3.6 },
+  { mes: '2024-06', total: 5.2, pf: 6.6, pj: 3.5 },
+  { mes: '2024-07', total: 5.1, pf: 6.5, pj: 3.4 },
+  { mes: '2024-08', total: 5.0, pf: 6.3, pj: 3.3 },
+  { mes: '2024-09', total: 4.9, pf: 6.2, pj: 3.3 },
+  { mes: '2024-10', total: 4.8, pf: 6.1, pj: 3.2 },
+  { mes: '2024-11', total: 4.7, pf: 6.0, pj: 3.1 },
+  { mes: '2024-12', total: 4.5, pf: 5.8, pj: 3.0 },
+  { mes: '2025-01', total: 5.1, pf: 6.5, pj: 3.3 },
+  { mes: '2025-02', total: 5.2, pf: 6.7, pj: 3.4 },
+  { mes: '2025-03', total: 5.0, pf: 6.4, pj: 3.3 },
+  { mes: '2025-04', total: 4.9, pf: 6.2, pj: 3.2 },
+  { mes: '2025-05', total: 4.7, pf: 6.0, pj: 3.1 },
+  { mes: '2025-06', total: 4.6, pf: 5.9, pj: 3.0 },
+  { mes: '2025-07', total: 4.5, pf: 5.8, pj: 2.9 },
+  { mes: '2025-08', total: 4.4, pf: 5.7, pj: 2.9 },
+  { mes: '2025-09', total: 4.3, pf: 5.6, pj: 2.8 },
+  { mes: '2025-10', total: 4.3, pf: 5.5, pj: 2.8 },
+  { mes: '2025-11', total: 4.2, pf: 5.4, pj: 2.7 },
+  { mes: '2025-12', total: 4.0, pf: 5.2, pj: 2.6 },
+  { mes: '2026-01', total: 4.6, pf: 5.9, pj: 2.9 },
+  { mes: '2026-02', total: 4.7, pf: 6.0, pj: 3.0 },
+  { mes: '2026-03', total: 4.4, pf: 5.7, pj: 2.9 },
+  { mes: '2026-04', total: 4.3, pf: 5.5, pj: 2.8 },
+  { mes: '2026-05', total: 4.1, pf: 5.3, pj: 2.7 },
+  { mes: '2026-06', total: 4.0, pf: 5.1, pj: 2.6 }
+];
+
+/* Séries: a ORDEM define a cor (slot 1, 2, 3 da paleta) e a ordem da legenda.
+   A cor acompanha a série, nunca a posição no ranking — não reordene por valor. */
+const SERIES = [
+  { chave: 'total', nome: 'Carteira total',   slot: 's1' },
+  { chave: 'pf',    nome: 'Pessoa física',    slot: 's2' },
+  { chave: 'pj',    nome: 'Pessoa jurídica',  slot: 's3' }
+];
+
+const CONFIG = {
+  principal:   'total',   // série usada nos indicadores do topo
+  casas:       1,         // casas decimais
+  unidade:     '%',
+  iniciarEmZero: true,    // eixo Y começa em zero
+  subirEhRuim: true,      // inadimplência subindo = sinal negativo
+  fonte: 'Modelo de demonstração — dados fictícios. Substitua o bloco DADOS pelos números da sua carteira.'
+};
+
+/* ==========================================================================
+   4. Utilidades
+   ========================================================================== */
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const fmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: CONFIG.casas, maximumFractionDigits: CONFIG.casas });
+const num = v => fmt.format(v);
+const pct = v => fmt.format(v) + CONFIG.unidade;
+const mesCurto = m => { const [a, b] = m.split('-'); return MESES[+b - 1] + '/' + a.slice(2); };
+const mesLongo = m => { const [a, b] = m.split('-'); return MESES[+b - 1] + '/' + a; };
+
+const NS = 'http://www.w3.org/2000/svg';
+function no(tag, attrs, texto) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (texto != null) el.textContent = texto;   // rótulos entram como texto, nunca como HTML
+  return el;
+}
+function el(tag, cls, texto) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (texto != null) n.textContent = texto;
+  return n;
+}
+/* passo "redondo" para o eixo: 1, 2, 2,5, 5, 10... */
+function passoBonito(intervalo, alvo) {
+  const bruto = intervalo / alvo;
+  const mag = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const n = bruto / mag;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+}
+
+/* ==========================================================================
+   5. Estado
+   ========================================================================== */
+const estado = { periodo: 'tudo', vista: 'grafico', foco: null };
+const $ = id => document.getElementById(id);
+const plot = $('plot'), svg = $('svg'), dica = $('dica');
+let fatia = DADOS, geo = null;
+
+const recorte = () => estado.periodo === 'tudo' ? DADOS : DADOS.slice(Math.max(0, DADOS.length - (+estado.periodo)));
+
+/* ==========================================================================
+   6. Indicadores do topo
+   ========================================================================== */
+function pintarTiles() {
+  const k = CONFIG.principal;
+  const vals = fatia.map(d => d[k]);
+  const ultimo = fatia[fatia.length - 1];
+  const iPico = vals.indexOf(Math.max(...vals));
+  const media = vals.reduce((s, v) => s + v, 0) / vals.length;
+
+  // comparação com 12 meses antes; se o recorte não alcança um ano, com o início dele
+  const temAno = fatia.length >= 13;
+  const passo = temAno ? 12 : fatia.length - 1;
+  const desde = temAno ? 'em 12 meses' : 'no período';
+  const base = fatia[fatia.length - 1 - passo];
+  const delta = ultimo[k] - base[k];
+  const ruim = CONFIG.subirEhRuim ? delta > 0 : delta < 0;
+  const seta = delta > 0 ? '▲' : delta < 0 ? '▼' : '■';
+
+  const alvo = $('tiles');
+  alvo.replaceChildren();
+  const add = (rotulo, valor, apoio) => {
+    const c = el('div', 'tile');
+    c.append(el('div', 'rotulo', rotulo), el('div', 'valor', valor));
+    c.append(apoio);
+    alvo.append(c);
+  };
+
+  const apoioDelta = el('div', 'apoio');
+  if (Math.abs(delta) < 1e-9) {
+    apoioDelta.textContent = 'estável ' + desde;
+  } else {
+    // seta + sinal: a cor nunca carrega o significado sozinha
+    const s = el('span', 'delta ' + (ruim ? 'ruim' : 'bom'),
+      seta + ' ' + (delta > 0 ? '+' : '−') + num(Math.abs(delta)) + ' p.p.');
+    apoioDelta.append(s, document.createTextNode(' ' + desde));
+  }
+  add('Inadimplência atual', pct(ultimo[k]), apoioDelta);
+  add('Pico do período',  pct(vals[iPico]), el('div', 'apoio', mesLongo(fatia[iPico].mes)));
+  add('Média do período', pct(media),
+      el('div', 'apoio', fatia.length + ' meses · ' + mesCurto(fatia[0].mes) + ' a ' + mesCurto(ultimo.mes)));
+}
+
+/* ==========================================================================
+   7. Legenda
+   ========================================================================== */
+function pintarLegenda() {
+  const ul = $('legenda');
+  ul.replaceChildren();
+  for (const s of SERIES) {
+    const li = document.createElement('li');
+    li.append(el('span', 'chave ' + s.slot), document.createTextNode(s.nome));
+    ul.append(li);
+  }
+}
+
+/* ==========================================================================
+   8. Gráfico
+   ========================================================================== */
+function desenhar() {
+  const larg = plot.clientWidth, alt = plot.clientHeight;
+  if (!larg || !alt) return;
+
+  const M = { topo: 16, dir: larg < 520 ? 20 : 58, base: 34, esq: 46 };
+  const pl = larg - M.esq - M.dir, pa = alt - M.topo - M.base;
+  const n = fatia.length;
+  if (pl <= 0 || pa <= 0 || n === 0) return;
+
+  const todos = fatia.flatMap(d => SERIES.map(s => d[s.chave])).filter(v => typeof v === 'number');
+  const bruto = Math.max(...todos);
+  const minY = CONFIG.iniciarEmZero ? 0 : Math.min(...todos);
+  const passo = passoBonito(bruto - minY, 4);
+  const maxY = Math.ceil(bruto / passo) * passo;
+  const piso = CONFIG.iniciarEmZero ? 0 : Math.floor(minY / passo) * passo;
+
+  const x = i => M.esq + (n === 1 ? pl / 2 : (i / (n - 1)) * pl);
+  const y = v => M.topo + pa - ((v - piso) / (maxY - piso)) * pa;
+
+  svg.replaceChildren();
+  svg.setAttribute('viewBox', `0 0 ${larg} ${alt}`);
+  svg.setAttribute('aria-label',
+    'Gráfico de linhas: taxa de inadimplência de ' + mesLongo(fatia[0].mes) + ' a ' +
+    mesLongo(fatia[n - 1].mes) + ', em ' + SERIES.length + ' séries.');
+
+  /* --- grade e eixo Y: fios de cabelo, sólidos, recuados --- */
+  for (let v = piso; v <= maxY + 1e-9; v += passo) {
+    const yy = Math.round(y(v)) + .5;
+    svg.append(no('line', { class: v === piso ? 'eixo' : 'grade', x1: M.esq, x2: M.esq + pl, y1: yy, y2: yy }));
+    svg.append(no('text', { class: 'marca', x: M.esq - 10, y: yy, 'text-anchor': 'end', 'dominant-baseline': 'middle' },
+                  num(v) + CONFIG.unidade));
+  }
+
+  /* --- eixo X: no máximo ~7 marcas, sempre com o mês mais recente --- */
+  const maxMarcas = Math.max(2, Math.min(7, Math.floor(pl / 62)));
+  const salto = Math.max(1, Math.ceil(n / maxMarcas));
+  const marcasX = [];
+  for (let i = n - 1; i >= 0; i -= salto) marcasX.push(i);
+  // o primeiro mês só entra se sobrar espaço — rótulo nenhum é melhor que rótulo colidido
+  if (marcasX[marcasX.length - 1] >= Math.ceil(salto * .7)) marcasX.push(0);
+  for (const i of marcasX) {
+    svg.append(no('text', { class: 'marca', x: x(i), y: M.topo + pa + 20, 'text-anchor': 'middle' }, mesCurto(fatia[i].mes)));
+  }
+
+  /* --- linhas: 2px, junções arredondadas --- */
+  for (const s of SERIES) {
+    const d = fatia.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p[s.chave]).toFixed(1)).join(' ');
+    svg.append(no('path', { class: 'linha ' + s.slot, d }));
+  }
+
+  /* --- rótulos diretos na ponta (só quando cabem sem colidir) --- */
+  const iFim = n - 1;
+  const pontas = SERIES.map(s => ({ s, v: fatia[iFim][s.chave], y: y(fatia[iFim][s.chave]) }))
+                       .sort((a, b) => a.y - b.y);
+  const colide = pontas.some((p, i) => i && p.y - pontas[i - 1].y < 15);
+  const cabe = M.dir >= 50 && !colide;
+  for (const p of pontas) {
+    svg.append(no('circle', { class: 'ponto ' + p.s.slot, cx: x(iFim), cy: p.y, r: 4 }));
+    if (cabe) {
+      svg.append(no('text', { class: 'rotulo-fim', x: x(iFim) + 11, y: p.y, 'dominant-baseline': 'middle' }, pct(p.v)));
+    }
+  }
+
+  /* --- camada de leitura: mira + marcadores --- */
+  const camada = no('g', { id: 'camada-mira', style: 'display:none' });
+  camada.append(no('line', { class: 'mira', id: 'mira', y1: M.topo, y2: M.topo + pa }));
+  for (const s of SERIES) camada.append(no('circle', { class: 'ponto ' + s.slot, id: 'p-' + s.chave, r: 4.5 }));
+  svg.append(camada);
+
+  /* --- alvo do ponteiro: a área toda, não os 2px da linha --- */
+  const alvo = no('rect', { x: M.esq, y: M.topo, width: pl, height: pa, fill: 'transparent' });
+  svg.append(alvo);
+
+  geo = { M, pl, pa, x, y, larg, alt, camada };
+  if (estado.foco != null) ler(Math.min(estado.foco, n - 1)); else esconder();
+}
+
+function ler(i) {
+  if (!geo) return;
+  estado.foco = i;
+  const p = fatia[i], px = geo.x(i);
+  geo.camada.setAttribute('style', 'display:block');
+  const mira = svg.querySelector('#mira');
+  mira.setAttribute('x1', px); mira.setAttribute('x2', px);
+  for (const s of SERIES) {
+    const c = svg.querySelector('#p-' + s.chave);
+    c.setAttribute('cx', px); c.setAttribute('cy', geo.y(p[s.chave]));
+  }
+
+  /* tooltip: um só, com todas as séries daquele mês */
+  dica.replaceChildren();
+  dica.append(el('div', 'quando', mesLongo(p.mes)));
+  const dl = document.createElement('dl');
+  for (const s of SERIES) {
+    dl.append(el('span', 'traco ' + s.slot), el('dt', null, s.nome), el('dd', null, pct(p[s.chave])));
+  }
+  dica.append(dl);
+  dica.dataset.visivel = '1';
+
+  const lg = dica.offsetWidth, ag = dica.offsetHeight;
+  let lx = px + 16;
+  if (lx + lg > geo.larg - 4) lx = px - 16 - lg;
+  let ly = geo.y(p[CONFIG.principal]) - ag / 2;
+  ly = Math.max(4, Math.min(geo.alt - ag - 4, ly));
+  dica.style.transform = `translate(${Math.round(lx)}px, ${Math.round(ly)}px)`;
+
+  $('leitura').textContent = mesLongo(p.mes) + ' — ' +
+    SERIES.map(s => s.nome + ' ' + pct(p[s.chave])).join('; ') + '.';
+}
+function esconder() {
+  estado.foco = null;
+  dica.dataset.visivel = '0';
+  if (geo) geo.camada.setAttribute('style', 'display:none');
+  $('leitura').textContent = '';
+}
+function indiceEm(clientX) {
+  const r = svg.getBoundingClientRect();
+  const t = (clientX - r.left - geo.M.esq) / geo.pl;
+  return Math.max(0, Math.min(fatia.length - 1, Math.round(t * (fatia.length - 1))));
+}
+
+/* ==========================================================================
+   9. Tabela — o par acessível do gráfico (mesmos números, sem cor)
+   ========================================================================== */
+function pintarTabela() {
+  const t = $('tabela');
+  [...t.querySelectorAll('thead, tbody')].forEach(n => n.remove());
+
+  const thead = document.createElement('thead');
+  const tr = document.createElement('tr');
+  tr.append(el('th', null, 'Mês'));
+  for (const s of SERIES) { const th = el('th', null, s.nome + ' (' + CONFIG.unidade + ')'); th.scope = 'col'; tr.append(th); }
+  thead.append(tr);
+
+  const tbody = document.createElement('tbody');
+  for (const p of [...fatia].reverse()) {
+    const linha = document.createElement('tr');
+    const th = el('th', null, mesLongo(p.mes)); th.scope = 'row';
+    linha.append(th);
+    for (const s of SERIES) linha.append(el('td', null, num(p[s.chave])));
+    tbody.append(linha);
+  }
+  t.append(thead, tbody);
+}
+
+/* ==========================================================================
+   10. Ligações
+   ========================================================================== */
+function atualizar() {
+  fatia = recorte();
+  estado.foco = null;
+  $('periodo-grafico').textContent =
+    mesLongo(fatia[0].mes) + ' a ' + mesLongo(fatia[fatia.length - 1].mes) + ' · % da carteira';
+  pintarTiles();
+  pintarTabela();
+  desenhar();
+  esconder();
+}
+
+document.querySelectorAll('[data-periodo]').forEach(b => b.addEventListener('click', () => {
+  estado.periodo = b.dataset.periodo;
+  document.querySelectorAll('[data-periodo]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+  atualizar();
+}));
+document.querySelectorAll('[data-vista]').forEach(b => b.addEventListener('click', () => {
+  estado.vista = b.dataset.vista;
+  document.querySelectorAll('[data-vista]').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+  $('cartao-grafico').classList.toggle('oculto', estado.vista !== 'grafico');
+  $('cartao-tabela').classList.toggle('oculto', estado.vista !== 'tabela');
+  if (estado.vista === 'grafico') desenhar();
+}));
+
+svg.addEventListener('pointermove', e => { if (geo) ler(indiceEm(e.clientX)); });
+svg.addEventListener('pointerdown', e => { if (geo) ler(indiceEm(e.clientX)); });
+svg.addEventListener('pointerleave', esconder);
+svg.addEventListener('blur', esconder);
+svg.addEventListener('keydown', e => {
+  const n = fatia.length;
+  let i = estado.foco == null ? n - 1 : estado.foco;
+  if (e.key === 'ArrowRight') i = Math.min(n - 1, i + 1);
+  else if (e.key === 'ArrowLeft') i = Math.max(0, i - 1);
+  else if (e.key === 'Home') i = 0;
+  else if (e.key === 'End') i = n - 1;
+  else if (e.key === 'Escape') { esconder(); return; }
+  else return;
+  e.preventDefault();
+  ler(i);
+});
+
+$('btn-tema').addEventListener('click', () => {
+  const escuro = matchMedia('(prefers-color-scheme: dark)').matches;
+  const atual = document.documentElement.dataset.theme || (escuro ? 'dark' : 'light');
+  document.documentElement.dataset.theme = atual === 'dark' ? 'light' : 'dark';
+  desenhar();
+});
+
+new ResizeObserver(() => desenhar()).observe(plot);
+
+$('fonte').textContent = CONFIG.fonte;
+pintarLegenda();
+atualizar();
+})();
+</script>
+</body>
+</html>
