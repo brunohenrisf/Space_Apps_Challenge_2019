@@ -166,7 +166,96 @@ sudo systemctl status casaos
 
 ---
 
-## 10. Problemas comuns
+## 10. Wi-Fi no Ubuntu Server (Netplan) — com soluções testadas na prática
+
+Sem interface gráfica, o Wi-Fi é configurado pelo **Netplan**. Descubra o nome da interface com `ip a` (começa com `wl`, ex.: `wlp0s20f3`) e crie o arquivo:
+
+```bash
+sudo nano /etc/netplan/50-wifi.yaml
+```
+
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlp0s20f3:
+      dhcp4: true
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
+      access-points:
+        "NomeDaRede":
+          password: "SenhaDoWifi"
+```
+
+```bash
+sudo chmod 600 /etc/netplan/50-wifi.yaml
+sudo netplan apply
+ip a show wlp0s20f3   # deve mostrar "state UP" e um IP
+ping -c 3 8.8.8.8     # testa internet sem DNS
+ping -c 3 google.com  # testa DNS
+```
+
+### Erro: "networkd backend does not support wifi with match:"
+
+O arquivo `50-cloud-init.yaml` criado pelo instalador conflita. Solução:
+
+```bash
+sudo mv /etc/netplan/50-cloud-init.yaml /root/50-cloud-init.yaml.bak
+echo 'network: {config: disabled}' | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+sudo netplan apply
+```
+
+### Erro: "network is unreachable" / interface fica em "state DOWN"
+
+Teste `sudo ip link set wlp0s20f3 up`. Se aparecer **"Operation not possible due to RF-kill"**, o rádio está bloqueado (modo avião) — comum em Lenovo IdeaPad (`ideapad_wlan`). Desbloqueie:
+
+```bash
+echo 0 | sudo tee /sys/class/rfkill/rfkill*/soft
+sudo ip link set wlp0s20f3 up
+sudo netplan apply
+```
+
+Se o bloqueio for `hard` (veja com `grep . /sys/class/rfkill/rfkill*/hard`), use a tecla física de modo avião (`Fn + F1`–`F12`) ou habilite o WLAN na BIOS.
+
+### Erro: "temporary failure in name resolution" (com internet funcionando por IP)
+
+Falta DNS — adicione o bloco `nameservers` mostrado acima e rode:
+
+```bash
+sudo netplan apply
+sudo systemctl restart systemd-resolved
+```
+
+---
+
+## 11. Usar o disco inteiro (pegadinha do LVM do Ubuntu Server)
+
+Por padrão, o instalador do Ubuntu Server com LVM usa **só uma parte do disco**. Verifique e expanda:
+
+```bash
+df -h /                                  # tamanho atual da raiz
+sudo vgdisplay | grep -E "VG Size|Free"  # espaço parado no LVM
+
+# Expandir para 100% do disco (seguro, sem reiniciar):
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+df -h /                                  # confirmar
+```
+
+Onde o CasaOS guarda as coisas (tudo na partição raiz):
+
+| O quê | Onde |
+|---|---|
+| Arquivos e mídia | `/DATA` |
+| Dados/configs dos apps | `/DATA/AppData` |
+| Imagens Docker | `/var/lib/docker` |
+
+Manutenção de espaço: `df -h /`, `sudo du -sh /DATA/*` e `docker system prune -f` (remove imagens órfãs). Para expandir no futuro: HD externo USB em **Settings → Storage** no painel.
+
+---
+
+## 12. Problemas comuns
 
 | Problema | Solução |
 |---|---|
@@ -175,3 +264,5 @@ sudo systemctl status casaos
 | Instalador do CasaOS falha | Verifique a internet (`ping google.com`) e rode o comando de novo — o script é idempotente. |
 | App não abre após instalar | Aguarde 1–2 min (o Docker baixa a imagem) e veja os logs do app no próprio painel. |
 | Wi-Fi caindo | Prefira cabo Ethernet; se impossível, desative economia de energia do Wi-Fi: `sudo iw dev wlan0 set power_save off`. |
+| Wi-Fi não conecta / sem IP | Veja a seção 10 (conflito do cloud-init, RF-kill, DNS). |
+| Disco "cheio" com espaço sobrando | Veja a seção 11 (expandir LVM). |
