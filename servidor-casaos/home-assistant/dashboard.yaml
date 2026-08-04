@@ -1,0 +1,192 @@
+# Dashboard (Lovelace) para Home Assistant rodando no servidor CasaOS
+#
+# Como usar:
+#   1. No Home Assistant: Configurações > Painéis > Adicionar painel > "Painel próprio"
+#   2. Abra o painel > menu (lápis) > 3 pontinhos > "Editor de YAML bruto"
+#   3. Cole este arquivo inteiro e salve.
+#
+# IMPORTANTE: troque os "entity:" pelos nomes reais dos seus dispositivos.
+#   Para descobri-los: Ferramentas de Desenvolvedor > Estados (lista todas as entidades).
+#   Apague os cartões de dispositivos que você ainda não tem.
+
+title: Casa
+
+views:
+  # ─────────────────────────────────────────────────────────────
+  - title: Visão Geral
+    path: geral
+    icon: mdi:home
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: >
+              ## Bem-vindo
+              {{ now().strftime('%d/%m/%Y — %H:%M') }}
+
+          # Resumo rápido: quantas luzes ligadas, portas abertas etc.
+          - type: glance
+            title: Resumo
+            columns: 3
+            entities:
+              - entity: sun.sun
+                name: Sol
+              - entity: weather.forecast_casa
+                name: Tempo
+              - entity: person.bruno
+                name: Presença
+
+      # Luzes com botões grandes (toque para ligar/desligar)
+      - type: grid
+        title: Luzes
+        columns: 3
+        square: false
+        cards:
+          - type: button
+            entity: light.sala
+            name: Sala
+            icon: mdi:sofa
+            show_state: true
+            tap_action:
+              action: toggle
+          - type: button
+            entity: light.cozinha
+            name: Cozinha
+            icon: mdi:silverware-fork-knife
+            show_state: true
+            tap_action:
+              action: toggle
+          - type: button
+            entity: light.quarto
+            name: Quarto
+            icon: mdi:bed
+            show_state: true
+            tap_action:
+              action: toggle
+
+      # Tomadas inteligentes
+      - type: entities
+        title: Tomadas
+        show_header_toggle: true
+        entities:
+          - entity: switch.tomada_tv
+            name: TV
+          - entity: switch.tomada_ventilador
+            name: Ventilador
+
+      # Sensores da casa
+      - type: entities
+        title: Ambiente
+        entities:
+          - entity: sensor.temperatura_sala
+            name: Temperatura
+          - entity: sensor.umidade_sala
+            name: Umidade
+
+  # ─────────────────────────────────────────────────────────────
+  - title: Mídia
+    path: midia
+    icon: mdi:play-circle
+    cards:
+      # Controle da TV LG (integração webOS) — mesmo servidor do Jellyfin
+      - type: media-control
+        entity: media_player.lg_webos_tv
+
+      # O que está tocando no Jellyfin (requer a integração Jellyfin no HA)
+      - type: entities
+        title: Jellyfin
+        entities:
+          - entity: sensor.jellyfin_sessoes
+            name: Sessões ativas
+          - entity: sensor.jellyfin_filmes
+            name: Filmes na biblioteca
+          - entity: sensor.jellyfin_series
+            name: Séries na biblioteca
+
+      - type: markdown
+        title: Atalhos
+        content: >
+          - [Jellyfin](http://10.0.0.103:8096)
+          - [qBittorrent](http://10.0.0.103:8080)
+          - [CasaOS](http://10.0.0.103)
+
+  # ─────────────────────────────────────────────────────────────
+  - title: Servidor
+    path: servidor
+    icon: mdi:server
+    cards:
+      # Saúde do notebook-servidor (requer a integração "System Monitor")
+      - type: gauge
+        entity: sensor.processor_use
+        name: CPU
+        min: 0
+        max: 100
+        severity:
+          green: 0
+          yellow: 60
+          red: 85
+
+      - type: gauge
+        entity: sensor.memory_use_percent
+        name: Memória
+        min: 0
+        max: 100
+        severity:
+          green: 0
+          yellow: 70
+          red: 90
+
+      - type: gauge
+        entity: sensor.disk_use_percent
+        name: Disco
+        min: 0
+        max: 100
+        severity:
+          green: 0
+          yellow: 75
+          red: 90
+
+      - type: entities
+        title: Detalhes
+        entities:
+          - entity: sensor.processor_temperature
+            name: Temperatura da CPU
+          - entity: sensor.last_boot
+            name: Ligado desde
+          - entity: binary_sensor.rpi_power_status
+            name: Alimentação
+
+      # Histórico de uso nas últimas 24h
+      - type: history-graph
+        title: Uso nas últimas 24h
+        hours_to_show: 24
+        entities:
+          - sensor.processor_use
+          - sensor.memory_use_percent
+          - sensor.processor_temperature
+
+  # ─────────────────────────────────────────────────────────────
+  - title: Automações
+    path: automacoes
+    icon: mdi:robot
+    cards:
+      - type: entities
+        title: Ligar/desligar automações
+        show_header_toggle: false
+        entities:
+          - entity: automation.luzes_ao_anoitecer
+            name: Luzes ao anoitecer
+          - entity: automation.desligar_tudo_ao_sair
+            name: Desligar tudo ao sair
+          - entity: automation.avisar_disco_cheio
+            name: Avisar se o disco encher
+
+      - type: entities
+        title: Cenas
+        entities:
+          - entity: scene.modo_filme
+            name: Modo filme
+          - entity: scene.bom_dia
+            name: Bom dia
+          - entity: scene.dormir
+            name: Dormir
