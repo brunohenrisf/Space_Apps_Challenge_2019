@@ -1,192 +1,306 @@
-# Dashboard (Lovelace) para Home Assistant rodando no servidor CasaOS
+# Dashboard (Lovelace) — Home Assistant no servidor CasaOS
+# Estilo moderno: views do tipo "sections" com cartões "tile" (HA 2024.9+)
 #
-# Como usar:
-#   1. No Home Assistant: Configurações > Painéis > Adicionar painel > "Painel próprio"
-#   2. Abra o painel > menu (lápis) > 3 pontinhos > "Editor de YAML bruto"
-#   3. Cole este arquivo inteiro e salve.
+# Como aplicar:
+#   Configurações > Painéis > Adicionar painel próprio > abrir > lápis >
+#   menu (⋮) > "Editor de YAML bruto" > colar tudo > Salvar.
 #
-# IMPORTANTE: troque os "entity:" pelos nomes reais dos seus dispositivos.
-#   Para descobri-los: Ferramentas de Desenvolvedor > Estados (lista todas as entidades).
-#   Apague os cartões de dispositivos que você ainda não tem.
-
-title: Casa
+# ATENÇÃO AOS NOMES DAS ENTIDADES
+#   Os entity_id abaixo seguem o padrão que o HA gera a partir do nome do
+#   dispositivo (ex.: "Led cozinha" > switch.led_cozinha_interruptor_1).
+#   Confira os seus em: Ferramentas de Desenvolvedor > Estados.
+#   Qualquer cartão apontando para entidade inexistente aparece como
+#   "Entity not available" — basta corrigir o nome ou apagar o cartão.
 
 views:
-  # ─────────────────────────────────────────────────────────────
-  - title: Visão Geral
-    path: geral
+  # ═══════════════════════════════════════════════════════════════
+  - title: Casa
+    path: casa
     icon: mdi:home
-    cards:
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: >
-              ## Bem-vindo
-              {{ now().strftime('%d/%m/%Y — %H:%M') }}
+    type: sections
+    max_columns: 3
 
-          # Resumo rápido: quantas luzes ligadas, portas abertas etc.
-          - type: glance
-            title: Resumo
-            columns: 3
-            entities:
-              - entity: sun.sun
-                name: Sol
-              - entity: weather.forecast_casa
-                name: Tempo
-              - entity: person.bruno
-                name: Presença
+    badges:
+      - type: entity
+        entity: weather.forecast_casa
+        name: Tempo
+      - type: entity
+        entity: sensor.sensor_th_temperatura
+        name: Temperatura
+      - type: entity
+        entity: sensor.sensor_th_humidade
+        name: Umidade
 
-      # Luzes com botões grandes (toque para ligar/desligar)
+    sections:
+      # ── Iluminação da casa ───────────────────────────────────
       - type: grid
-        title: Luzes
-        columns: 3
-        square: false
         cards:
-          - type: button
-            entity: light.sala
-            name: Sala
-            icon: mdi:sofa
-            show_state: true
-            tap_action:
-              action: toggle
-          - type: button
-            entity: light.cozinha
-            name: Cozinha
-            icon: mdi:silverware-fork-knife
-            show_state: true
-            tap_action:
-              action: toggle
-          - type: button
-            entity: light.quarto
+          - type: heading
+            heading: Iluminação
+            heading_style: title
+            icon: mdi:lightbulb-group
+
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_1
+            name: Iluminação 1 — Ponto 1
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_2
+            name: Iluminação 1 — Ponto 2
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_3
+            name: Iluminação 1 — Ponto 3
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_1
+            name: Iluminação 2 — Ponto 1
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_2
+            name: Iluminação 2 — Ponto 2
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_3
+            name: Iluminação 2 — Ponto 3
+            icon: mdi:ceiling-light
+            features:
+              - type: toggle
+
+      # ── Ambientes específicos ────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Ambientes
+            heading_style: title
+            icon: mdi:floor-plan
+
+          - type: tile
+            entity: switch.led_cozinha_interruptor_1
+            name: LED da cozinha
+            icon: mdi:led-strip-variant
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.balcao_interruptor_1
+            name: Balcão
+            icon: mdi:countertop
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.spot_interruptor_1
+            name: Spot
+            icon: mdi:spotlight-beam
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.penteadeira_interruptor_1
+            name: Penteadeira
+            icon: mdi:mirror
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.quarto_interruptor_1
             name: Quarto
             icon: mdi:bed
-            show_state: true
+            features:
+              - type: toggle
+
+          - type: tile
+            entity: switch.z_alberto_interruptor
+            name: Z-Alberto
+            icon: mdi:power-socket-de
+            features:
+              - type: toggle
+
+      # ── Acesso + atalhos rápidos ─────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Acesso
+            heading_style: title
+            icon: mdi:gate
+
+          # Portão com confirmação — evita abrir sem querer no celular
+          - type: tile
+            entity: switch.fechadura_portao_interruptor_1
+            name: Portão
+            icon: mdi:gate-open
             tap_action:
               action: toggle
+              confirmation:
+                text: Abrir/fechar o portão?
 
-      # Tomadas inteligentes
-      - type: entities
-        title: Tomadas
-        show_header_toggle: true
-        entities:
-          - entity: switch.tomada_tv
-            name: TV
-          - entity: switch.tomada_ventilador
-            name: Ventilador
+          - type: heading
+            heading: Atalhos
+            heading_style: subtitle
+            icon: mdi:gesture-tap-button
 
-      # Sensores da casa
-      - type: entities
-        title: Ambiente
-        entities:
-          - entity: sensor.temperatura_sala
-            name: Temperatura
-          - entity: sensor.umidade_sala
-            name: Umidade
+          - type: button
+            name: Apagar todas as luzes
+            icon: mdi:lightbulb-off-outline
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.turn_off
+              target:
+                entity_id:
+                  - switch.iluminacao_1_interruptor_1
+                  - switch.iluminacao_1_interruptor_2
+                  - switch.iluminacao_1_interruptor_3
+                  - switch.iluminacao_2_interruptor_1
+                  - switch.iluminacao_2_interruptor_2
+                  - switch.iluminacao_2_interruptor_3
+                  - switch.led_cozinha_interruptor_1
+                  - switch.balcao_interruptor_1
+                  - switch.spot_interruptor_1
+                  - switch.penteadeira_interruptor_1
+                  - switch.quarto_interruptor_1
 
-  # ─────────────────────────────────────────────────────────────
-  - title: Mídia
-    path: midia
-    icon: mdi:play-circle
-    cards:
-      # Controle da TV LG (integração webOS) — mesmo servidor do Jellyfin
-      - type: media-control
-        entity: media_player.lg_webos_tv
+          - type: button
+            name: Modo filme
+            icon: mdi:movie-open-outline
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.turn_off
+              target:
+                entity_id:
+                  - switch.iluminacao_1_interruptor_1
+                  - switch.iluminacao_1_interruptor_2
+                  - switch.iluminacao_1_interruptor_3
+                  - switch.spot_interruptor_1
 
-      # O que está tocando no Jellyfin (requer a integração Jellyfin no HA)
-      - type: entities
-        title: Jellyfin
-        entities:
-          - entity: sensor.jellyfin_sessoes
-            name: Sessões ativas
-          - entity: sensor.jellyfin_filmes
-            name: Filmes na biblioteca
-          - entity: sensor.jellyfin_series
-            name: Séries na biblioteca
+  # ═══════════════════════════════════════════════════════════════
+  - title: Energia
+    path: energia
+    icon: mdi:flash
+    type: sections
+    max_columns: 2
 
-      - type: markdown
-        title: Atalhos
-        content: >
-          - [Jellyfin](http://10.0.0.103:8096)
-          - [qBittorrent](http://10.0.0.103:8080)
-          - [CasaOS](http://10.0.0.103)
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Consumo acumulado
+            heading_style: title
+            icon: mdi:counter
 
-  # ─────────────────────────────────────────────────────────────
+          - type: tile
+            entity: sensor.z_alberto_energia_total
+            name: Z-Alberto
+            icon: mdi:lightning-bolt
+
+          - type: tile
+            entity: sensor.led_cozinha_energia_total
+            name: LED da cozinha
+            icon: mdi:lightning-bolt
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Histórico (7 dias)
+            heading_style: title
+            icon: mdi:chart-line
+
+          - type: statistics-graph
+            title: Energia por dia
+            chart_type: bar
+            period: day
+            days_to_show: 7
+            stat_types:
+              - state
+            entities:
+              - sensor.z_alberto_energia_total
+              - sensor.led_cozinha_energia_total
+
+  # ═══════════════════════════════════════════════════════════════
   - title: Servidor
     path: servidor
     icon: mdi:server
-    cards:
-      # Saúde do notebook-servidor (requer a integração "System Monitor")
-      - type: gauge
-        entity: sensor.processor_use
-        name: CPU
-        min: 0
-        max: 100
-        severity:
-          green: 0
-          yellow: 60
-          red: 85
+    type: sections
+    max_columns: 2
 
-      - type: gauge
-        entity: sensor.memory_use_percent
-        name: Memória
-        min: 0
-        max: 100
-        severity:
-          green: 0
-          yellow: 70
-          red: 90
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Saúde do servidor
+            heading_style: title
+            icon: mdi:heart-pulse
 
-      - type: gauge
-        entity: sensor.disk_use_percent
-        name: Disco
-        min: 0
-        max: 100
-        severity:
-          green: 0
-          yellow: 75
-          red: 90
+          - type: gauge
+            entity: sensor.processor_use
+            name: CPU
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 60
+              red: 85
 
-      - type: entities
-        title: Detalhes
-        entities:
-          - entity: sensor.processor_temperature
+          - type: gauge
+            entity: sensor.memory_use_percent
+            name: Memória
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 70
+              red: 90
+
+          - type: gauge
+            entity: sensor.disk_use_percent
+            name: Disco
+            min: 0
+            max: 100
+            severity:
+              green: 0
+              yellow: 75
+              red: 90
+
+          - type: tile
+            entity: sensor.processor_temperature
             name: Temperatura da CPU
-          - entity: sensor.last_boot
-            name: Ligado desde
-          - entity: binary_sensor.rpi_power_status
-            name: Alimentação
+            icon: mdi:thermometer
 
-      # Histórico de uso nas últimas 24h
-      - type: history-graph
-        title: Uso nas últimas 24h
-        hours_to_show: 24
-        entities:
-          - sensor.processor_use
-          - sensor.memory_use_percent
-          - sensor.processor_temperature
+      - type: grid
+        cards:
+          - type: heading
+            heading: Serviços
+            heading_style: title
+            icon: mdi:apps
 
-  # ─────────────────────────────────────────────────────────────
-  - title: Automações
-    path: automacoes
-    icon: mdi:robot
-    cards:
-      - type: entities
-        title: Ligar/desligar automações
-        show_header_toggle: false
-        entities:
-          - entity: automation.luzes_ao_anoitecer
-            name: Luzes ao anoitecer
-          - entity: automation.desligar_tudo_ao_sair
-            name: Desligar tudo ao sair
-          - entity: automation.avisar_disco_cheio
-            name: Avisar se o disco encher
+          - type: markdown
+            content: >
+              - [Jellyfin](http://10.0.0.103:8096)
 
-      - type: entities
-        title: Cenas
-        entities:
-          - entity: scene.modo_filme
-            name: Modo filme
-          - entity: scene.bom_dia
-            name: Bom dia
-          - entity: scene.dormir
-            name: Dormir
+              - [qBittorrent](http://10.0.0.103:8080)
+
+              - [CasaOS](http://10.0.0.103)
+
+          - type: history-graph
+            title: Uso nas últimas 24h
+            hours_to_show: 24
+            entities:
+              - sensor.processor_use
+              - sensor.memory_use_percent
