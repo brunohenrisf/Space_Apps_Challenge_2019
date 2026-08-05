@@ -1,0 +1,11 @@
+services:
+  assistente:
+    build: .
+    container_name: assistente
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /DATA/AppData/assistente:/dados
+      # Somente leitura: as ferramentas só consultam o Docker, nunca alteram.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # Sem portas publicadas: o bot faz long polling de saída, não recebe conexões.
