@@ -108,11 +108,18 @@ def destino_do(info: dict, base: Path, extensao: str, idioma: str | None) -> Pat
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("origem", type=Path, help="Pasta com os arquivos bagunçados")
-    p.add_argument("--destino", type=Path, default=Path("/DATA/Media/Shows"))
+    p.add_argument("origem", type=Path, nargs="?", default=Path("."),
+                   help="Pasta com os arquivos bagunçados (padrão: pasta atual)")
+    p.add_argument("--destino", type=Path, default=None,
+                   help="Onde criar a estrutura (padrão: a própria pasta de origem)")
     p.add_argument("--aplicar", action="store_true", help="Executa (sem isto, só simula)")
     p.add_argument("--copiar", action="store_true", help="Copia em vez de mover")
     args = p.parse_args()
+
+    # Sem --destino, organiza ali mesmo: as pastas das séries nascem
+    # dentro da própria pasta onde os arquivos estão.
+    if args.destino is None:
+        args.destino = args.origem
 
     if not args.origem.is_dir():
         print(f"Pasta não encontrada: {args.origem}")
