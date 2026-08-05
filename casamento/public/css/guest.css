@@ -1,0 +1,156 @@
+/* Página do convidado — o que ele vê ao ler o QR Code da mesa. */
+
+.pick-note {
+  margin: 1rem 0 0;
+  font-size: 0.83rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* --- Grade de fotos selecionadas ----------------------------------------- */
+
+.thumbs {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.55rem;
+  margin: 1.15rem 0 0;
+  padding: 0;
+}
+
+.thumbs:empty {
+  display: none;
+}
+
+.thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--accent-soft);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-remove {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(23, 20, 15, 0.62);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* --- Barra de progresso --------------------------------------------------- */
+
+.bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.progress-label {
+  margin: 0.7rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.upload-list {
+  list-style: none;
+  margin: 1.15rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.upload-item img {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 7px;
+  object-fit: cover;
+  flex: none;
+}
+
+.upload-item .name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-item .state {
+  flex: none;
+  font-weight: 600;
+}
+
+.upload-item[data-state="ok"] .state {
+  color: var(--sage);
+}
+
+.upload-item[data-state="erro"] .state {
+  color: var(--danger);
+}
+
+/* --- Tela final ----------------------------------------------------------- */
+
+.done {
+  text-align: center;
+}
+
+.done-mark {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* --- Rodapé --------------------------------------------------------------- */
+
+.page-foot {
+  margin-top: 2.5rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.page-foot p {
+  margin: 0 0 0.5rem;
+}
+
+.page-foot a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

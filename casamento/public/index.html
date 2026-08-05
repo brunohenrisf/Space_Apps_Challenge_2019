@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbf7f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17140f" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>Fotos do casamento</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/guest.css">
+<!--CONFIG-->
+</head>
+<body>
+<main class="page">
+
+  <header class="page-head">
+    <p class="eyebrow" id="event-date" hidden></p>
+    <h1 id="couple-names">Os noivos</h1>
+    <hr class="rule">
+    <p class="lede" id="welcome"></p>
+  </header>
+
+  <!-- 1. Escolher as fotos -->
+  <section class="panel" id="step-pick">
+    <div class="btn-row">
+      <button type="button" class="btn" id="btn-camera">Tirar uma foto</button>
+      <button type="button" class="btn btn-secondary" id="btn-gallery">Escolher da galeria</button>
+    </div>
+
+    <input type="file" id="input-camera" accept="image/*" capture="environment" class="visually-hidden" tabindex="-1">
+    <input type="file" id="input-gallery" accept="image/*" multiple class="visually-hidden" tabindex="-1">
+
+    <p class="pick-note" id="pick-note">Pode mandar quantas quiser, uma de cada vez ou várias juntas.</p>
+
+    <ul class="thumbs" id="selection" aria-label="Fotos selecionadas"></ul>
+  </section>
+
+  <!-- 2. Assinar e enviar -->
+  <section class="panel" id="step-details" hidden>
+    <h2 class="panel-title">Quer deixar um recado?</h2>
+
+    <label class="field">
+      <span>Seu nome <span class="hint">— opcional</span></span>
+      <input type="text" id="guest-name" maxlength="60" autocomplete="name" placeholder="Como os noivos te chamam">
+    </label>
+
+    <label class="field">
+      <span>Recado para os noivos <span class="hint">— opcional</span></span>
+      <textarea id="guest-message" maxlength="400" placeholder="Um voto, uma memória da noite, o que vier…"></textarea>
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" id="optimize" checked>
+      <span>Otimizar as fotos para enviar mais rápido. Desmarque se quiser mandar no tamanho original — vai demorar mais.</span>
+    </label>
+
+    <button type="button" class="btn btn-block" id="btn-send" style="margin-top: 1.25rem;">Enviar</button>
+    <p class="alert alert-error" id="form-error" hidden></p>
+  </section>
+
+  <!-- 3. Enviando -->
+  <section class="panel" id="step-progress" hidden aria-live="polite">
+    <h2 class="panel-title">Enviando suas fotos…</h2>
+    <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+    <p class="progress-label" id="progress-label">Preparando…</p>
+    <ul class="upload-list" id="upload-list"></ul>
+  </section>
+
+  <!-- 4. Fim -->
+  <section class="panel done" id="step-done" hidden aria-live="polite">
+    <p class="done-mark" aria-hidden="true">♥</p>
+    <h2 class="panel-title" id="done-title">Recebemos!</h2>
+    <p class="lede" id="done-text"></p>
+    <p class="alert alert-error" id="done-error" hidden></p>
+    <div class="btn-row" style="margin-top: 1.25rem;">
+      <button type="button" class="btn" id="btn-again">Enviar mais fotos</button>
+      <button type="button" class="btn btn-secondary" id="btn-retry" hidden>Tentar as que falharam</button>
+    </div>
+  </section>
+
+  <footer class="page-foot">
+    <p>As fotos vão direto para os noivos e não ficam públicas nesta página.</p>
+    <a href="/painel">Área dos noivos</a>
+  </footer>
+
+</main>
+<script src="/js/upload.js"></script>
+</body>
+</html>

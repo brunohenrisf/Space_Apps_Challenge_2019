@@ -1,0 +1,21 @@
+{
+  "name": "casamento-fotos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Página de casamento para os convidados enviarem, via QR Code, as fotos que registraram do evento.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "express": "^4.21.2",
+    "multer": "^2.0.2",
+    "qrcode": "^1.5.4"
+  }
+}

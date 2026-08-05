@@ -1,0 +1,6 @@
+node_modules/
+.env
+
+# Conteúdo enviado pelos convidados e índice das fotos — nunca vai para o git.
+uploads/
+data/
