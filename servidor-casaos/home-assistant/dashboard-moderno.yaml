@@ -1,0 +1,495 @@
+# Dashboard estilo "glass" (vidro fosco) — Home Assistant
+#
+# ⚠️ PRÉ-REQUISITOS (via HACS) — sem eles os cartões aparecem como "Custom
+#    element doesn't exist". Veja README-MODERNO.md para instalar:
+#      - Mushroom          (mushroom-template-card, mushroom-chips-card)
+#      - card-mod          (aplica o CSS do efeito de vidro)
+#      - mini-graph-card   (gráficos suaves de temperatura)
+#
+# 📷 FUNDO: coloque uma imagem em /config/www/fundo.jpg
+#    (no servidor: /DATA/AppData/homeassistant/www/fundo.jpg)
+#    Se não quiser fundo, apague a linha "background:" de cada view.
+#
+# 🔗 NAVEGAÇÃO: os cartões de cômodo levam para as sub-views usando o caminho
+#    /casa/sala, /casa/cozinha ... Troque "casa" pela URL do seu painel
+#    (Configurações > Painéis > coluna "URL").
+
+views:
+  # ═══════════════════════════════════════════════════════════════
+  # PRINCIPAL
+  # ═══════════════════════════════════════════════════════════════
+  - title: Casa
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 3
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+
+    sections:
+      # ── Saudação + status rápido ─────────────────────────────
+      - type: grid
+        cards:
+          - type: custom:mushroom-template-card
+            primary: >-
+              {% set h = now().hour %}
+              {% if h < 6 %}Boa madrugada!
+              {% elif h < 12 %}Bom dia!
+              {% elif h < 18 %}Boa tarde!
+              {% else %}Boa noite!{% endif %}
+            secondary: >-
+              {{ now().strftime('%d/%m/%Y — %H:%M') }}
+            icon: mdi:home-heart
+            icon_color: amber
+            card_mod: &vidro
+              style: |
+                ha-card {
+                  background: rgba(255,255,255,0.07);
+                  backdrop-filter: blur(14px);
+                  -webkit-backdrop-filter: blur(14px);
+                  border: 1px solid rgba(255,255,255,0.12);
+                  border-radius: 22px;
+                  box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+                }
+
+          # Linha de "chips": clima, temperatura, luzes acesas
+          - type: custom:mushroom-chips-card
+            alignment: center
+            chips:
+              - type: weather
+                entity: weather.forecast_casa
+                show_conditions: true
+                show_temperature: true
+
+              - type: entity
+                entity: sensor.sensor_th_temperatura
+                icon: mdi:thermometer
+
+              - type: entity
+                entity: sensor.sensor_th_humidade
+                icon: mdi:water-percent
+
+              # Conta quantas luzes estão ligadas agora
+              - type: template
+                icon: mdi:lightbulb-group
+                icon_color: >-
+                  {% set luzes = [
+                    'switch.iluminacao_1_interruptor_1',
+                    'switch.iluminacao_1_interruptor_2',
+                    'switch.iluminacao_1_interruptor_3',
+                    'switch.iluminacao_2_interruptor_1',
+                    'switch.iluminacao_2_interruptor_2',
+                    'switch.iluminacao_2_interruptor_3',
+                    'switch.led_cozinha_interruptor_1',
+                    'switch.balcao_interruptor_1',
+                    'switch.spot_interruptor_1',
+                    'switch.penteadeira_interruptor_1',
+                    'switch.quarto_interruptor_1' ] %}
+                  {{ 'amber' if expand(luzes) | selectattr('state','eq','on') | list | count > 0 else 'grey' }}
+                content: >-
+                  {% set luzes = [
+                    'switch.iluminacao_1_interruptor_1',
+                    'switch.iluminacao_1_interruptor_2',
+                    'switch.iluminacao_1_interruptor_3',
+                    'switch.iluminacao_2_interruptor_1',
+                    'switch.iluminacao_2_interruptor_2',
+                    'switch.iluminacao_2_interruptor_3',
+                    'switch.led_cozinha_interruptor_1',
+                    'switch.balcao_interruptor_1',
+                    'switch.spot_interruptor_1',
+                    'switch.penteadeira_interruptor_1',
+                    'switch.quarto_interruptor_1' ] %}
+                  {{ expand(luzes) | selectattr('state','eq','on') | list | count }} acesas
+                tap_action:
+                  action: perform-action
+                  perform_action: homeassistant.turn_off
+                  target:
+                    entity_id:
+                      - switch.iluminacao_1_interruptor_1
+                      - switch.iluminacao_1_interruptor_2
+                      - switch.iluminacao_1_interruptor_3
+                      - switch.iluminacao_2_interruptor_1
+                      - switch.iluminacao_2_interruptor_2
+                      - switch.iluminacao_2_interruptor_3
+                      - switch.led_cozinha_interruptor_1
+                      - switch.balcao_interruptor_1
+                      - switch.spot_interruptor_1
+                      - switch.penteadeira_interruptor_1
+                      - switch.quarto_interruptor_1
+
+              - type: entity
+                entity: switch.fechadura_portao_interruptor_1
+                icon: mdi:gate
+
+      # ── Cômodos (cada card abre a sub-view do cômodo) ────────
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Cômodos
+            heading_style: title
+            icon: mdi:floor-plan
+
+          - type: custom:mushroom-template-card
+            primary: Sala
+            secondary: >-
+              {% set l = ['switch.iluminacao_1_interruptor_1',
+                          'switch.iluminacao_1_interruptor_2',
+                          'switch.iluminacao_1_interruptor_3',
+                          'switch.spot_interruptor_1'] %}
+              {{ expand(l) | selectattr('state','eq','on') | list | count }} de {{ l | count }} ligadas
+            icon: mdi:sofa
+            icon_color: >-
+              {% set l = ['switch.iluminacao_1_interruptor_1',
+                          'switch.iluminacao_1_interruptor_2',
+                          'switch.iluminacao_1_interruptor_3',
+                          'switch.spot_interruptor_1'] %}
+              {{ 'amber' if expand(l) | selectattr('state','eq','on') | list | count > 0 else 'grey' }}
+            tap_action:
+              action: navigate
+              navigation_path: /casa/sala
+            card_mod: *vidro
+
+          - type: custom:mushroom-template-card
+            primary: Cozinha
+            secondary: >-
+              {% set l = ['switch.led_cozinha_interruptor_1',
+                          'switch.balcao_interruptor_1'] %}
+              {{ expand(l) | selectattr('state','eq','on') | list | count }} de {{ l | count }} ligadas
+            icon: mdi:silverware-fork-knife
+            icon_color: >-
+              {% set l = ['switch.led_cozinha_interruptor_1',
+                          'switch.balcao_interruptor_1'] %}
+              {{ 'amber' if expand(l) | selectattr('state','eq','on') | list | count > 0 else 'grey' }}
+            tap_action:
+              action: navigate
+              navigation_path: /casa/cozinha
+            card_mod: *vidro
+
+          - type: custom:mushroom-template-card
+            primary: Quarto
+            secondary: >-
+              {% set l = ['switch.quarto_interruptor_1',
+                          'switch.penteadeira_interruptor_1'] %}
+              {{ expand(l) | selectattr('state','eq','on') | list | count }} de {{ l | count }} ligadas
+            icon: mdi:bed
+            icon_color: >-
+              {% set l = ['switch.quarto_interruptor_1',
+                          'switch.penteadeira_interruptor_1'] %}
+              {{ 'amber' if expand(l) | selectattr('state','eq','on') | list | count > 0 else 'grey' }}
+            tap_action:
+              action: navigate
+              navigation_path: /casa/quarto
+            card_mod: *vidro
+
+          - type: custom:mushroom-template-card
+            primary: Área externa
+            secondary: >-
+              {% set l = ['switch.iluminacao_2_interruptor_1',
+                          'switch.iluminacao_2_interruptor_2',
+                          'switch.iluminacao_2_interruptor_3'] %}
+              {{ expand(l) | selectattr('state','eq','on') | list | count }} de {{ l | count }} ligadas
+            icon: mdi:home-floor-g
+            icon_color: >-
+              {% set l = ['switch.iluminacao_2_interruptor_1',
+                          'switch.iluminacao_2_interruptor_2',
+                          'switch.iluminacao_2_interruptor_3'] %}
+              {{ 'amber' if expand(l) | selectattr('state','eq','on') | list | count > 0 else 'grey' }}
+            tap_action:
+              action: navigate
+              navigation_path: /casa/externa
+            card_mod: *vidro
+
+      # ── Clima + gráfico de temperatura ───────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Clima
+            heading_style: title
+            icon: mdi:weather-partly-cloudy
+
+          - type: weather-forecast
+            entity: weather.forecast_casa
+            forecast_type: daily
+            show_current: true
+            show_forecast: true
+            card_mod: *vidro
+
+          - type: custom:mini-graph-card
+            name: Temperatura e umidade
+            hours_to_show: 24
+            points_per_hour: 2
+            line_width: 3
+            smoothing: true
+            entities:
+              - entity: sensor.sensor_th_temperatura
+                name: Temp.
+                color: "#ff9800"
+              - entity: sensor.sensor_th_humidade
+                name: Umidade
+                color: "#03a9f4"
+                y_axis: secondary
+            card_mod: *vidro
+
+      # ── Acesso e cenas ───────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Acesso e cenas
+            heading_style: title
+            icon: mdi:gesture-tap-button
+
+          - type: custom:mushroom-entity-card
+            entity: switch.fechadura_portao_interruptor_1
+            name: Portão
+            icon: mdi:gate-open
+            icon_color: red
+            tap_action:
+              action: toggle
+              confirmation:
+                text: Abrir/fechar o portão?
+            card_mod: *vidro
+
+          - type: custom:mushroom-template-card
+            primary: Modo filme
+            secondary: Apaga sala e spot
+            icon: mdi:movie-open-outline
+            icon_color: purple
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.turn_off
+              target:
+                entity_id:
+                  - switch.iluminacao_1_interruptor_1
+                  - switch.iluminacao_1_interruptor_2
+                  - switch.iluminacao_1_interruptor_3
+                  - switch.spot_interruptor_1
+            card_mod: *vidro
+
+          - type: custom:mushroom-template-card
+            primary: Apagar tudo
+            secondary: Todas as luzes da casa
+            icon: mdi:lightbulb-off-outline
+            icon_color: blue-grey
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.turn_off
+              target:
+                entity_id:
+                  - switch.iluminacao_1_interruptor_1
+                  - switch.iluminacao_1_interruptor_2
+                  - switch.iluminacao_1_interruptor_3
+                  - switch.iluminacao_2_interruptor_1
+                  - switch.iluminacao_2_interruptor_2
+                  - switch.iluminacao_2_interruptor_3
+                  - switch.led_cozinha_interruptor_1
+                  - switch.balcao_interruptor_1
+                  - switch.spot_interruptor_1
+                  - switch.penteadeira_interruptor_1
+                  - switch.quarto_interruptor_1
+            card_mod: *vidro
+
+      # ── Energia ──────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energia
+            heading_style: title
+            icon: mdi:flash
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.z_alberto_energia_total
+            name: Z-Alberto
+            icon: mdi:lightning-bolt
+            icon_color: yellow
+            card_mod: *vidro
+
+          - type: custom:mushroom-entity-card
+            entity: sensor.led_cozinha_energia_total
+            name: LED da cozinha
+            icon: mdi:lightning-bolt
+            icon_color: yellow
+            card_mod: *vidro
+
+          - type: statistics-graph
+            title: Consumo por dia
+            chart_type: bar
+            period: day
+            days_to_show: 7
+            stat_types:
+              - state
+            entities:
+              - sensor.z_alberto_energia_total
+              - sensor.led_cozinha_energia_total
+            card_mod: *vidro
+
+  # ═══════════════════════════════════════════════════════════════
+  # SUB-VIEWS (abertas pelos cartões de cômodo)
+  # ═══════════════════════════════════════════════════════════════
+  - title: Sala
+    path: sala
+    icon: mdi:sofa
+    subview: true
+    type: sections
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sala
+            heading_style: title
+            icon: mdi:sofa
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_1
+            name: Ponto 1
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_2
+            name: Ponto 2
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.iluminacao_1_interruptor_3
+            name: Ponto 3
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.spot_interruptor_1
+            name: Spot
+            icon: mdi:spotlight-beam
+            features: [{type: toggle}]
+
+  - title: Cozinha
+    path: cozinha
+    icon: mdi:silverware-fork-knife
+    subview: true
+    type: sections
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Cozinha
+            heading_style: title
+            icon: mdi:silverware-fork-knife
+          - type: tile
+            entity: switch.led_cozinha_interruptor_1
+            name: LED
+            icon: mdi:led-strip-variant
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.balcao_interruptor_1
+            name: Balcão
+            icon: mdi:countertop
+            features: [{type: toggle}]
+          - type: tile
+            entity: sensor.led_cozinha_energia_total
+            name: Consumo do LED
+            icon: mdi:lightning-bolt
+
+  - title: Quarto
+    path: quarto
+    icon: mdi:bed
+    subview: true
+    type: sections
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Quarto
+            heading_style: title
+            icon: mdi:bed
+          - type: tile
+            entity: switch.quarto_interruptor_1
+            name: Luz do quarto
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.penteadeira_interruptor_1
+            name: Penteadeira
+            icon: mdi:mirror
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.z_alberto_interruptor
+            name: Z-Alberto
+            icon: mdi:power-socket-de
+            features: [{type: toggle}]
+
+  - title: Área externa
+    path: externa
+    icon: mdi:home-floor-g
+    subview: true
+    type: sections
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Área externa
+            heading_style: title
+            icon: mdi:home-floor-g
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_1
+            name: Ponto 1
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_2
+            name: Ponto 2
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.iluminacao_2_interruptor_3
+            name: Ponto 3
+            features: [{type: toggle}]
+          - type: tile
+            entity: switch.fechadura_portao_interruptor_1
+            name: Portão
+            icon: mdi:gate-open
+            tap_action:
+              action: toggle
+              confirmation:
+                text: Abrir/fechar o portão?
+
+  # ═══════════════════════════════════════════════════════════════
+  - title: Servidor
+    path: servidor
+    icon: mdi:server
+    type: sections
+    max_columns: 2
+    background: center / cover no-repeat url("/local/fundo.jpg") fixed
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Saúde do servidor
+            heading_style: title
+            icon: mdi:heart-pulse
+          - type: gauge
+            entity: sensor.processor_use
+            name: CPU
+            min: 0
+            max: 100
+            severity: {green: 0, yellow: 60, red: 85}
+          - type: gauge
+            entity: sensor.memory_use_percent
+            name: Memória
+            min: 0
+            max: 100
+            severity: {green: 0, yellow: 70, red: 90}
+          - type: gauge
+            entity: sensor.disk_use_percent
+            name: Disco
+            min: 0
+            max: 100
+            severity: {green: 0, yellow: 75, red: 90}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Serviços
+            heading_style: title
+            icon: mdi:apps
+          - type: markdown
+            content: >
+              - [Jellyfin](http://10.0.0.103:8096)
+
+              - [qBittorrent](http://10.0.0.103:8080)
+
+              - [CasaOS](http://10.0.0.103)
+            card_mod: *vidro
