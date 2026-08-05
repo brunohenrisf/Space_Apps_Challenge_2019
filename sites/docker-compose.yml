@@ -1,0 +1,44 @@
+services:
+  # Servidor web e proxy reverso: atende todos os sites e aplicações,
+  # decidindo pelo domínio da requisição.
+  #   - site estático  → serve arquivos de /DATA/Sites/<dominio>
+  #   - aplicação      → repassa a requisição para o contêiner da aplicação
+  web:
+    image: nginx:alpine
+    container_name: web
+    restart: unless-stopped
+    ports:
+      # Só na rede local — quem publica na internet é o túnel, abaixo.
+      - "8090:80"
+    volumes:
+      - /DATA/Sites:/sites:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/cloudflare-real-ip.conf:/etc/nginx/cloudflare-real-ip.conf:ro
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Túnel de saída até a Cloudflare. Publica tudo com HTTPS sem abrir
+  # nenhuma porta no roteador e sem revelar seu IP residencial.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    networks:
+      - proxy
+    depends_on:
+      - web
+
+# Rede compartilhada: as aplicações em outros compose entram nela para
+# que o nginx consiga alcançá-las pelo nome do contêiner.
+# Crie uma vez com:  docker network create proxy
+networks:
+  proxy:
+    external: true

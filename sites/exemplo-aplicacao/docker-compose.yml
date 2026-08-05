@@ -1,0 +1,39 @@
+# Exemplo de aplicação em contêiner publicada pelo mesmo túnel.
+# Fica numa pasta separada, com seu próprio ciclo de vida:
+#   /DATA/compose/meu-app/docker-compose.yml
+services:
+  meu-app:
+    # Uma das duas linhas: imagem pronta OU build do seu código
+    image: node:22-alpine
+    # build: .
+    container_name: meu-app
+    restart: unless-stopped
+    working_dir: /app
+    command: node server.js
+    volumes:
+      - /DATA/Apps/meu-app:/app
+      - /DATA/AppData/meu-app:/dados      # dados que precisam sobreviver
+    env_file: .env
+    networks:
+      - proxy
+    # SEM "ports:" — a aplicação não precisa ficar exposta na rede local.
+    # Quem fala com ela é o nginx, pela rede interna do Docker.
+
+  # Banco de dados, se a aplicação precisar. Note que ele NÃO entra na
+  # rede "proxy" — fica isolado, acessível só pela aplicação.
+  banco:
+    image: postgres:16-alpine
+    container_name: meu-app-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: meuapp
+    volumes:
+      - /DATA/AppData/meu-app-db:/var/lib/postgresql/data
+    networks:
+      - interna
+
+networks:
+  proxy:
+    external: true
+  interna:
