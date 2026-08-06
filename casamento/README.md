@@ -26,11 +26,11 @@ O console mostra os endereços, inclusive o da rede local — útil para testar 
 antes da festa:
 
 ```
-  Ana & Bruno — página de fotos do casamento
+  Bruno e Sabrina — página de fotos do casamento
   ────────────────────────────────────────────
-  Convidados:  https://fotos-ana-e-bruno.com.br
-  Painel:      https://fotos-ana-e-bruno.com.br/painel
-  QR Code:     https://fotos-ana-e-bruno.com.br/qr
+  Convidados:  https://fotos-bruno-e-sabrina.com.br
+  Painel:      https://fotos-bruno-e-sabrina.com.br/painel
+  QR Code:     https://fotos-bruno-e-sabrina.com.br/qr
   Na rede:     http://192.168.0.14:3000
 ```
 

@@ -147,6 +147,37 @@
       });
   }
 
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  /** Marca, na grade, as fotos que vieram com recado. */
+  function envelopeIcon(message) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'card-note');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linejoin', 'round');
+
+    var box = document.createElementNS(SVG_NS, 'rect');
+    box.setAttribute('x', '2.5');
+    box.setAttribute('y', '5');
+    box.setAttribute('width', '19');
+    box.setAttribute('height', '14');
+    box.setAttribute('rx', '2');
+    svg.appendChild(box);
+
+    var flap = document.createElementNS(SVG_NS, 'path');
+    flap.setAttribute('d', 'M3 6.5 12 13.5 21 6.5');
+    svg.appendChild(flap);
+
+    var title = document.createElementNS(SVG_NS, 'title');
+    title.textContent = message;
+    svg.appendChild(title);
+
+    return svg;
+  }
+
   function plural(count, singular, many) {
     return count === 1 ? singular : many;
   }
@@ -212,19 +243,9 @@
       }
 
       if (photo.message) {
-        // SVG em vez de um caractere: nem todo aparelho tem o glifo do envelope.
-        var note = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        note.setAttribute('class', 'card-note');
-        note.setAttribute('viewBox', '0 0 24 24');
-        note.setAttribute('aria-hidden', 'true');
-        var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('fill', 'currentColor');
-        path.setAttribute('d', 'M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm9 8L4.3 7H19.7L12 13z');
-        note.appendChild(path);
-        var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = photo.message;
-        note.appendChild(title);
-        button.appendChild(note);
+        // Envelope traçado, não preenchido: nem todo aparelho tem o glifo ✉, e
+        // duas subpaths preenchidas se fundiriam em um retângulo sólido.
+        button.appendChild(envelopeIcon(photo.message));
       }
 
       var tag = document.createElement('span');
