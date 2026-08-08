@@ -1,0 +1,71 @@
+{
+  "_comentario": [
+    "Cenas da casa. Vão na raiz do cartão SD.",
+    "Cada passo é publicado tal e qual em zigbee2mqtt/<z2m>/set, então",
+    "aqui se escreve no vocabulário do Zigbee (state/brightness/color_temp",
+    "em mireds), não no da interface.",
+    "As cenas vivem aqui e não no hub de propósito: se o Zigbee2MQTT cair",
+    "e voltar, o 'boa noite' da casa não vai junto."
+  ],
+
+  "scenes": [
+    {
+      "id": "bomdia",
+      "steps": [
+        { "id": "sui_teto",    "set": { "state": "ON", "brightness": 178, "color_temp": 238 } },
+        { "id": "coz_bancada", "set": { "state": "ON", "brightness": 229, "color_temp": 217 } },
+        { "id": "sala_cort",   "set": { "position": 100 } },
+        { "id": "sala_teto",   "set": { "state": "ON", "brightness": 200, "color_temp": 250 } }
+      ]
+    },
+    {
+      "id": "cinema",
+      "steps": [
+        { "id": "sala_teto",  "set": { "state": "OFF" } },
+        { "id": "sala_sanca", "set": { "state": "ON", "brightness": 36 } },
+        { "id": "sala_tv",    "set": { "state": "ON" } },
+        { "id": "sala_cort",  "set": { "position": 0 } }
+      ]
+    },
+    {
+      "id": "jantar",
+      "steps": [
+        { "id": "sala_teto",   "set": { "state": "ON", "brightness": 97,  "color_temp": 370 } },
+        { "id": "coz_bancada", "set": { "state": "ON", "brightness": 152, "color_temp": 333 } },
+        { "id": "sala_sanca",  "set": { "state": "ON", "brightness": 51 } }
+      ]
+    },
+    {
+      "id": "boanoite",
+      "steps": [
+        { "id": "sala_teto",   "set": { "state": "OFF" } },
+        { "id": "sala_sanca",  "set": { "state": "OFF" } },
+        { "id": "coz_bancada", "set": { "state": "OFF" } },
+        { "id": "esc_teto",    "set": { "state": "OFF" } },
+        { "id": "esc_mesa",    "set": { "state": "OFF" } },
+        { "id": "var_luz",     "set": { "state": "OFF" } },
+        { "id": "sala_tv",     "set": { "state": "OFF" } },
+        { "id": "sui_abajur",  "set": { "state": "ON", "brightness": 30 } },
+        { "id": "ent_fech",    "set": { "state": "LOCK" } }
+      ]
+    },
+    {
+      "id": "sair",
+      "steps": [
+        { "id": "sala_teto",   "set": { "state": "OFF" } },
+        { "id": "sala_sanca",  "set": { "state": "OFF" } },
+        { "id": "sala_tv",     "set": { "state": "OFF" } },
+        { "id": "coz_bancada", "set": { "state": "OFF" } },
+        { "id": "sui_teto",    "set": { "state": "OFF" } },
+        { "id": "sui_abajur",  "set": { "state": "OFF" } },
+        { "id": "sui_ac",      "set": { "state": "OFF" } },
+        { "id": "qt2_teto",    "set": { "state": "OFF" } },
+        { "id": "esc_teto",    "set": { "state": "OFF" } },
+        { "id": "esc_mesa",    "set": { "state": "OFF" } },
+        { "id": "var_luz",     "set": { "state": "OFF" } },
+        { "id": "ent_portao",  "set": { "state": "ON", "brightness": 153 } },
+        { "id": "ent_fech",    "set": { "state": "LOCK" } }
+      ]
+    }
+  ]
+}

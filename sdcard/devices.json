@@ -1,0 +1,91 @@
+{
+  "_comentario": [
+    "Catálogo da casa. Vai na raiz do cartão SD.",
+    "O firmware lê este arquivo na partida — mexer aqui não exige recompilar.",
+    "'z2m' precisa bater exatamente com o friendly_name no Zigbee2MQTT."
+  ],
+
+  "house": { "name": "Casa Ribeiro", "tarifa": 0.92 },
+
+  "rooms": [
+    { "id": "sala",    "name": "Sala" },
+    { "id": "cozinha", "name": "Cozinha" },
+    { "id": "suite",   "name": "Suíte" },
+    { "id": "quarto",  "name": "Quarto 2" },
+    { "id": "escrit",  "name": "Escritório" },
+    { "id": "varanda", "name": "Varanda" },
+    { "id": "entrada", "name": "Entrada" }
+  ],
+
+  "devices": [
+    { "id": "sala_teto",  "z2m": "Luz sala teto",   "name": "Luz principal", "room": "sala",
+      "type": "light", "caps": ["onoff","dim","cct"], "fav": true,
+      "model": "IKEA TRADFRI E27 CWS" },
+
+    { "id": "sala_sanca", "z2m": "Sanca sala",      "name": "Sanca LED", "room": "sala",
+      "type": "light", "caps": ["onoff","dim"], "fav": true,
+      "model": "Tuya Zigbee Dimmer 2CH" },
+
+    { "id": "sala_tv",    "z2m": "Tomada rack",     "name": "TV e rack", "room": "sala",
+      "type": "plug", "caps": ["onoff","power"], "fav": true,
+      "model": "Tuya TS011F 16A" },
+
+    { "id": "sala_cort",  "z2m": "Cortina sala",    "name": "Cortina", "room": "sala",
+      "type": "cover", "caps": ["cover"], "model": "Zemismart ZM25TQ" },
+
+    { "id": "sala_pres",  "z2m": "Presenca sala",   "name": "Presença sala", "room": "sala",
+      "type": "motion", "caps": ["motion"], "model": "Aqara RTCGQ11LM" },
+
+    { "id": "coz_bancada","z2m": "Luz bancada",     "name": "Luz da bancada", "room": "cozinha",
+      "type": "light", "caps": ["onoff","dim","cct"], "fav": true,
+      "model": "Philips Hue LTA001" },
+
+    { "id": "coz_gelad",  "z2m": "Tomada geladeira","name": "Geladeira", "room": "cozinha",
+      "type": "plug", "caps": ["onoff","power"], "model": "Tuya TS011F 16A" },
+
+    { "id": "coz_vaz",    "z2m": "Vazamento pia",   "name": "Sensor de vazamento", "room": "cozinha",
+      "type": "leak", "caps": ["leak"], "model": "Aqara SJCGQ11LM" },
+
+    { "id": "sui_teto",   "z2m": "Luz suite",       "name": "Luz do teto", "room": "suite",
+      "type": "light", "caps": ["onoff","dim","cct"], "model": "IKEA TRADFRI E27 WS" },
+
+    { "id": "sui_abajur", "z2m": "Abajur suite",    "name": "Abajur", "room": "suite",
+      "type": "light", "caps": ["onoff","dim"], "fav": true, "model": "Tuya TS0501B" },
+
+    { "id": "sui_ac",     "z2m": "Tomada ar suite", "name": "Ar-condicionado", "room": "suite",
+      "type": "ac", "caps": ["onoff","power"], "model": "Moes IR + TS011F" },
+
+    { "id": "sui_janela", "z2m": "Janela suite",    "name": "Janela", "room": "suite",
+      "type": "contact", "caps": ["contact"], "model": "Aqara MCCGQ11LM" },
+
+    { "id": "qt2_teto",   "z2m": "Luz quarto 2",    "name": "Luz do quarto", "room": "quarto",
+      "type": "light", "caps": ["onoff","dim"], "model": "Tuya TS0502B" },
+
+    { "id": "esc_teto",   "z2m": "Luz escritorio",  "name": "Luz do escritório", "room": "escrit",
+      "type": "light", "caps": ["onoff","dim","cct"], "fav": true,
+      "model": "Philips Hue LTA001" },
+
+    { "id": "esc_mesa",   "z2m": "Tomada bancada",  "name": "Tomada da bancada", "room": "escrit",
+      "type": "plug", "caps": ["onoff","power"], "model": "Tuya TS011F 16A" },
+
+    { "id": "var_luz",    "z2m": "Luz varanda",     "name": "Luz da varanda", "room": "varanda",
+      "type": "light", "caps": ["onoff","dim"], "model": "Tuya TS0502A" },
+
+    { "id": "var_temp",   "z2m": "Clima varanda",   "name": "Temperatura externa", "room": "varanda",
+      "type": "temp", "caps": ["temp"], "model": "Aqara WSDCGQ11LM" },
+
+    { "id": "ent_fech",   "z2m": "Fechadura",       "name": "Fechadura", "room": "entrada",
+      "type": "lock", "caps": ["lock"], "fav": true, "model": "Tuya ZS-SF-EU" },
+
+    { "id": "ent_portao", "z2m": "Luz portao",      "name": "Luz do portão", "room": "entrada",
+      "type": "light", "caps": ["onoff","dim"], "model": "Tuya TS0502A" }
+  ],
+
+  "scenes": [
+    { "id": "bomdia",   "name": "Bom dia",      "icon": "ic-sun",   "n": 6 },
+    { "id": "cinema",   "name": "Cinema",       "icon": "ic-tv",    "n": 5 },
+    { "id": "jantar",   "name": "Jantar",       "icon": "ic-scene", "n": 4 },
+    { "id": "boanoite", "name": "Boa noite",    "icon": "ic-moon",  "n": 11 },
+    { "id": "sair",     "name": "Sair de casa", "icon": "ic-lock",  "n": 14 }
+  ]
+}

@@ -1,0 +1,8 @@
+# Credenciais da casa do cliente — nunca sobem
+firmware/nexo-panel/config.h
+
+# Saída de build: gerada por `node tools/build.mjs`
+dist/
+
+node_modules/
+.DS_Store

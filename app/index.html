@@ -1,0 +1,1503 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Nexo</title>
+<meta name="description" content="Painel de automação residencial local. Funciona na sua rede, sem nuvem.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#100E0C" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4EFE8" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nexo">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   TOKENS
+   Tema claro = cômodo com a luz acesa. Tema escuro = luz apagada.
+   Neutros puxados para o quente do âmbar, nunca cinza puro.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --bg:#F4EFE8;
+  --surface:#FFFFFF;
+  --surface-2:#FBF7F1;
+  --surface-3:#EFE7DC;
+  --line:#E4DACC;
+  --line-soft:#EFE7DC;
+  --text:#1C1713;
+  --text-dim:#6E6157;
+  --text-faint:#9C8E80;
+  --accent:#C87F14;
+  --accent-fill:#F6A93B;
+  --accent-soft:rgba(246,169,59,.14);
+  --accent-ink:#3A2508;
+  --cool:#2F73AC;
+  --alert:#C24A31;
+  --alert-soft:rgba(194,74,49,.12);
+  --ok:#3D8A61;
+  --shadow-1:0 1px 2px rgba(58,37,8,.05), 0 6px 18px -10px rgba(58,37,8,.20);
+  --shadow-2:0 24px 60px -20px rgba(58,37,8,.34);
+  --scrim:rgba(28,23,19,.42);
+  --glass:rgba(255,255,255,.78);
+  --chart-bar:#E4D8C6;
+  --tile-on-bg:linear-gradient(170deg,#FFE7BF,#FFD394);
+  --tile-on-ink:#3A2508;
+
+  --r-sm:10px; --r-md:16px; --r-lg:22px; --r-xl:30px;
+  --ease:cubic-bezier(.32,.72,0,1);
+
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#100E0C;
+    --surface:#191614;
+    --surface-2:#211D1A;
+    --surface-3:#2B2622;
+    --line:#332C26;
+    --line-soft:#251F1B;
+    --text:#F6EFE5;
+    --text-dim:#A3968A;
+    --text-faint:#6F6459;
+    --accent:#F6A93B;
+    --accent-fill:#F6A93B;
+    --accent-soft:rgba(246,169,59,.13);
+    --accent-ink:#2A1B06;
+    --cool:#7FB6E8;
+    --alert:#E8705A;
+    --alert-soft:rgba(232,112,90,.14);
+    --ok:#5CB98A;
+    --shadow-1:0 1px 2px rgba(0,0,0,.34), 0 6px 18px -10px rgba(0,0,0,.6);
+    --shadow-2:0 24px 60px -20px rgba(0,0,0,.8);
+    --scrim:rgba(6,5,4,.62);
+    --glass:rgba(25,22,20,.76);
+  --chart-bar:#3B332B;
+    --chart-bar:#3B332B;
+    --tile-on-bg:linear-gradient(170deg,#5C3F14,#3C2A0E);
+    --tile-on-ink:#FFDFA8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#100E0C;
+  --surface:#191614;
+  --surface-2:#211D1A;
+  --surface-3:#2B2622;
+  --line:#332C26;
+  --line-soft:#251F1B;
+  --text:#F6EFE5;
+  --text-dim:#A3968A;
+  --text-faint:#6F6459;
+  --accent:#F6A93B;
+  --accent-fill:#F6A93B;
+  --accent-soft:rgba(246,169,59,.13);
+  --accent-ink:#2A1B06;
+  --cool:#7FB6E8;
+  --alert:#E8705A;
+  --alert-soft:rgba(232,112,90,.14);
+  --ok:#5CB98A;
+  --shadow-1:0 1px 2px rgba(0,0,0,.34), 0 6px 18px -10px rgba(0,0,0,.6);
+  --shadow-2:0 24px 60px -20px rgba(0,0,0,.8);
+  --scrim:rgba(6,5,4,.62);
+  --glass:rgba(25,22,20,.76);
+  --tile-on-bg:linear-gradient(170deg,#5C3F14,#3C2A0E);
+  --tile-on-ink:#FFDFA8;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-ui);
+  font-size:15px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* ── Casca do app ─────────────────────────────────────────── */
+.shell{
+  position:relative;
+  display:flex;flex-direction:column;
+  height:100dvh;width:100%;
+  overflow:hidden;
+  background:var(--bg);
+  isolation:isolate;
+}
+/* Em telas largas (desktop, durante o desenvolvimento) o app aparece
+   dentro de um aparelho. No iPhone instalado, ocupa a tela inteira. */
+@media (min-width:780px) and (min-height:700px){
+  body{
+    display:grid;place-items:center;min-height:100dvh;
+    background:
+      radial-gradient(120% 90% at 50% 0%, var(--surface-2), var(--bg) 62%);
+    padding:28px;
+  }
+  .shell{
+    width:390px;height:812px;max-height:calc(100dvh - 56px);
+    border-radius:46px;
+    border:1px solid var(--line);
+    box-shadow:var(--shadow-2);
+  }
+  .deskcap{
+    position:fixed;left:0;right:0;bottom:14px;text-align:center;
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);
+  }
+}
+.deskcap{display:none}
+@media (min-width:780px) and (min-height:700px){.deskcap{display:block}}
+
+/* ── Cabeçalho ────────────────────────────────────────────── */
+.head{
+  flex:0 0 auto;
+  padding:max(14px,env(safe-area-inset-top)) 20px 10px;
+  background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line-soft);
+  z-index:3;
+}
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.head h1{
+  font-family:var(--font-display);
+  font-size:27px;font-weight:700;letter-spacing:-.022em;
+  margin:0;line-height:1.1;text-wrap:balance;
+}
+.eyebrow{
+  font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-faint);margin:0 0 3px;
+}
+.head-btn{
+  width:38px;height:38px;flex:0 0 auto;
+  display:grid;place-items:center;border-radius:50%;
+  background:var(--surface-3);color:var(--text-dim);
+}
+.head-btn:active{transform:scale(.93)}
+
+/* faixa de status: densa, monoespaçada — legenda de painel */
+.statusbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:9px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.01em;
+  color:var(--text-faint);
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.dot.warn{background:var(--alert)}
+.dot.idle{background:var(--text-faint)}
+.status-sep{opacity:.4}
+.chip-demo{
+  font-family:var(--font-ui);font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent);
+}
+
+/* ── Área rolável ─────────────────────────────────────────── */
+.view{
+  flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:16px 20px calc(28px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:22px;
+}
+/* Sem isto, num flex column de altura fixa os blocos se espremem em vez
+   de transbordar — o painel de leituras vira uma linha de 1px. */
+.view>*{flex:0 0 auto}
+.section{display:flex;flex-direction:column;gap:11px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.section-head h2{
+  font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--text-faint);margin:0;
+}
+.section-head .aux{font-size:12px;color:var(--text-faint);font-variant-numeric:tabular-nums}
+
+/* ── Painel "agora": leituras grandes e finas ─────────────── */
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft);
+  border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line-soft)}
+.readout{background:var(--surface);padding:14px 12px 13px;display:flex;flex-direction:column;gap:2px}
+.readout .k{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+.readout .v{
+  font-family:var(--font-display);
+  font-size:29px;font-weight:200;letter-spacing:-.03em;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.readout .v u{font-size:13px;font-weight:500;text-decoration:none;color:var(--text-dim);margin-left:2px;letter-spacing:0}
+
+/* ── Cenas ────────────────────────────────────────────────── */
+.scenerow{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:2px 20px 4px}
+.scenerow::-webkit-scrollbar{display:none}
+.scene{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:9px 15px 9px 11px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);
+  font-size:14px;font-weight:500;white-space:nowrap;
+  transition:transform .16s var(--ease),background .16s;
+}
+.scene:active{transform:scale(.95)}
+.scene svg{width:18px;height:18px;color:var(--text-dim)}
+.scene.hot{background:var(--accent-fill);border-color:transparent;color:var(--accent-ink)}
+.scene.hot svg{color:var(--accent-ink)}
+
+/* ── Grade de dispositivos favoritos ──────────────────────── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{
+  position:relative;text-align:left;
+  padding:13px 14px 12px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);
+  display:flex;flex-direction:column;gap:14px;min-height:104px;
+  transition:transform .16s var(--ease);
+}
+.tile:active{transform:scale(.975)}
+.tile.on{background:var(--tile-on-bg);border-color:transparent;color:var(--tile-on-ink)}
+.tile.off-net{opacity:.55}
+.tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tile-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  background:var(--surface-3);color:var(--text-dim);flex:0 0 auto}
+.tile.on .tile-ico{background:rgba(255,255,255,.28);color:var(--tile-on-ink)}
+.tile-ico svg{width:19px;height:19px}
+.tile-name{font-size:14.5px;font-weight:600;letter-spacing:-.01em;line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile-sub{font-size:11.5px;color:var(--text-faint);margin-top:1px;font-variant-numeric:tabular-nums}
+.tile.on .tile-sub{color:var(--tile-on-ink);opacity:.72}
+.tile-more{
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  color:var(--text-faint);margin:-3px -4px 0 0;flex:0 0 auto;
+}
+.tile.on .tile-more{color:var(--tile-on-ink);opacity:.6}
+.tile-more svg{width:15px;height:15px}
+
+/* pulso de "aguardando confirmação do rádio" */
+.pending::after{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+  border:1.5px solid var(--accent-fill);animation:breathe 1.1s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.15}50%{opacity:.85}}
+.rejected{animation:nudge .34s ease}
+@keyframes nudge{0%,100%{transform:translateX(0)}22%{transform:translateX(-5px)}62%{transform:translateX(4px)}}
+
+/* ── Linhas de dispositivo ────────────────────────────────── */
+.list{display:flex;flex-direction:column;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;width:100%;
+  border-bottom:1px solid var(--line-soft)}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--surface-2)}
+.row-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  background:var(--surface-3);color:var(--text-dim);flex:0 0 auto}
+.row-ico.lit{background:var(--accent-soft);color:var(--accent)}
+.row-ico svg{width:18px;height:18px}
+.row-main{flex:1 1 auto;min-width:0}
+.row-name{display:block;font-size:15px;font-weight:500;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-sub{display:block;font-size:12px;color:var(--text-faint);font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-aux{flex:0 0 auto;display:flex;align-items:center;gap:10px;color:var(--text-faint)}
+.row-aux svg{width:16px;height:16px}
+.row-val{font-family:var(--font-display);font-size:17px;font-weight:300;
+  font-variant-numeric:tabular-nums;color:var(--text-dim)}
+
+/* interruptor */
+.sw{width:47px;height:29px;border-radius:999px;background:var(--surface-3);
+  position:relative;flex:0 0 auto;transition:background .2s var(--ease)}
+.sw::after{content:"";position:absolute;top:2.5px;left:2.5px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .22s var(--ease)}
+.sw.on{background:var(--accent-fill)}
+.sw.on::after{transform:translateX(18px)}
+
+/* ── Pílulas de cômodo ────────────────────────────────────── */
+.pills{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:2px 20px 4px}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:0 0 auto;padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:500;
+  background:var(--surface);border:1px solid var(--line);color:var(--text-dim);white-space:nowrap}
+.pill[aria-selected="true"]{background:var(--text);color:var(--bg);border-color:transparent}
+
+/* ── Barra de abas ────────────────────────────────────────── */
+.tabs{
+  flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
+  padding:7px 8px max(7px,env(safe-area-inset-bottom));
+  background:var(--glass);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  backdrop-filter:saturate(180%) blur(20px);
+  border-top:1px solid var(--line-soft);z-index:3;
+}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 3px;
+  color:var(--text-faint);font-size:10px;font-weight:500;letter-spacing:.01em}
+.tab svg{width:23px;height:23px}
+.tab[aria-selected="true"]{color:var(--accent)}
+
+/* ── Sheet do dispositivo ─────────────────────────────────── */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:8;
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);animation:fade .26s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:9;
+  max-height:92%;display:flex;flex-direction:column;
+  background:var(--surface);
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  border-top:1px solid var(--line);
+  box-shadow:var(--shadow-2);
+  animation:rise .34s var(--ease);
+  overflow:hidden;
+}
+@media (min-width:780px) and (min-height:700px){.sheet{border-radius:var(--r-xl) var(--r-xl) 44px 44px}}
+@keyframes rise{from{transform:translateY(102%)}to{transform:translateY(0)}}
+/* O "bloom": a luz que o cômodo vai receber, antes de o rádio responder.
+   Centrado sobre o slider — é de lá que a luz sai. Fica todo dentro da
+   caixa para não deixar a borda do degradê aparecer como emenda. */
+.sheet::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(46% 32% at 22% 30%, var(--bloom-c,#F6A93B) 0%, transparent 70%);
+  opacity:var(--bloom-a,0);transition:opacity .3s var(--ease),background .3s var(--ease);
+}
+.sheet-in{position:relative;overflow-y:auto;padding:8px 22px calc(26px + env(safe-area-inset-bottom))}
+.grab{width:38px;height:4.5px;border-radius:999px;background:var(--line);margin:0 auto 12px}
+.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:20px}
+.sheet-head h2{font-family:var(--font-display);font-size:24px;font-weight:600;letter-spacing:-.022em;margin:0;line-height:1.2}
+.sheet-head .where{font-size:12.5px;color:var(--text-faint);margin-top:2px}
+
+/* slider vertical — o elemento de assinatura */
+.control{display:flex;gap:16px;align-items:stretch;margin-bottom:20px}
+.vslider{
+  --vh:226px;                     /* altura interna: 228px menos as bordas */
+  position:relative;flex:0 0 116px;height:228px;border-radius:26px;overflow:hidden;
+  background:var(--surface-3);touch-action:none;user-select:none;-webkit-user-select:none;
+  border:1px solid var(--line);
+}
+.vfill{position:absolute;left:0;right:0;bottom:0;overflow:hidden;
+  background:linear-gradient(180deg,var(--accent-fill),#E2892A);
+  transition:height .18s var(--ease)}
+.vslider.dragging .vfill{transition:none}
+/* O número e o ícone são desenhados duas vezes: a cópia clara embaixo e a
+   cópia escura dentro do preenchimento, que a recorta. Assim a leitura
+   troca de cor exatamente na linha da luz, sem meio-termo ilegível quando
+   o brilho para no meio do algarismo. */
+.vfill-clip{position:absolute;left:0;right:0;bottom:0;height:var(--vh);pointer-events:none}
+.vslider-txt{position:absolute;left:0;right:0;bottom:16px;text-align:center;
+  font-family:var(--font-display);font-size:34px;font-weight:250;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;color:var(--text-dim)}
+.vslider-txt u{font-size:15px;font-weight:500;text-decoration:none;opacity:.6}
+.vslider-ico{position:absolute;top:16px;left:0;right:0;display:grid;place-items:center;
+  color:var(--text-faint)}
+.vslider-ico svg{width:22px;height:22px}
+.vfill .vslider-txt{color:var(--accent-ink)}
+.vfill .vslider-ico{color:var(--accent-ink);opacity:.6}
+.control-side{flex:1 1 auto;display:flex;flex-direction:column;gap:10px}
+.bigbtn{flex:1 1 0;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  font-size:12.5px;font-weight:600;color:var(--text-dim);padding:10px}
+.bigbtn svg{width:22px;height:22px}
+.bigbtn[aria-pressed="true"]{background:var(--accent-fill);border-color:transparent;color:var(--accent-ink)}
+.bigbtn:active{transform:scale(.97)}
+/* O âmbar quer dizer uma coisa só: "está aceso". Preferido é uma
+   preferência, não um estado do circuito — fica em voz baixa. */
+.bigbtn.quiet[aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--text)}
+.bigbtn.quiet[aria-pressed="true"] svg{color:var(--accent)}
+
+/* faixa de temperatura de cor: o eixo âmbar↔azul é dado, não enfeite */
+.cct{margin-bottom:20px}
+.cct-track{position:relative;height:52px;border-radius:16px;touch-action:none;
+  background:linear-gradient(90deg,#FF9E3D,#FFD2A1,#FFF3E4,#E4EEFB,#C9DEFA);
+  border:1px solid var(--line);cursor:pointer}
+.cct-knob{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35),0 0 0 1.5px rgba(0,0,0,.07);pointer-events:none}
+.cct-scale{display:flex;justify-content:space-between;margin-top:6px;
+  font-family:var(--font-mono);font-size:10px;color:var(--text-faint)}
+
+/* ficha técnica */
+.specs{border-top:1px solid var(--line-soft);padding-top:4px}
+.spec{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.spec:last-child{border-bottom:0}
+.spec .k{color:var(--text-faint);flex:0 0 auto}
+.spec .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spec .v.mono{font-family:var(--font-mono);font-size:12px}
+.bars{display:inline-flex;align-items:flex-end;gap:2px;height:13px;vertical-align:-2px;margin-right:6px}
+.bars i{width:3px;border-radius:1px;background:var(--line);display:block}
+.bars i.f{background:var(--ok)}
+.bars.weak i.f{background:var(--alert)}
+
+/* ── Gráfico de energia ───────────────────────────────────── */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 14px 12px}
+.chart-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;padding:0 4px}
+.chart-big{font-family:var(--font-display);font-size:38px;font-weight:200;letter-spacing:-.035em;
+  line-height:1;font-variant-numeric:tabular-nums}
+.chart-big u{font-size:15px;font-weight:500;text-decoration:none;color:var(--text-dim);margin-left:3px;letter-spacing:0}
+.chart-note{font-size:12px;color:var(--text-faint);text-align:right;line-height:1.35}
+.chart svg{display:block;width:100%;height:118px;overflow:visible}
+.chart-axis{display:flex;justify-content:space-between;padding:7px 4px 0;
+  font-family:var(--font-mono);font-size:10px;color:var(--text-faint)}
+
+/* ── Avisos / banners ─────────────────────────────────────── */
+.banner{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:var(--r-md);
+  background:var(--alert-soft);color:var(--alert);font-size:13px;font-weight:500;line-height:1.35}
+.banner svg{width:19px;height:19px;flex:0 0 auto}
+.banner.calm{background:var(--surface-2);color:var(--text-dim);border:1px solid var(--line)}
+
+.toast{
+  position:absolute;left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:20;
+  background:var(--text);color:var(--bg);padding:12px 15px;border-radius:14px;font-size:13.5px;
+  font-weight:500;box-shadow:var(--shadow-2);animation:pop .3s var(--ease);
+  display:flex;align-items:center;gap:10px;line-height:1.35;
+}
+.toast svg{width:18px;height:18px;flex:0 0 auto;opacity:.7}
+@keyframes pop{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ── Tela de bloqueio ─────────────────────────────────────── */
+.lock{position:absolute;inset:0;z-index:30;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:26px;padding:32px 30px calc(38px + env(safe-area-inset-bottom))}
+.lock-mark{width:60px;height:60px;border-radius:19px;display:grid;place-items:center;
+  background:var(--accent-fill);color:var(--accent-ink)}
+.lock-mark svg{width:31px;height:31px}
+.lock h2{font-family:var(--font-display);font-size:21px;font-weight:600;letter-spacing:-.02em;margin:0;text-align:center}
+.lock p{margin:-16px 0 0;font-size:13px;color:var(--text-faint);text-align:center}
+.pips{display:flex;gap:13px;margin:2px 0 4px}
+.pips i{width:12px;height:12px;border-radius:50%;background:var(--surface-3);
+  border:1px solid var(--line);transition:background .18s,transform .18s var(--ease)}
+.pips i.f{background:var(--accent-fill);border-color:transparent;transform:scale(1.1)}
+.pips.bad{animation:nudge .36s ease}
+.keys{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.key{height:72px;border-radius:50%;background:var(--surface);border:1px solid var(--line);
+  font-family:var(--font-display);font-size:27px;font-weight:300;display:grid;place-items:center}
+.key:active{background:var(--surface-3);transform:scale(.94)}
+.key.blank{background:none;border:0}
+.key.fn{font-size:13px;font-weight:600;color:var(--text-dim);background:none;border:0}
+
+.empty{text-align:center;color:var(--text-faint);font-size:13.5px;padding:26px 10px;line-height:1.5}
+.sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- Biblioteca de ícones. Traço 1.7, cantos arredondados, grade 24. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="i" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
+</defs>
+<symbol id="ic-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 18.2h5M10.4 21h3.2"/><path d="M12 3a6.2 6.2 0 0 0-3.7 11.2c.6.45.95 1.05 1.05 1.7l.05.3h5.2l.05-.3c.1-.65.45-1.25 1.05-1.7A6.2 6.2 0 0 0 12 3Z"/></symbol>
+<symbol id="ic-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.6v5.2M15 2.6v5.2"/><path d="M6.2 7.8h11.6v3.1a5.8 5.8 0 0 1-11.6 0Z"/><path d="M12 16.7v4.7"/></symbol>
+<symbol id="ic-cover" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3.6h18M4.8 3.6v10.8M19.2 3.6v10.8"/><path d="M4.8 8.2h14.4M4.8 12.6h14.4"/><path d="M12 14.4v5.2M9.6 19.6h4.8"/></symbol>
+<symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.4" y="10.2" width="15.2" height="10.8" rx="2.8"/><path d="M7.8 10.2V7.4a4.2 4.2 0 0 1 8.4 0v2.8"/></symbol>
+<symbol id="ic-motion" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.9"/><path d="M7.9 16.1a5.8 5.8 0 0 1 0-8.2M16.1 7.9a5.8 5.8 0 0 1 0 8.2"/><path d="M5 19a9.9 9.9 0 0 1 0-14M19 5a9.9 9.9 0 0 1 0 14"/></symbol>
+<symbol id="ic-door" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 21h16.8"/><path d="M6.4 21V4a1.2 1.2 0 0 1 1.2-1.2h8.8A1.2 1.2 0 0 1 17.6 4v17"/><circle cx="14.2" cy="12.4" r=".95" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-thermo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.1 14.3V5.2a2.1 2.1 0 1 0-4.2 0v9.1a4.1 4.1 0 1 0 4.2 0Z"/></symbol>
+<symbol id="ic-leak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2s6.1 6.4 6.1 10.1a6.1 6.1 0 1 1-12.2 0C5.9 9.6 12 3.2 12 3.2Z"/></symbol>
+<symbol id="ic-tv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="4.4" width="18.8" height="12.4" rx="2.2"/><path d="M8.4 20.6h7.2M12 16.8v3.8"/></symbol>
+<symbol id="ic-ac" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="4.2" width="18.8" height="7.4" rx="2.4"/><path d="M5.6 8h12.8"/><path d="M7 14.6c0 1.5 1.6 1.5 1.6 3M12 14.6c0 1.5 1.6 1.5 1.6 3M17 14.6c0 1.5-1.6 1.5-1.6 3"/></symbol>
+<symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 10.4 12 3.1l8.8 7.3v9.3a1.3 1.3 0 0 1-1.3 1.3h-4.4v-6h-6.2v6H4.5a1.3 1.3 0 0 1-1.3-1.3Z"/></symbol>
+<symbol id="ic-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="3.2" width="7.4" height="7.4" rx="2.2"/><rect x="13.4" y="3.2" width="7.4" height="7.4" rx="2.2"/><rect x="3.2" y="13.4" width="7.4" height="7.4" rx="2.2"/><rect x="13.4" y="13.4" width="7.4" height="7.4" rx="2.2"/></symbol>
+<symbol id="ic-scene" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.4 12.85 8.6 18 10.45 12.85 12.3 11 17.5 9.15 12.3 4 10.45 9.15 8.6Z"/><path d="M18.4 15.4v3.8M20.3 17.3h-3.8"/></symbol>
+<symbol id="ic-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 2.4 4.8 13.6h6.2l-.9 8 8.6-11.4h-6.2Z"/></symbol>
+<symbol id="ic-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.4M12 19v2.4M21.4 12H19M5 12H2.6M18.65 5.35l-1.7 1.7M7.05 16.95l-1.7 1.7M18.65 18.65l-1.7-1.7M7.05 7.05l-1.7-1.7"/></symbol>
+<symbol id="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.4v2.2M12 19.4v2.2M21.6 12h-2.2M4.6 12H2.4M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6M18.8 18.8l-1.6-1.6M6.8 6.8 5.2 5.2"/></symbol>
+<symbol id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.6A8.7 8.7 0 0 1 9.4 3.6a8.7 8.7 0 1 0 11 11Z"/></symbol>
+<symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.8V12l3.4 2"/></symbol>
+<symbol id="ic-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.4 5.2 6.8 6.8-6.8 6.8"/></symbol>
+<symbol id="ic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.6 4.6 4.6L19 6.6"/></symbol>
+<symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.6 21.4 20H2.6Z"/><path d="M12 9.6v4.4"/><circle cx="12" cy="16.8" r="1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-batt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.8" width="16.4" height="8.4" rx="2.4"/><path d="M21.4 11v2"/></symbol>
+<symbol id="ic-hub" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="3.6" r="1.8"/><circle cx="19.3" cy="16.2" r="1.8"/><circle cx="4.7" cy="16.2" r="1.8"/><path d="M12 6v3.4M14.3 13.4l3.2 1.9M9.7 13.4l-3.2 1.9"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.2v13.6M5.2 12h13.6"/></symbol>
+<symbol id="ic-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 9.2a13.4 13.4 0 0 1 18.8 0M6 12.8a8.6 8.6 0 0 1 12 0M9.4 16.4a3.8 3.8 0 0 1 5.2 0"/><circle cx="12" cy="19.6" r="1" fill="currentColor" stroke="none"/></symbol>
+</svg>
+
+<div class="shell" id="shell">
+  <header class="head">
+    <div class="head-row">
+      <div>
+        <p class="eyebrow" id="eyebrow">Início</p>
+        <h1 id="title">Nexo</h1>
+      </div>
+      <button class="head-btn" data-act="tab" data-v="settings" aria-label="Ajustes">
+        <svg width="19" height="19"><use href="#ic-gear"/></svg>
+      </button>
+    </div>
+    <div class="statusbar" id="statusbar"></div>
+  </header>
+
+  <main class="view" id="view" tabindex="-1"></main>
+
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab" role="tab" data-act="tab" data-v="home"   aria-selected="true"><svg><use href="#ic-home"/></svg>Início</button>
+    <button class="tab" role="tab" data-act="tab" data-v="rooms"  aria-selected="false"><svg><use href="#ic-grid"/></svg>Cômodos</button>
+    <button class="tab" role="tab" data-act="tab" data-v="scenes" aria-selected="false"><svg><use href="#ic-scene"/></svg>Cenas</button>
+    <button class="tab" role="tab" data-act="tab" data-v="energy" aria-selected="false"><svg><use href="#ic-bolt"/></svg>Energia</button>
+  </nav>
+
+  <div id="layer"></div>
+</div>
+<p class="deskcap">Nexo &middot; pré-visualização do painel &middot; arraste o brilho no cartão do dispositivo</p>
+
+<script>
+(function(){
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════════
+   NEXO — painel de automação residencial local
+   Servido pelo ESP32 a partir do cartão SD. Sem nuvem, sem conta.
+   ═══════════════════════════════════════════════════════════════ */
+
+const $  = (s,r)=> (r||document).querySelector(s);
+const el = (id)=> document.getElementById(id);
+const clamp = (n,a,b)=> n<a?a:n>b?b:n;
+const esc = (s)=> String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf  = (n,d)=> n.toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+
+/* O Safari em navegação privada lança ao tocar em localStorage. Sem esta
+   proteção o app inteiro morre na primeira linha. */
+const guarda = {
+  ler(chave, sessao){
+    try{ return (sessao?sessionStorage:localStorage).getItem(chave); }catch(_){ return null; }
+  },
+  gravar(chave, valor, sessao){
+    try{ (sessao?sessionStorage:localStorage).setItem(chave, valor); }catch(_){ }
+  }
+};
+
+/** fetch com prazo. AbortSignal.timeout só existe do iOS 16 em diante, e
+ *  sem alternativa um iPhone antigo cairia no simulador para sempre. */
+function buscarComPrazo(url, ms){
+  if (typeof AbortSignal!=='undefined' && AbortSignal.timeout)
+    return fetch(url, { signal: AbortSignal.timeout(ms) });
+  const ac = new AbortController();
+  const t = setTimeout(()=>ac.abort(), ms);
+  return fetch(url, { signal: ac.signal }).finally(()=>clearTimeout(t));
+}
+
+/* ── Estado ─────────────────────────────────────────────────── */
+const S = {
+  view:'home', room:null, sheet:null, locked:true, demo:false,
+  conn:'connecting',                 // connecting | online | offline
+  theme: guarda.ler('nexo.theme') || 'auto',
+  house:{ name:'Casa Ribeiro', tarifa:0.92 },
+  hub:{ online:true, canal:15, panId:'0x1A62', coord:'CC2652P · Zigbee2MQTT 1.42.0', permitJoin:0 },
+  painel:{ ip:'192.168.0.44', rssi:-58, uptime:412860, heap:148, fw:'1.0.0', sd:'29,1 GB livres' },
+  rooms:[], devices:[], scenes:[], routines:[], energia:{ horas:[], total:0 },
+  toast:null, pinBuf:'', pinBad:false
+};
+
+/* ── Catálogo de ícones por tipo ────────────────────────────── */
+const ICON = { light:'ic-bulb', plug:'ic-plug', tv:'ic-tv', ac:'ic-ac', cover:'ic-cover',
+  lock:'ic-lock', motion:'ic-motion', contact:'ic-door', temp:'ic-thermo', leak:'ic-leak' };
+
+/* ── Utilidades de domínio ──────────────────────────────────── */
+const dev  = id => S.devices.find(d=>d.id===id);
+const room = id => S.rooms.find(r=>r.id===id);
+const isLight  = d => d.caps.includes('dim') || d.caps.includes('onoff');
+const isOn     = d => !!(d.st && d.st.on);
+const acesos   = () => S.devices.filter(d=>d.caps.includes('onoff') && isOn(d)).length;
+const potencia = () => S.devices.reduce((a,d)=> a + (d.st && d.st.w ? d.st.w : 0), 0);
+
+/** Cor da luz para um valor de temperatura em kelvin (2000K → 6500K).
+ *  Interpolação simples entre dois extremos calibrados a olho — não é
+ *  corpo negro exato, mas é o que o olho espera ver num dimmer. */
+function kelvinHex(k){
+  const t = clamp((k-2000)/4500, 0, 1);
+  const a=[255,158,61], b=[214,233,255];
+  const c = a.map((v,i)=> Math.round(v + (b[i]-v)*t));
+  return '#' + c.map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+/** Intensidade do halo atrás do sheet, em função do brilho. */
+const bloom = bri => (0.08 + clamp(bri,0,100)/100*0.28).toFixed(3);
+
+/* Onde o preenchimento do slider alcança o rótulo (≈29% da altura) e o
+   ícone (≈88%) — abaixo disso a tinta escura sumiria no fundo escuro. */
+/** Coluna vertical de arrasto. O conteúdo é emitido duas vezes: a cópia
+ *  de baixo em tom claro e a de dentro do preenchimento em tom escuro. */
+function colunaVertical(valor, icone, rotulo, min){
+  const corpo = `<span class="vslider-ico"><svg><use href="#${icone}"/></svg></span>`
+              + `<span class="vslider-txt">${valor}<u>%</u></span>`;
+  return `<div class="vslider" id="vs" role="slider" tabindex="0" aria-label="${rotulo}"
+       aria-valuemin="${min}" aria-valuemax="100" aria-valuenow="${valor}">
+    ${corpo}
+    <div class="vfill" id="vfill" style="height:${valor}%"><div class="vfill-clip">${corpo}</div></div>
+  </div>`;
+}
+
+function faz(ts){
+  const s = Math.max(0, Math.round((Date.now()-ts)/1000));
+  if (s < 60)   return 'agora';
+  if (s < 3600) return 'há ' + Math.floor(s/60) + ' min';
+  if (s < 86400)return 'há ' + Math.floor(s/3600) + ' h';
+  return 'há ' + Math.floor(s/86400) + ' d';
+}
+function dur(s){
+  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+  return d ? d+'d '+h+'h' : h ? h+'h '+m+'min' : m+'min';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TRANSPORTE
+   Em produção: WebSocket com o ESP32. Sem ESP32 alcançável, o app
+   cai para um simulador para que a interface possa ser avaliada.
+   ═══════════════════════════════════════════════════════════════ */
+const Bus = {
+  ws:null, backoff:800,
+
+  async start(){
+    try{
+      const r = await buscarComPrazo('api/state', 1200);
+      if (!r.ok) throw new Error('http '+r.status);
+      Object.assign(S, await r.json());
+      this.openSocket();
+      S.conn='online';
+    }catch(_){
+      S.demo = true; S.conn = 'online';
+      Sim.seed();
+      Sim.tick();
+    }
+    render();
+  },
+
+  openSocket(){
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    const ws = this.ws = new WebSocket(proto+'://'+location.host+'/ws');
+    ws.onopen    = ()=>{ this.backoff=800; S.conn='online'; render(); };
+    ws.onmessage = e=>{ try{ this.recv(JSON.parse(e.data)); }catch(_){ } };
+    ws.onclose   = ()=>{
+      S.conn='offline'; render();
+      setTimeout(()=>this.openSocket(), this.backoff);
+      this.backoff = Math.min(this.backoff*2, 15000);
+    };
+  },
+
+  /* Mensagens vindas do ESP32 */
+  recv(m){
+    if (m.t==='state'){
+      const d = dev(m.id); if(!d) return;
+      Object.assign(d.st, m.p); d.seen = Date.now(); d.rx = true;
+      confirmar(d, true);
+    }
+    else if (m.t==='reject'){ const d=dev(m.id); if(d) confirmar(d, false); }
+    else if (m.t==='hub')   { Object.assign(S.hub, m.p); }
+    else if (m.t==='panel') { Object.assign(S.painel, m.p); }
+    render();
+  },
+
+  /* Comando para um dispositivo. Otimista: a interface muda já e o
+     rádio confirma depois. Zigbee leva 100–500 ms; esperar por isso
+     faz o app parecer quebrado. */
+  set(id, patch){
+    const d = dev(id); if(!d) return;
+    Object.assign(d.st, patch);
+    d.pend = { t:setTimeout(()=>confirmar(d,false), 3000) };
+    if (S.demo) Sim.set(id, patch);
+    else if (this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'set', id, p:patch}));
+    else { clearTimeout(d.pend.t); d.pend=null; toast('Sem conexão com o painel.'); }
+    render();
+  },
+
+  scene(id){
+    if (S.demo) Sim.scene(id);
+    else if (this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'scene', id}));
+    const sc = S.scenes.find(s=>s.id===id);
+    toast('Cena "'+ (sc?sc.name:id) +'" aplicada.', 'ic-check');
+    render();
+  },
+
+  pair(seg){
+    S.hub.permitJoin = seg;
+    if (!S.demo && this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'pair', s:seg}));
+    render();
+  }
+};
+
+/** Fecha (ou desfaz) o comando otimista de um dispositivo. */
+function confirmar(d, ok){
+  if (!d.pend) return;
+  clearTimeout(d.pend.t); d.pend = null;
+  if (!ok){
+    if (d.prev) Object.assign(d.st, d.prev);
+    d.falhou = true;
+    setTimeout(()=>{ d.falhou=false; render(); }, 400);
+    toast('"'+d.name+'" não respondeu. Sinal fraco na malha.', 'ic-alert');
+  }
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIMULADOR — só entra em cena quando não há ESP32 na rede.
+   ═══════════════════════════════════════════════════════════════ */
+const Sim = {
+  seed(){
+    const now = Date.now(), min = 60000;
+    S.rooms = [
+      {id:'sala',   name:'Sala'},
+      {id:'cozinha',name:'Cozinha'},
+      {id:'suite',  name:'Suíte'},
+      {id:'quarto', name:'Quarto 2'},
+      {id:'escrit', name:'Escritório'},
+      {id:'varanda',name:'Varanda'},
+      {id:'entrada',name:'Entrada'}
+    ];
+    // Endereço IEEE plausível: prefixo OUI + hash FNV-1a do id, em hexa.
+    const ieee = id=>{
+      let h = 0x811c9dc5;
+      for (let i=0;i<id.length;i++){ h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193)>>>0; }
+      return '0x00158d00' + h.toString(16).padStart(8,'0');
+    };
+    const D = (id,name,rm,type,caps,st,x)=> Object.assign(
+      {id,name,room:rm,type,caps,st,lqi:120,bat:null,seen:now,
+       model:'—',ieee:ieee(id),fav:false,fraco:false}, x||{});
+
+    S.devices = [
+      D('sala_teto','Luz principal','sala','light',['onoff','dim','cct'],
+        {on:true,bri:64,k:3000}, {fav:true,lqi:158,model:'IKEA TRADFRI E27 CWS'}),
+      D('sala_sanca','Sanca LED','sala','light',['onoff','dim'],
+        {on:true,bri:28}, {fav:true,lqi:143,model:'Tuna Zigbee Dimmer 2CH'}),
+      D('sala_tv','TV e rack','sala','plug',['onoff','power'],
+        {on:true,w:96,kwh:1.42}, {fav:true,lqi:151,model:'Tuya TS011F 16A'}),
+      D('sala_cort','Cortina','sala','cover',['cover'],
+        {pos:100}, {lqi:132,model:'Zemismart ZM25TQ'}),
+      D('sala_pres','Presença sala','sala','motion',['motion'],
+        {motion:false}, {lqi:118,bat:82,seen:now-14*min,model:'Aqara RTCGQ11LM'}),
+
+      D('coz_bancada','Luz da bancada','cozinha','light',['onoff','dim','cct'],
+        {on:false,bri:80,k:4000}, {fav:true,lqi:147,model:'Philips Hue LTA001'}),
+      D('coz_gelad','Geladeira','cozinha','plug',['onoff','power'],
+        {on:true,w:118,kwh:2.86}, {lqi:139,model:'Tuya TS011F 16A'}),
+      D('coz_vaz','Sensor de vazamento','cozinha','leak',['leak'],
+        {leak:false}, {lqi:104,bat:91,seen:now-52*min,model:'Aqara SJCGQ11LM'}),
+
+      D('sui_teto','Luz do teto','suite','light',['onoff','dim','cct'],
+        {on:false,bri:55,k:2700}, {lqi:149,model:'IKEA TRADFRI E27 WS'}),
+      D('sui_abajur','Abajur','suite','light',['onoff','dim'],
+        {on:false,bri:22}, {fav:true,lqi:126,model:'Tuya TS0501B'}),
+      D('sui_ac','Ar-condicionado','suite','ac',['onoff','power'],
+        {on:false,w:0,kwh:3.21}, {lqi:135,model:'Moes IR + TS011F'}),
+      D('sui_janela','Janela','suite','contact',['contact'],
+        {aberto:false}, {lqi:112,bat:74,seen:now-6*min,model:'Aqara MCCGQ11LM'}),
+
+      D('qt2_teto','Luz do quarto','quarto','light',['onoff','dim'],
+        {on:false,bri:70}, {lqi:128,model:'Tuya TS0502B'}),
+
+      D('esc_teto','Luz do escritório','escrit','light',['onoff','dim','cct'],
+        {on:true,bri:88,k:4600}, {fav:true,lqi:154,model:'Philips Hue LTA001'}),
+      D('esc_mesa','Tomada da bancada','escrit','plug',['onoff','power'],
+        {on:true,w:212,kwh:4.07}, {lqi:141,model:'Tuya TS011F 16A'}),
+
+      D('var_luz','Luz da varanda','varanda','light',['onoff','dim'],
+        {on:false,bri:45}, {lqi:96,model:'Tuya TS0502A'}),
+      D('var_temp','Temperatura externa','varanda','temp',['temp'],
+        {t:19.4,h:71}, {lqi:88,bat:63,seen:now-3*min,model:'Aqara WSDCGQ11LM'}),
+
+      D('ent_fech','Fechadura','entrada','lock',['lock'],
+        {trancado:true}, {fav:true,lqi:121,bat:57,model:'Tuya ZS-SF-EU'}),
+      // Nó no limite da malha: existe em toda instalação real e é a razão
+      // de a interface precisar tratar comando que não volta.
+      D('ent_portao','Luz do portão','entrada','light',['onoff','dim'],
+        {on:false,bri:60}, {lqi:38,fraco:true,model:'Tuya TS0502A'})
+    ];
+
+    S.scenes = [
+      {id:'bomdia',  name:'Bom dia',      icon:'ic-sun',   n:6},
+      {id:'cinema',  name:'Cinema',       icon:'ic-tv',    n:5},
+      {id:'jantar',  name:'Jantar',       icon:'ic-scene', n:4},
+      {id:'boanoite',name:'Boa noite',    icon:'ic-moon',  n:11},
+      {id:'sair',    name:'Sair de casa', icon:'ic-lock',  n:14}
+    ];
+
+    S.routines = [
+      {id:'r1', name:'Pôr do sol', desc:'Acende varanda e portão a 45%', on:true,  icon:'ic-sun'},
+      {id:'r2', name:'23h30',      desc:'Modo noturno: apaga áreas comuns', on:true, icon:'ic-moon'},
+      {id:'r3', name:'Presença na varanda', desc:'Depois das 22h, luz a 30% por 3 min', on:true, icon:'ic-motion'},
+      {id:'r4', name:'Vazamento na cozinha', desc:'Corta a tomada e alerta no painel', on:true, icon:'ic-leak'},
+      {id:'r5', name:'Ninguém em casa',     desc:'Desliga tomadas não essenciais', on:false, icon:'ic-home'}
+    ];
+
+    // Curva de 24 h com forma de casa: manhã, vale, pico da noite.
+    const perfil=[.22,.18,.16,.15,.16,.21,.42,.58,.46,.36,.33,.38,
+                  .52,.44,.36,.34,.41,.66,.88,1,.94,.72,.48,.31];
+    S.energia.horas = perfil.map(v=> +(v*1.42).toFixed(2));
+    S.energia.total = +S.energia.horas.reduce((a,b)=>a+b,0).toFixed(1);
+  },
+
+  /* Resposta do rádio: latência real e um nó que às vezes some. */
+  set(id, patch){
+    const d = dev(id); if(!d) return;
+    const lat = 140 + Math.random()*260;
+    const perde = d.fraco && Math.random() < 0.34;
+    setTimeout(()=>{
+      if (perde) { confirmar(d,false); return; }
+      if ('on' in patch && d.caps.includes('power'))
+        d.st.w = patch.on ? (d.id==='esc_mesa'?212:d.id==='coz_gelad'?118:96) : 0;
+      d.seen = Date.now();
+      confirmar(d,true);
+    }, lat);
+  },
+
+  scene(id){
+    const set=(ids,p)=> ids.forEach(i=>{ const d=dev(i); if(d) Object.assign(d.st,p); });
+    const off=ids=> set(ids,{on:false});
+    if (id==='boanoite'){
+      off(['sala_teto','sala_sanca','coz_bancada','esc_teto','var_luz','sala_tv','esc_mesa']);
+      set(['sui_abajur'],{on:true,bri:12}); set(['ent_fech'],{trancado:true});
+    }
+    if (id==='cinema'){
+      set(['sala_teto'],{on:false}); set(['sala_sanca'],{on:true,bri:14});
+      set(['sala_tv'],{on:true}); set(['sala_cort'],{pos:0});
+    }
+    if (id==='bomdia'){
+      set(['sui_teto'],{on:true,bri:70,k:4200}); set(['coz_bancada'],{on:true,bri:90,k:4600});
+      set(['sala_cort'],{pos:100});
+    }
+    if (id==='jantar'){
+      set(['sala_teto'],{on:true,bri:38,k:2700}); set(['coz_bancada'],{on:true,bri:60,k:3000});
+      set(['sala_sanca'],{on:true,bri:20});
+    }
+    if (id==='sair'){
+      S.devices.forEach(d=>{ if(d.caps.includes('onoff') && d.id!=='coz_gelad') d.st.on=false; });
+      set(['ent_fech'],{trancado:true});
+    }
+    S.devices.forEach(d=>{ if(d.st && 'w' in d.st) d.st.w = d.st.on ? d.st.w||96 : 0; });
+  },
+
+  /* Deriva lenta dos sensores e do consumo, para o painel não ficar morto. */
+  tick(){
+    setInterval(()=>{
+      const t = dev('var_temp');
+      if (t){ t.st.t = +(clamp(t.st.t + (Math.random()-.5)*.22, 14, 34)).toFixed(1); t.seen = Date.now(); }
+      const g = dev('coz_gelad');
+      if (g && g.st.on) g.st.w = Math.round(clamp(118 + (Math.random()-.5)*26, 92, 146));
+      if (S.hub.permitJoin > 0) S.hub.permitJoin--;
+      S.painel.uptime++;
+      if (!S.sheet || S.view==='energy' || S.view==='home') render();
+    }, 1000);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDERIZAÇÃO
+   ═══════════════════════════════════════════════════════════════ */
+let travado = false;    // não redesenhar durante o arrasto de um slider
+let agendado = false;
+
+function render(){
+  if (travado || agendado) return;
+  agendado = true;
+  requestAnimationFrame(()=>{ agendado = false; desenhar(); });
+}
+
+function desenhar(){
+  if (S.locked){ el('layer').innerHTML = telaBloqueio(); return; }
+
+  const T = { home:['Início', saudacao()], rooms:['Cômodos', room(S.room)?room(S.room).name:'Cômodos'],
+              scenes:['Cenas e rotinas','Cenas'], energy:['Consumo','Energia'], settings:['Sistema','Ajustes'] }[S.view];
+  el('eyebrow').textContent = T[0];
+  el('title').textContent   = T[1];
+  el('statusbar').innerHTML = barraStatus();
+
+  el('view').innerHTML = ({ home:vHome, rooms:vRooms, scenes:vScenes,
+                            energy:vEnergy, settings:vSettings })[S.view]();
+
+  document.querySelectorAll('#tabs .tab').forEach(t=>
+    t.setAttribute('aria-selected', String(t.dataset.v===S.view)));
+
+  el('layer').innerHTML = (S.sheet ? sheetDispositivo(S.sheet) : '')
+                        + (S.toast ? toastHTML() : '');
+  if (S.sheet) ligarControles();
+}
+
+function saudacao(){
+  const h = new Date().getHours();
+  return h<5 ? 'Boa madrugada' : h<12 ? 'Bom dia' : h<18 ? 'Boa tarde' : 'Boa noite';
+}
+
+function barraStatus(){
+  const off = S.devices.filter(d=> Date.now()-d.seen > 3*3600e3).length;
+  const p = [];
+  p.push('<span class="dot '+(S.hub.online?'':'warn')+'"></span>hub ' + (S.hub.online?'ativo':'fora do ar'));
+  p.push('<span class="status-sep">/</span>' + S.devices.length + ' nós');
+  if (off) p.push('<span class="status-sep">/</span><span style="color:var(--alert)">' + off + ' sem reportar</span>');
+  p.push('<span class="status-sep">/</span>' + nf(potencia()) + ' W');
+  if (S.conn==='offline') p.push('<span class="status-sep">/</span><span style="color:var(--alert)">reconectando…</span>');
+  if (S.demo) p.push('<span class="chip-demo">DEMO</span>');
+  return p.join(' ');
+}
+
+/* ── Início ─────────────────────────────────────────────────── */
+function vHome(){
+  const temp = dev('var_temp'), favs = S.devices.filter(d=>d.fav);
+  const alertas = avisos();
+  return `
+  <div class="readouts">
+    <div class="readout"><span class="k">Acesos</span><span class="v">${acesos()}</span></div>
+    <div class="readout"><span class="k">Agora</span><span class="v">${nf(potencia())}<u>W</u></span></div>
+    <div class="readout"><span class="k">Externa</span><span class="v">${temp?nf(temp.st.t,1):'—'}<u>°C</u></span></div>
+  </div>
+
+  ${alertas.length ? `<div class="section">${alertas.join('')}</div>` : ''}
+
+  <div class="section">
+    <div class="section-head"><h2>Cenas</h2></div>
+    <div class="scenerow">${S.scenes.map(s=>`
+      <button class="scene" data-act="scene" data-id="${s.id}">
+        <svg><use href="#${s.icon}"/></svg>${esc(s.name)}
+      </button>`).join('')}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Favoritos</h2><span class="aux">${favs.length} de ${S.devices.length}</span></div>
+    <div class="grid">${favs.map(cartao).join('')}</div>
+  </div>`;
+}
+
+function avisos(){
+  const out = [];
+  const bat = S.devices.filter(d=> d.bat!==null && d.bat<60);
+  const vaz = S.devices.find(d=> d.st.leak);
+  const jan = S.devices.filter(d=> d.st.aberto);
+  if (vaz) out.push(banner('ic-leak', 'Água detectada em ' + nomeSala(vaz.room) + '. Tomada cortada pela rotina.'));
+  if (jan.length) out.push(banner('ic-door', jan.map(d=>d.name).join(', ') + ' aberta.'));
+  if (bat.length) out.push(banner('ic-batt',
+    bat.length===1 ? `Bateria de "${bat[0].name}" em ${bat[0].bat}%.`
+                   : `${bat.length} sensores com bateria abaixo de 60%.`, true));
+  return out;
+}
+const banner=(ic,txt,calm)=>`<div class="banner${calm?' calm':''}"><svg><use href="#${ic}"/></svg><span>${esc(txt)}</span></div>`;
+const nomeSala = id => { const r=room(id); return r?r.name:id; };
+
+/** Cartão de dispositivo. O corpo alterna; o canto abre a ficha. */
+function cartao(d){
+  const on = isOn(d), stale = Date.now()-d.seen > 3*3600e3;
+  return `<div class="tile${on?' on':''}${d.pend?' pending':''}${d.falhou?' rejected':''}${stale?' off-net':''}"
+               data-act="open" data-id="${d.id}">
+    <div class="tile-top">
+      <span class="tile-ico"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
+      <span class="tile-more"><svg><use href="#ic-chev"/></svg></span>
+    </div>
+    <div>
+      <div class="tile-name">${esc(d.name)}</div>
+      <div class="tile-sub">${esc(resumo(d, stale))}</div>
+    </div>
+  </div>`;
+}
+
+/** Uma linha de texto que diz a verdade sobre o dispositivo. */
+function resumo(d, stale){
+  if (stale) return 'sem reportar · ' + faz(d.seen);
+  if (d.caps.includes('lock'))  return d.st.trancado ? 'Trancada' : 'Destrancada';
+  if (d.caps.includes('cover')) return d.st.pos===0 ? 'Fechada' : d.st.pos===100 ? 'Aberta' : d.st.pos+'% aberta';
+  if (d.caps.includes('motion'))return d.st.motion ? 'Movimento agora' : 'Parado · ' + faz(d.seen);
+  if (d.caps.includes('contact'))return d.st.aberto ? 'Aberta' : 'Fechada';
+  if (d.caps.includes('leak'))  return d.st.leak ? 'Água detectada' : 'Seco';
+  if (d.caps.includes('temp'))  return nf(d.st.t,1) + ' °C · ' + d.st.h + '% umidade';
+  if (!isOn(d)) return 'Desligada';
+  if (d.caps.includes('dim'))   return d.st.bri + '%' + (d.st.k ? ' · ' + d.st.k + 'K' : '');
+  if (d.caps.includes('power')) return nf(d.st.w) + ' W';
+  return 'Ligada';
+}
+
+/* ── Cômodos ────────────────────────────────────────────────── */
+function vRooms(){
+  const rid = S.room || S.rooms[0].id;
+  const ds  = S.devices.filter(d=>d.room===rid);
+  const n   = ds.filter(d=>d.caps.includes('onoff') && isOn(d)).length;
+  return `
+  <div class="pills" role="tablist">${S.rooms.map(r=>`
+    <button class="pill" role="tab" data-act="room" data-id="${r.id}"
+            aria-selected="${r.id===rid}">${esc(r.name)}</button>`).join('')}</div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>${esc(nomeSala(rid))}</h2>
+      <span class="aux">${n ? n + (n>1?' acesos':' aceso') : 'tudo apagado'}</span>
+    </div>
+    <div class="list">${ ds.length ? ds.map(linha).join('') : '<p class="empty">Nenhum dispositivo aqui ainda.</p>' }</div>
+  </div>`;
+}
+
+/** Linha de lista: nome, estado real e o controle mais provável. */
+function linha(d){
+  const stale = Date.now()-d.seen > 3*3600e3;
+  const passivo = !d.caps.includes('onoff') && !d.caps.includes('cover') && !d.caps.includes('lock');
+  let aux;
+  if (d.caps.includes('temp'))       aux = `<span class="row-val">${nf(d.st.t,1)}°</span>`;
+  else if (passivo)                  aux = `<svg><use href="#ic-chev"/></svg>`;
+  else if (d.caps.includes('cover')) aux = `<span class="row-val">${d.st.pos}%</span><svg><use href="#ic-chev"/></svg>`;
+  else if (d.caps.includes('lock'))  aux = `<span class="sw${d.st.trancado?' on':''}" data-act="toggle" data-id="${d.id}"></span>`;
+  else                               aux = `<span class="sw${isOn(d)?' on':''}" data-act="toggle" data-id="${d.id}"></span>`;
+
+  return `<button class="row${d.pend?' pending':''}${d.falhou?' rejected':''}"
+                  data-act="open" data-id="${d.id}" style="${stale?'opacity:.55':''}">
+    <span class="row-ico${isOn(d)?' lit':''}"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
+    <span class="row-main">
+      <span class="row-name">${esc(d.name)}</span>
+      <span class="row-sub">${esc(resumo(d, stale))}</span>
+    </span>
+    <span class="row-aux">${aux}</span>
+  </button>`;
+}
+
+/* ── Cenas e rotinas ────────────────────────────────────────── */
+function vScenes(){
+  return `
+  <div class="section">
+    <div class="section-head"><h2>Cenas</h2><span class="aux">toque para aplicar</span></div>
+    <div class="list">${S.scenes.map(s=>`
+      <button class="row" data-act="scene" data-id="${s.id}">
+        <span class="row-ico"><svg><use href="#${s.icon}"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">${esc(s.name)}</span>
+          <span class="row-sub">${s.n} dispositivos</span>
+        </span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>`).join('')}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Rotinas</h2><span class="aux">rodam no painel, sem internet</span></div>
+    <div class="list">${S.routines.map(r=>`
+      <div class="row">
+        <span class="row-ico${r.on?' lit':''}"><svg><use href="#${r.icon}"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">${esc(r.name)}</span>
+          <span class="row-sub">${esc(r.desc)}</span>
+        </span>
+        <span class="row-aux"><span class="sw${r.on?' on':''}" data-act="routine" data-id="${r.id}"></span></span>
+      </div>`).join('')}</div>
+  </div>`;
+}
+
+/* ── Energia ────────────────────────────────────────────────── */
+function vEnergy(){
+  const h = S.energia.horas, max = Math.max.apply(null,h) || 1;
+  const agora = new Date().getHours();
+  const W = 300, H = 100, g = 2.2, bw = (W - g*(h.length-1))/h.length;
+
+  const barras = h.map((v,i)=>{
+    const bh = Math.max(2, v/max*H), x = i*(bw+g), y = H-bh;
+    const cor = i===agora ? 'var(--accent-fill)' : 'var(--chart-bar)';
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}"
+             rx="${Math.min(2.4,bw/2).toFixed(1)}" fill="${cor}"/>`;
+  }).join('');
+
+  const top = S.devices.filter(d=>d.st && 'kwh' in d.st).sort((a,b)=>b.st.kwh-a.st.kwh);
+  const custo = S.energia.total * S.house.tarifa;
+
+  return `
+  <div class="chart">
+    <div class="chart-top">
+      <div>
+        <div class="chart-big">${nf(S.energia.total,1)}<u>kWh</u></div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">Últimas 24 horas</div>
+      </div>
+      <div class="chart-note">≈ R$ ${nf(custo,2)}<br>a R$ ${nf(S.house.tarifa,2)}/kWh</div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+         aria-label="Consumo por hora nas últimas 24 horas">${barras}</svg>
+    <div class="chart-axis"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Quem mais consome</h2><span class="aux">medido na tomada</span></div>
+    <div class="list">${top.map(d=>`
+      <button class="row" data-act="open" data-id="${d.id}">
+        <span class="row-ico${isOn(d)?' lit':''}"><svg><use href="#${ICON[d.type]||'ic-plug'}"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">${esc(d.name)}</span>
+          <span class="row-sub">${esc(nomeSala(d.room))} · ${nf(d.st.w)} W agora</span>
+        </span>
+        <span class="row-aux"><span class="row-val">${nf(d.st.kwh,2)}</span>
+          <span style="font-size:11px;color:var(--text-faint)">kWh</span></span>
+      </button>`).join('')}</div>
+  </div>
+
+  <div class="banner calm">
+    <svg><use href="#ic-bolt"/></svg>
+    <span>Só aparece aqui o que passa por uma tomada Zigbee com medição. Iluminação em circuito direto não é medida.</span>
+  </div>`;
+}
+
+/* ── Ajustes ────────────────────────────────────────────────── */
+function vSettings(){
+  const pj = S.hub.permitJoin;
+  const linhasMalha = S.devices.slice().sort((a,b)=>a.lqi-b.lqi).slice(0,5);
+  return `
+  <div class="section">
+    <div class="section-head"><h2>Hub Zigbee</h2></div>
+    <div class="list">
+      ${spec('Coordenador', S.hub.coord)}
+      ${spec('Canal / PAN ID', S.hub.canal + ' · ' + S.hub.panId, true)}
+      ${spec('Dispositivos', S.devices.length + ' pareados')}
+      <button class="row" data-act="pair">
+        <span class="row-ico${pj?' lit':''}"><svg><use href="#ic-plus"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">Parear novo dispositivo</span>
+          <span class="row-sub">${pj ? 'Aberto por mais ' + pj + ' s — coloque o dispositivo em modo de pareamento'
+                                     : 'Abre a rede por 60 segundos'}</span>
+        </span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Elos mais fracos da malha</h2><span class="aux">LQI 0–255</span></div>
+    <div class="list">${linhasMalha.map(d=>`
+      <button class="row" data-act="open" data-id="${d.id}">
+        <span class="row-ico"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">${esc(d.name)}</span>
+          <span class="row-sub">${esc(nomeSala(d.room))}${d.lqi<60?' · considere um repetidor por perto':''}</span>
+        </span>
+        <span class="row-aux">${barrasLQI(d.lqi)}<span class="row-val">${d.lqi}</span></span>
+      </button>`).join('')}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Painel ESP32</h2></div>
+    <div class="list">
+      ${spec('Endereço', S.painel.ip + ' · nexo.local', true)}
+      ${spec('Wi-Fi', S.painel.rssi + ' dBm')}
+      ${spec('No ar há', dur(S.painel.uptime))}
+      ${spec('Memória livre', S.painel.heap + ' KB')}
+      ${spec('Cartão SD', S.painel.sd)}
+      ${spec('Firmware', 'v' + S.painel.fw, true)}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Aparência</h2></div>
+    <div class="list">
+      ${['auto','light','dark'].map(t=>`
+      <button class="row" data-act="theme" data-v="${t}">
+        <span class="row-ico"><svg><use href="#${t==='dark'?'ic-moon':t==='light'?'ic-sun':'ic-gear'}"/></svg></span>
+        <span class="row-main"><span class="row-name">${ {auto:'Seguir o sistema',light:'Claro',dark:'Escuro'}[t] }</span></span>
+        <span class="row-aux">${S.theme===t?'<svg style="color:var(--accent)"><use href="#ic-check"/></svg>':''}</span>
+      </button>`).join('')}
+    </div>
+  </div>
+
+  <div class="banner calm">
+    <svg><use href="#ic-hub"/></svg>
+    <span>Esta casa não fala com a internet. O painel e o hub conversam só dentro da sua rede — se a operadora cair, tudo continua funcionando.</span>
+  </div>`;
+}
+const spec=(k,v,mono)=>`<div class="row"><span class="row-main"><span class="row-sub" style="font-size:12px">${esc(k)}</span>
+  <span class="row-name" style="font-weight:400;font-size:14px${mono?';font-family:var(--font-mono);font-size:12.5px':''}">${esc(v)}</span></span></div>`;
+
+function barrasLQI(lqi){
+  const n = lqi>150?4:lqi>110?3:lqi>60?2:1;
+  return `<span class="bars${n<2?' weak':''}">${[6,8.5,11,13.5].map((h,i)=>
+    `<i style="height:${h}px" class="${i<n?'f':''}"></i>`).join('')}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SHEET DO DISPOSITIVO
+   ═══════════════════════════════════════════════════════════════ */
+function sheetDispositivo(id){
+  const d = dev(id); if(!d) return '';
+  const on = isOn(d), dim = d.caps.includes('dim'), cct = d.caps.includes('cct');
+  const bri = d.st.bri ?? 100;
+  const cor = cct ? kelvinHex(d.st.k) : '#F6A93B';
+  const bloomA = on ? bloom(bri) : '0';
+
+  let controle = '';
+  if (dim){
+    const pct = on ? bri : 0;
+    controle = `
+    <div class="control">
+      ${colunaVertical(pct, ICON[d.type]||'ic-bulb', 'Brilho de ' + esc(d.name), 1)}
+      <div class="control-side">
+        <button class="bigbtn" data-act="toggle" data-id="${d.id}" aria-pressed="${on}">
+          <svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg>${on?'Ligada':'Desligada'}
+        </button>
+        <button class="bigbtn quiet" data-act="fav" data-id="${d.id}" aria-pressed="${d.fav}">
+          <svg><use href="#ic-scene"/></svg>${d.fav?'Nos favoritos':'Favoritar'}
+        </button>
+      </div>
+    </div>`;
+  } else if (d.caps.includes('cover')){
+    controle = `<div class="control">
+      ${colunaVertical(d.st.pos, 'ic-cover', 'Abertura da cortina', 0)}
+      <div class="control-side">
+        <button class="bigbtn" data-act="cover" data-id="${d.id}" data-v="100"><svg><use href="#ic-sun"/></svg>Abrir</button>
+        <button class="bigbtn" data-act="cover" data-id="${d.id}" data-v="0"><svg><use href="#ic-moon"/></svg>Fechar</button>
+      </div>
+    </div>`;
+  } else if (d.caps.includes('lock')){
+    controle = `<div class="control" style="height:150px">
+      <button class="bigbtn" style="flex:1" data-act="toggle" data-id="${d.id}" aria-pressed="${d.st.trancado}">
+        <svg style="width:32px;height:32px"><use href="#ic-lock"/></svg>${d.st.trancado?'Trancada':'Destrancada'}
+      </button>
+    </div>`;
+  } else if (d.caps.includes('onoff')){
+    controle = `<div class="control" style="height:150px">
+      <button class="bigbtn" style="flex:1" data-act="toggle" data-id="${d.id}" aria-pressed="${on}">
+        <svg style="width:32px;height:32px"><use href="#${ICON[d.type]||'ic-plug'}"/></svg>${on?'Ligado':'Desligado'}
+      </button>
+      ${d.caps.includes('power')?`<div class="bigbtn" style="flex:1;pointer-events:none">
+        <span style="font-family:var(--font-display);font-size:31px;font-weight:200;letter-spacing:-.03em">${nf(d.st.w)}<u style="font-size:14px;font-weight:500;text-decoration:none">W</u></span>
+        <span style="font-weight:400;color:var(--text-faint)">${nf(d.st.kwh,2)} kWh hoje</span></div>`:''}
+    </div>`;
+  } else {
+    // Sensor: não há o que comandar. Mostrar a leitura, grande.
+    const leitura = d.caps.includes('temp') ? nf(d.st.t,1)+'<u style="font-size:20px;font-weight:400;text-decoration:none"> °C</u>'
+                  : d.caps.includes('motion')? (d.st.motion?'Movimento':'Parado')
+                  : d.caps.includes('contact')? (d.st.aberto?'Aberta':'Fechada')
+                  : (d.st.leak?'Água detectada':'Seco');
+    controle = `<div style="text-align:center;padding:14px 0 28px">
+      <div style="font-family:var(--font-display);font-size:60px;font-weight:200;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums">${leitura}</div>
+      ${d.caps.includes('temp')?`<div style="color:var(--text-faint);font-size:13.5px;margin-top:8px">${d.st.h}% de umidade</div>`:''}
+      <div style="color:var(--text-faint);font-size:12.5px;margin-top:6px">reportado ${faz(d.seen)}</div>
+    </div>`;
+  }
+
+  const faixaCCT = cct ? `
+    <div class="cct">
+      <div class="cct-track" id="cct" role="slider" tabindex="0" aria-label="Temperatura de cor"
+           aria-valuemin="2000" aria-valuemax="6500" aria-valuenow="${d.st.k}"
+           aria-valuetext="${d.st.k} kelvin">
+        <span class="cct-knob" id="cctknob" style="left:${((d.st.k-2000)/4500*100).toFixed(1)}%"></span>
+      </div>
+      <div class="cct-scale"><span>2000K quente</span><span id="cctval">${d.st.k}K</span><span>6500K frio</span></div>
+    </div>` : '';
+
+  const stale = Date.now()-d.seen > 3*3600e3;
+
+  return `
+  <div class="scrim" data-act="close"></div>
+  <section class="sheet" style="--bloom-c:${cor};--bloom-a:${bloomA}" role="dialog" aria-modal="true"
+           aria-label="${esc(d.name)}">
+    <div class="sheet-in">
+      <div class="grab"></div>
+      <div class="sheet-head">
+        <div>
+          <h2>${esc(d.name)}</h2>
+          <div class="where">${esc(nomeSala(d.room))}${stale?' · sem reportar':''}</div>
+        </div>
+        <button class="head-btn" data-act="close" aria-label="Fechar">
+          <svg width="17" height="17"><use href="#ic-x"/></svg>
+        </button>
+      </div>
+      ${controle}
+      ${faixaCCT}
+      <div class="specs">
+        <div class="spec"><span class="k">Sinal na malha</span>
+          <span class="v">${barrasLQI(d.lqi)}LQI ${d.lqi}${d.lqi<60?' · fraco':''}</span></div>
+        ${d.bat!==null?`<div class="spec"><span class="k">Bateria</span>
+          <span class="v" style="${d.bat<60?'color:var(--alert)':''}">${d.bat}%</span></div>`:''}
+        <div class="spec"><span class="k">Última resposta</span><span class="v">${faz(d.seen)}</span></div>
+        <div class="spec"><span class="k">Modelo</span><span class="v">${esc(d.model)}</span></div>
+        <div class="spec"><span class="k">Endereço IEEE</span><span class="v mono">${esc(d.ieee)}</span></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ── Arrasto dos sliders ────────────────────────────────────── */
+function ligarControles(){
+  const d = dev(S.sheet); if(!d) return;
+  const vs = $('#vs');
+
+  if (vs){
+    const fill = $('#vfill'), rotulos = vs.querySelectorAll('.vslider-txt');
+    const min = d.caps.includes('cover') ? 0 : 1;
+    let ultimo = 0, valor = d.caps.includes('cover') ? d.st.pos : d.st.bri;
+
+    const ler = y=>{ const r = vs.getBoundingClientRect();
+      return clamp(Math.round((1 - (y - r.top)/r.height)*100), min, 100); };
+
+    const pintar = v=>{
+      fill.style.height = v + '%';
+      rotulos.forEach(n=>{ n.innerHTML = v + '<u>%</u>'; });   // as duas cópias
+      vs.setAttribute('aria-valuenow', v);
+      const sheet = $('.sheet');
+      if (sheet && !d.caps.includes('cover'))
+        sheet.style.setProperty('--bloom-a', v===0 ? '0' : bloom(v));
+    };
+
+    /* A malha Zigbee congestiona se cada pixel virar um comando.
+       Envia no máximo ~4x por segundo enquanto arrasta, e o valor
+       final sempre, ao soltar. */
+    const enviar = (v, final)=>{
+      const agora = Date.now();
+      if (!final && agora - ultimo < 240) return;
+      ultimo = agora;
+      if (d.caps.includes('cover')) Bus.set(d.id, {pos:v});
+      else Bus.set(d.id, v===0 ? {on:false} : {on:true, bri:v});
+    };
+
+    vs.addEventListener('pointerdown', e=>{
+      travado = true; vs.classList.add('dragging'); vs.setPointerCapture(e.pointerId);
+      valor = ler(e.clientY); pintar(valor); e.preventDefault();
+    });
+    vs.addEventListener('pointermove', e=>{
+      if (!vs.hasPointerCapture(e.pointerId)) return;
+      valor = ler(e.clientY); pintar(valor); enviar(valor, false);
+    });
+    const soltar = ()=>{
+      if (!travado) return;
+      travado = false; vs.classList.remove('dragging');
+      enviar(valor, true); render();
+    };
+    vs.addEventListener('pointerup', soltar);
+    vs.addEventListener('pointercancel', soltar);
+    vs.addEventListener('keydown', e=>{
+      const passo = e.key==='ArrowUp'?5 : e.key==='ArrowDown'?-5 : 0;
+      if (!passo) return;
+      e.preventDefault(); valor = clamp(valor+passo, min, 100); pintar(valor); enviar(valor, true);
+    });
+  }
+
+  const cct = $('#cct');
+  if (cct){
+    const knob = $('#cctknob'), lab = $('#cctval');
+    let ultimo = 0, k = d.st.k;
+    const ler = x=>{ const r = cct.getBoundingClientRect();
+      return Math.round((2000 + clamp((x-r.left)/r.width,0,1)*4500)/50)*50; };
+    const pintar = v=>{
+      k = v;
+      knob.style.left = ((v-2000)/4500*100).toFixed(1) + '%';
+      lab.textContent = v + 'K';
+      cct.setAttribute('aria-valuenow', v);
+      cct.setAttribute('aria-valuetext', v + ' kelvin');
+      const sheet = $('.sheet'); if (sheet) sheet.style.setProperty('--bloom-c', kelvinHex(v));
+    };
+    const enviar = (v,final)=>{ const a=Date.now();
+      if(!final && a-ultimo<240) return; ultimo=a; Bus.set(d.id,{on:true,k:v}); };
+
+    cct.addEventListener('pointerdown', e=>{
+      travado = true; cct.setPointerCapture(e.pointerId); pintar(ler(e.clientX)); e.preventDefault(); });
+    cct.addEventListener('pointermove', e=>{
+      if (!cct.hasPointerCapture(e.pointerId)) return; pintar(ler(e.clientX)); enviar(k,false); });
+    const soltar = ()=>{ if(!travado) return; travado=false; enviar(k,true); render(); };
+    cct.addEventListener('pointerup', soltar);
+    cct.addEventListener('pointercancel', soltar);
+    cct.addEventListener('keydown', e=>{
+      const p = e.key==='ArrowRight'?100 : e.key==='ArrowLeft'?-100 : 0;
+      if(!p) return; e.preventDefault(); pintar(clamp(k+p,2000,6500)); enviar(k,true);
+    });
+  }
+}
+
+/* ── Avisos efêmeros ────────────────────────────────────────── */
+let toastT = null;
+function toast(msg, ic){
+  S.toast = { msg, ic: ic||'ic-alert' };
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>{ S.toast=null; render(); }, 3600);
+  render();
+}
+const toastHTML=()=>`<div class="toast" role="status"><svg><use href="#${S.toast.ic}"/></svg><span>${esc(S.toast.msg)}</span></div>`;
+
+/* ── Tela de bloqueio ───────────────────────────────────────── */
+function telaBloqueio(){
+  const teclas = [1,2,3,4,5,6,7,8,9,'.',0,'←'];
+  return `<div class="lock">
+    <div class="lock-mark"><svg><use href="#ic-hub"/></svg></div>
+    <h2>${esc(S.house.name)}</h2>
+    <p>Digite o código do painel${S.demo?' — nesta demonstração é 1234':''}</p>
+    <div class="pips${S.pinBad?' bad':''}">${[0,1,2,3].map(i=>
+      `<i class="${i<S.pinBuf.length?'f':''}"></i>`).join('')}</div>
+    <div class="keys">${teclas.map(t=>
+      t==='.' ? '<span class="key blank"></span>'
+      : t==='←' ? '<button class="key fn" data-act="pinDel">apagar</button>'
+      : `<button class="key" data-act="pin" data-v="${t}">${t}</button>`).join('')}</div>
+  </div>`;
+}
+
+function digitar(n){
+  if (S.pinBuf.length>=4) return;
+  S.pinBuf += n;
+  if (S.pinBuf.length===4){
+    const ok = S.demo ? S.pinBuf==='1234' : true;   // no ESP32, quem valida é o firmware
+    setTimeout(()=>{
+      if (ok){ S.locked=false; S.pinBuf=''; guarda.gravar('nexo.aberto','1',true); }
+      else   { S.pinBad=true; S.pinBuf=''; setTimeout(()=>{S.pinBad=false;render();},400); }
+      render();
+    }, 140);
+  }
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVENTOS
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]'); if(!t) return;
+  const { act, id, v } = t.dataset;
+  const d = id ? dev(id) : null;
+
+  if (act==='tab'){ S.view = v; S.sheet = null; el('view').scrollTop = 0; render(); }
+
+  else if (act==='room'){ S.room = id; render(); }
+
+  else if (act==='open'){
+    // Um toque no interruptor alterna; no resto do cartão, abre a ficha.
+    if (e.target.closest('.sw')) return;
+    S.sheet = id; render();
+  }
+
+  else if (act==='toggle'){
+    e.stopPropagation();
+    if (!d) return;
+    d.prev = Object.assign({}, d.st);
+    if (d.caps.includes('lock')) Bus.set(id, {trancado: !d.st.trancado});
+    else Bus.set(id, {on: !isOn(d)});
+  }
+
+  else if (act==='cover'){ if(d){ d.prev = Object.assign({},d.st); Bus.set(id,{pos:+v}); } }
+
+  else if (act==='fav'){ if(d){ d.fav = !d.fav; render(); } }
+
+  else if (act==='scene'){ Bus.scene(id); }
+
+  else if (act==='routine'){
+    const r = S.routines.find(x=>x.id===id);
+    if (r){ r.on = !r.on; render(); }
+  }
+
+  else if (act==='pair'){
+    if (S.hub.permitJoin>0){ Bus.pair(0); toast('Pareamento encerrado.','ic-check'); }
+    else { Bus.pair(60); toast('Rede aberta por 60 s. Coloque o dispositivo em pareamento.','ic-plus'); }
+  }
+
+  else if (act==='theme'){
+    S.theme = v; guarda.gravar('nexo.theme', v);
+    aplicarTema(); render();
+  }
+
+  else if (act==='close'){ S.sheet = null; render(); }
+  else if (act==='pin'){ digitar(v); }
+  else if (act==='pinDel'){ S.pinBuf = S.pinBuf.slice(0,-1); render(); }
+});
+
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape' && S.sheet){ S.sheet=null; render(); }
+  if (S.locked && /^[0-9]$/.test(e.key)) digitar(e.key);
+  if (S.locked && e.key==='Backspace'){ S.pinBuf=S.pinBuf.slice(0,-1); render(); }
+});
+
+function aplicarTema(){
+  // 'auto' devolve a decisão ao sistema — não carimba nada na raiz.
+  if (S.theme==='auto') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = S.theme;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTIDA
+   ═══════════════════════════════════════════════════════════════ */
+aplicarTema();
+if (guarda.ler('nexo.aberto', true)) S.locked = false;
+Bus.start();
+render();
+
+/* O service worker exige contexto seguro. Sobre http:// puro o iOS
+   recusa o registro — o app continua funcionando, só sem cache
+   offline. Ver docs/ios-pwa.md. */
+if ('serviceWorker' in navigator && window.isSecureContext){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+})();
+</script>
+</body>
+</html>
