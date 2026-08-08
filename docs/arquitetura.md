@@ -38,9 +38,10 @@ com display, ou ponte de E/S para relé, dimmer 0–10 V e sensor com fio.
 **ESP32: periférico, não painel.** Com o contrato v1 — JWT EdDSA, modelo
 de capability, refresh rotativo — o ESP32 clássico deixou de dar conta de
 ser a central. O firmware em `firmware/nexo-panel` fica como referência da
-topologia enxuta e como ponto de partida para o que o ESP32 faz bem:
-painel de parede (cliente da central) ou ponte de E/S para relé, dimmer
-0–10 V e sensor com fio. Ver [contrato-v1.md](contrato-v1.md).
+topologia enxuta; o papel que sobrou já tem firmware próprio,
+`firmware/nexo-ponte`: a ponte de E/S que leva relé de portão, contato
+seco e campainha para o app pela convenção MQTT de
+[pontes-mqtt.md](pontes-mqtt.md). Ver [contrato-v1.md](contrato-v1.md).
 
 O que muda entre as duas: **nada na interface**. Ver
 [raspberry.md](raspberry.md) para o que se ganha, o que se perde (o cartão
@@ -80,8 +81,13 @@ do cliente três meses depois.
 
 `server/lib/adaptadores/` é onde o princípio 1 vira estrutura de arquivo.
 Um adaptador implementa cinco métodos e avisa a central por um `bus`;
-nada fora dele sabe o que há do outro lado. Existem dois: Zigbee2MQTT e
-um simulador que roda a casa inteira em memória.
+nada fora dele sabe o que há do outro lado. Existem três: Zigbee2MQTT,
+as pontes de E/S ([pontes-mqtt.md](pontes-mqtt.md) — o fio que o Zigbee
+não alcança) e um simulador que roda a casa inteira em memória. Em
+produção os dois primeiros rodam **juntos**, atrás de uma fachada com a
+mesma interface — o portão com fio e a lâmpada Zigbee chegam ao app pelo
+mesmo `GET /devices`, e nenhum outro ponto do servidor sabe da
+diferença.
 
 A tradução de unidade — 0–254 para percentual, mired para Kelvin, xy para
 HS, LQI para sinal 0–100 — mora em `server/lib/contrato/modelo.mjs` e em

@@ -86,13 +86,15 @@ instalar.sh         do git clone à casa no ar, detectando o dongle
 server/             a central, no Raspberry Pi
   nexo.mjs          costura tudo: estáticos, REST, stream, automações
   lib/contrato/     modelo, auth (EdDSA), REST v1, WebSocket v1
-  lib/adaptadores/  a fronteira do backend: zigbee2mqtt e simulador
+  lib/adaptadores/  a fronteira do backend: zigbee2mqtt, pontes e simulador
   lib/historico.mjs histórico em JSONL, sem dependência nativa
   lib/aprendiz.mjs  os três detectores que propõem automações
   ferramentas/      conformidade do contrato e semeadura do aprendiz
   deploy/           Caddyfile (TLS) e unidade systemd
 firmware/nexo-panel/
-  nexo-panel.ino    ESP32 — não implementa o v1; ver docs/contrato-v1.md
+  nexo-panel.ino    ESP32 — a topologia enxuta original; não implementa o v1
+firmware/nexo-ponte/
+  nexo-ponte.ino    ESP32 como ponte de E/S: portão, contato seco, campainha
 tools/
   build.mjs         gzipa e monta dist/sd/ para o cartão
   make-icons.mjs    gera os PNG (codifica o PNG na mão, sem dependências)
@@ -102,6 +104,7 @@ docs/
   contrato-v1.md    notas de implementação, acréscimos, o que ficou aberto
   arquitetura.md    topologia, decisões que vieram do rádio, limites
   raspberry.md      centralizar no Pi: o que muda, ganha, perde e instala
+  pontes-mqtt.md    a convenção das pontes de E/S (ESP32 com fio)
   ios-pwa.md        o requisito de HTTPS do iOS e as quatro saídas
   produto.md        onde dá para ganhar deste mercado, e por onde começar
 ```
@@ -178,7 +181,7 @@ A interface está completa e testada nas duas paletas e nos dois temas. O
 firmware é um esqueleto funcional: serve o cartão, faz a ponte MQTT e
 transmite estado.
 
-A central implementa o contrato v1 e passa 67 verificações de
+A central implementa o contrato v1 e passa 70 verificações de
 conformidade. A interface renderiza por capability, nas duas paletas e nos
 dois temas, contra a central real e no modo de demonstração. O aprendiz
 encontra os três padrões plantados em 30 dias sintéticos sem inventar um
@@ -188,8 +191,10 @@ Falta: Web Push para os alertas (o HTTPS do Pi já destrava), o botão de
 ensaio, o relay para acesso fora da LAN, e a decisão de multi-central.
 
 O ESP32 deixou de ser a central — o contrato v1 é pesado demais para ele.
-O firmware fica como referência e como ponto de partida para o papel de
-periférico. Os limites conhecidos estão em
+O papel de periférico, esse, já é real: `firmware/nexo-ponte` leva portão,
+contato seco e campainha para o app pela convenção de
+[docs/pontes-mqtt.md](docs/pontes-mqtt.md) (28 verificações próprias,
+`node server/ferramentas/ponte.mjs`). Os limites conhecidos estão em
 [docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
 
 ---

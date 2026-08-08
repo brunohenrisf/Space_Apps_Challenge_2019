@@ -98,5 +98,8 @@ continua no catálogo para dois papéis:
 - **Painel de parede**: ESP32-S3 + display touch de 4–7", rodando o mesmo
   PWA como cliente da central (via navegador embarcado ou LVGL falando o
   contrato).
-- **Ponte de E/S**: relé de portão, dimmer 0–10 V, sensores com fio —
-  coisas que o Zigbee não alcança — publicando MQTT no broker da central.
+- **Ponte de E/S** (pronta): relé de portão, contato seco, campainha,
+  dimmer 0–10 V — o fio que o Zigbee não alcança. Firmware em
+  `firmware/nexo-ponte`, convenção em [pontes-mqtt.md](pontes-mqtt.md).
+  A lista de compras é curta: ESP32 DevKit (~R$ 40), módulo de relé
+  opto-isolado (~R$ 10), fonte 5 V — e o fio até o portão.

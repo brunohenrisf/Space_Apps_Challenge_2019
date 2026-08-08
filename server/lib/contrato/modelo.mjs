@@ -60,6 +60,17 @@ export function lqiParaSinal(lqi) {
   return Math.round(25 + ((x - 40) / 140) * 65);
 }
 
+/**
+ * RSSI Wi-Fi (dBm) → sinal 0–100. É a escala das pontes de E/S, que
+ * falam Wi-Fi em vez de Zigbee. −50 dBm ou melhor é sinal cheio;
+ * −100 dBm é enlace morto; no meio, linear — para RSSI a régua simples
+ * bate com a percepção.
+ */
+export function rssiParaSinal(rssi) {
+  if (!Number.isFinite(rssi)) return null;
+  return Math.round(limitar(2 * (rssi + 100), 0, 100));
+}
+
 /** xy CIE 1931 → HS. Aproximação suficiente para um seletor de cor. */
 export function xyParaHs(x, y, brilho = 1) {
   const z = 1 - x - y;

@@ -38,7 +38,20 @@ const DIA = 864e5;
 const meiaNoite = d => { const x = new Date(Date.now() - d * DIA); x.setHours(0,0,0,0); return +x; };
 const ehUtil = ts => { const d = new Date(ts).getDay(); return d !== 0 && d !== 6; };
 const em = (ts, h_, m) => ts + h_ * 36e5 + m * 60e3;
-const ruido = n => Math.round((Math.random() - 0.5) * 2 * n);
+
+/* Aleatório COM semente (mulberry32): banco de ensaio que às vezes passa
+ * e às vezes não ensina a desconfiar do teste, não do código. Uma rodada
+ * azarada de sorteio() derrubava o padrão 2 de vez em quando. Mude a
+ * semente de propósito (SEMENTE=42 node …) para explorar outros sorteios. */
+let semente = (Number(process.env.SEMENTE) || 7) >>> 0;
+function sorteio() {
+  semente = (semente + 0x6D2B79F5) >>> 0;
+  let t = semente;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const ruido = n => Math.round((sorteio() - 0.5) * 2 * n);
 
 let n = 0;
 const reg = e => { h.registrar(e); n++; };
@@ -51,7 +64,7 @@ for (let d = 29; d >= 0; d--) {
      Ligar + ajustar brilho + ajustar temperatura são TRÊS comandos em
      produção (uma capability cada), e é assim que o detector reconstrói
      "a 88%, 4600K": pela mediana dos ajustes feitos perto do acender. */
-  if (util && Math.random() < 0.86) {
+  if (util && sorteio() < 0.86) {
     const t1 = em(base, 6, 45 + ruido(9));
     reg({ ts: t1, id: 'coz_bancada', cap: 'switch', acao: 'on',
           valor: { type: 'switch', state: true }, modo: 'normal', origem: 'manual' });
@@ -65,8 +78,8 @@ for (let d = 29; d >= 0; d--) {
   const disparo = em(base, 18, 0);
   reg({ ts: disparo, id: 'var_luz', cap: 'switch', acao: 'on',
         valor: { type: 'switch', state: true }, modo: 'normal', origem: 'rotina', rotina: 'r1' });
-  if (Math.random() < 0.55) {
-    reg({ ts: disparo + (2 + Math.random() * 6) * 60e3, id: 'var_luz', cap: 'switch',
+  if (sorteio() < 0.55) {
+    reg({ ts: disparo + (2 + sorteio() * 6) * 60e3, id: 'var_luz', cap: 'switch',
           acao: 'off', valor: { type: 'switch', state: false }, modo: 'normal', origem: 'manual' });
   }
 
@@ -74,17 +87,17 @@ for (let d = 29; d >= 0; d--) {
   const dormir = em(base, 23, 15 + ruido(20));
   reg({ ts: dormir, id: '_casa', acao: 'modo', valor: { modo: 'dormindo' },
         modo: 'dormindo', origem: 'manual' });
-  if (Math.random() < 0.8) {
+  if (sorteio() < 0.8) {
     reg({ ts: dormir + (38 + ruido(10)) * 60e3, id: 'sala_tv', cap: 'switch', acao: 'off',
           valor: { type: 'switch', state: false }, modo: 'dormindo', origem: 'manual' });
   }
 
   /* ── Ruído: uso avulso, sem padrão nenhum ─────────────────────────── */
-  for (let i = 0; i < 3 + Math.floor(Math.random() * 4); i++) {
+  for (let i = 0; i < 3 + Math.floor(sorteio() * 4); i++) {
     const alvo = ['sala_teto','sui_teto','qt2_teto','esc_teto','sui_abajur','sala_sanca'][
-      Math.floor(Math.random() * 6)];
-    const liga = Math.random() < 0.5;
-    reg({ ts: em(base, 8 + Math.floor(Math.random() * 14), Math.floor(Math.random() * 60)),
+      Math.floor(sorteio() * 6)];
+    const liga = sorteio() < 0.5;
+    reg({ ts: em(base, 8 + Math.floor(sorteio() * 14), Math.floor(sorteio() * 60)),
           id: alvo, cap: 'switch', acao: liga ? 'on' : 'off',
           valor: { type: 'switch', state: liga }, modo: 'normal', origem: 'manual' });
   }

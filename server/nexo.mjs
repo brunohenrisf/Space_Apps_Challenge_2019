@@ -23,6 +23,7 @@ import { criarRest } from './lib/contrato/rest.mjs';
 import { criarStream } from './lib/contrato/stream.mjs';
 import { AdaptadorZigbee2Mqtt } from './lib/adaptadores/zigbee2mqtt.mjs';
 import { AdaptadorSimulador } from './lib/adaptadores/simulador.mjs';
+import { AdaptadorPonte } from './lib/adaptadores/ponte.mjs';
 import { Historico, tipoDeDia } from './lib/historico.mjs';
 import { eventoSolar, hhmmSol } from './lib/sol.mjs';
 import { sugerir } from './lib/aprendiz.mjs';
@@ -547,11 +548,34 @@ stream = criarStream({ servidor, auth });
 /* ═══════════════════════════════════════════════════════════════
    PARTIDA
    ═══════════════════════════════════════════════════════════════ */
-adaptador = cfg.adaptador === 'simulador'
-  ? new AdaptadorSimulador({ casa, bus })
-  : new AdaptadorZigbee2Mqtt({ mqtt: cfg.mqtt, casa, bus });
+/* Em produção a central fala com DOIS mundos ao mesmo tempo: a malha
+   Zigbee (via Zigbee2MQTT) e as pontes de E/S com fio (convenção MQTT
+   própria — docs/pontes-mqtt.md). A fachada apresenta os dois como um
+   adaptador só; nenhum outro ponto do servidor sabe da diferença. */
+const adaptadores = cfg.adaptador === 'simulador'
+  ? [new AdaptadorSimulador({ casa, bus })]
+  : [new AdaptadorZigbee2Mqtt({ mqtt: cfg.mqtt, casa, bus }),
+     new AdaptadorPonte({ mqtt: cfg.mqtt, casa, bus })];
 
-adaptador.iniciar();
+const donoDe = id => adaptadores.find(a => a.devices().some(d => d.id === id));
+adaptador = {
+  get nome() { return adaptadores.map(a => a.nome).join('+'); },
+  devices: () => adaptadores.flatMap(a => a.devices()),
+  comandar: (id, capId, cmd, commandId) =>
+    donoDe(id)?.comandar(id, capId, cmd, commandId) ?? false,
+  remover: id => donoDe(id)?.remover(id) ?? false,
+  uuidDoNativo: nome => {
+    for (const a of adaptadores) { const u = a.uuidDoNativo(nome); if (u) return u; }
+    return null;
+  },
+  // Pareamento é conceito de rádio: vai para o adaptador da malha, que é
+  // sempre o primeiro. Pontes entram na casa por fio, não por pareamento.
+  parear: seg => adaptadores[0].parear(seg),
+  pararPareamento: () => adaptadores[0].pararPareamento(),
+  parar: () => adaptadores.forEach(a => a.parar?.()),
+};
+
+adaptadores.forEach(a => a.iniciar());
 recalcularSugestoes();
 agendarAposModo(modoAtual);
 

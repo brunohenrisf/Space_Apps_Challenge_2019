@@ -19,6 +19,11 @@ services:
   mosquitto:
     image: eclipse-mosquitto:2
     restart: unless-stopped
+    # ports:
+    #   # Listener das pontes de E/S (ESP32 com fio na LAN). Só descomente
+    #   # JUNTO com o bloco 1884 do mosquitto.conf — que exige senha.
+    #   # Passo a passo: docs/pontes-mqtt.md.
+    #   - "1884:1884"
     volumes:
       - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto-dados:/mosquitto/data

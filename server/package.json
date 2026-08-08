@@ -13,5 +13,8 @@
   "dependencies": {
     "mqtt": "^5.10.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "aedes": "^0.51.3"
   }
 }

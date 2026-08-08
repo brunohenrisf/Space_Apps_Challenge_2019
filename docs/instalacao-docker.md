@@ -163,7 +163,15 @@ CA própria para casa 100% offline) estão comentadas lá, e o raciocínio
 completo em [ios-pwa.md](ios-pwa.md). `docker compose restart caddy`
 aplica.
 
-## 6. Diagnóstico rápido
+## 6. Pontes de E/S (portão, contato seco, campainha)
+
+O que tem fio e não tem Zigbee entra na casa por uma **ponte** — um
+ESP32 de R$ 40 falando MQTT com a central. De fábrica o broker não
+escuta a LAN; habilitar é criar uma credencial e abrir o listener 1884
+(sempre com senha). O passo a passo, a convenção e o firmware estão em
+[pontes-mqtt.md](pontes-mqtt.md).
+
+## 7. Diagnóstico rápido
 
 | Sintoma | Primeira suspeita |
 |---|---|
@@ -173,6 +181,7 @@ aplica.
 | App diz "central ligada" mas nada responde | `docker compose logs mosquitto` — broker de pé? |
 | Automação por sol na hora errada | `TZ` errado no `.env`, ou `lat`/`lon` ausentes em `casa/casa.json` |
 | `zigbee2mqtt` nem aparece no `ps` | instalação feita sem dongle — espete o rádio e rode `./instalar.sh` de novo |
+| Ponte ESP32 não conecta | listener 1884 habilitado? credencial criada? — [pontes-mqtt.md](pontes-mqtt.md) |
 | `mem_limit` sem efeito (RAM cresce além do teto) | cgroup de memória desligado — `cgroup_enable=memory cgroup_memory=1` no `cmdline.txt` e reinício |
 | "no space left on device" | `docker system prune` (imagens antigas de builds acumulam) |
 

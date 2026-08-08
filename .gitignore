@@ -1,5 +1,5 @@
 # Credenciais da casa do cliente — nunca sobem
-firmware/nexo-panel/config.h
+firmware/*/config.h
 
 # Saída de build: gerada por `node tools/build.mjs`
 dist/
@@ -14,3 +14,8 @@ server/dados/
 
 # O .env é da casa, não do repositório
 .env
+
+# Capturas que os bancos de ensaio (Playwright) deixam cair na raiz
+/d[0-9]-*.png
+/v1-*.png
+/r-[abc].png
