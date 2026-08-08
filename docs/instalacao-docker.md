@@ -53,6 +53,28 @@ deduz o driver (`ember` para ZBDongle-E, `zstack` para CC2652), escreve o
 `.env` e sobe a pilha com build local. A primeira construção leva alguns
 minutos; as seguintes, segundos.
 
+### Bancada fora do Pi: notebook com ZimaOS (ou qualquer x86 com Docker)
+
+A pilha é multi-arch de propósito — **o mesmo `instalar.sh` roda num
+notebook** e é o jeito mais rápido de testar tudo antes de comprar o
+hardware da casa. Num ZimaOS:
+
+1. SSH no notebook e clone em `/DATA` (é a partição que o ZimaOS
+   persiste): `git clone <repo> /DATA/nexo && cd /DATA/nexo`.
+2. O ZimaOS serve o painel dele na porta **80**. Antes de subir, edite o
+   `.env` (o instalador cria na primeira execução — pode rodar, ele
+   detecta o conflito e aponta a saída): `NEXO_HTTP=8090`.
+3. `./instalar.sh`. Sem dongle, sobe em modo demonstração completo
+   (conta do dono, app no iPhone, convites — tudo real, só sem rádio);
+   com o dongle espetado no notebook, é uma central inteira de bancada.
+4. Acesse `http://<ip-do-notebook>:8090`. O `nexo.local` fica de fora na
+   bancada — o mDNS do host anuncia o nome do ZimaOS, não o nosso; na
+   casa, com o Pi chamado *nexo*, ele volta.
+
+Para promover a bancada a casa de verdade: leve **só** o `casa/casa.json`
+para o Pi. Os volumes nunca migram — carregam a chave de assinatura, as
+contas e as chaves da malha.
+
 Dois desvios que ele trata sozinho:
 
 - **Sem dongle conectado** — mapear um `/dev` inexistente faria o Docker
@@ -187,5 +209,6 @@ escuta a LAN; habilitar é criar uma credencial e abrir o listener 1884
 
 O ciclo completo (broker MQTT real → central → interface → comando →
 relato → histórico) tem teste automatizado — `server/ferramentas/` — mas
-**o build da imagem em si só é validado no Pi**: rode `./instalar.sh` numa
-bancada antes da primeira casa.
+**o build da imagem só se prova rodando**: a bancada x86 (o notebook com
+ZimaOS acima) valida o build amd64, e a primeira subida no Pi valida o
+arm64. Faça as duas antes da primeira casa entregue.

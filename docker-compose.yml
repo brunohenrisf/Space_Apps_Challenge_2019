@@ -87,7 +87,10 @@ services:
       nexo:
         condition: service_healthy
     ports:
-      - "80:80"
+      # No Pi da casa fica 80 (padrão). Em bancada onde o host já ocupa
+      # a 80 — ZimaOS/CasaOS servem o painel deles nela — defina
+      # NEXO_HTTP=8090 no .env e acesse http://<ip>:8090.
+      - "${NEXO_HTTP:-80}:80"
       # Descomente junto com um dos blocos TLS do Caddyfile — sem site
       # :443 configurado, a porta publicada só confundiria o diagnóstico.
       # - "443:443"

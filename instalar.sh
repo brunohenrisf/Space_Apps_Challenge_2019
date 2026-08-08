@@ -81,6 +81,21 @@ if [ "$(hostname)" != "nexo" ]; then
 fi
 
 # 5 ── Sobe a pilha ─────────────────────────────────────────────────
+# Porta HTTP: em bancada (notebook com ZimaOS/CasaOS), o host já serve o
+# painel DELE na 80 — o Caddy não conseguiria subir e o erro do Docker é
+# criptico. Confere antes e aponta a saída. (Se o listener for o nosso
+# próprio Caddy de uma execução anterior, está tudo certo.)
+HTTP_PORTA=$(grep -E '^NEXO_HTTP=' .env | head -n1 | cut -d= -f2- || true)
+HTTP_PORTA=${HTTP_PORTA:-80}
+if ! docker compose ps --status running 2>/dev/null | grep -q caddy; then
+  if ss -ltn 2>/dev/null | grep -qE "[:.]${HTTP_PORTA}\s"; then
+    erro "A porta ${HTTP_PORTA} já está em uso neste host (painel do ZimaOS/CasaOS?)."
+    echo  "  Edite o .env:  NEXO_HTTP=8090   e rode ./instalar.sh de novo."
+    echo  "  O app ficará em http://<ip>:8090 — o resto não muda."
+    exit 1
+  fi
+fi
+
 # No Raspberry Pi OS padrão o controlador de memória vem desligado e o
 # mem_limit do compose é descartado em silêncio. Nada quebra — mas o teto
 # de RAM só passa a valer depois de habilitar o cgroup e reiniciar.
@@ -102,11 +117,12 @@ else
 fi
 
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+SUF=""; [ "$HTTP_PORTA" != "80" ] && SUF=":${HTTP_PORTA}"
 azul "── Pronto ───────────────────────────────────────────────────"
-echo "  Acesse:   http://nexo.local   ou   http://${IP:-<ip-do-pi>}"
+echo "  Acesse:   http://nexo.local${SUF}   ou   http://${IP:-<ip-do-pi>}${SUF}"
 echo "  1º acesso cria a conta do dono; os demais entram por convite."
 if [ -z "$SERIAL" ]; then
   echo "  Zigbee:   parado (sem dongle). Espete o rádio e rode ./instalar.sh de novo."
 fi
-echo "  Saúde:    curl http://127.0.0.1/api/v1/health"
+echo "  Saúde:    curl http://127.0.0.1${SUF}/api/v1/health"
 echo "  Logs:     docker compose logs -f nexo"
