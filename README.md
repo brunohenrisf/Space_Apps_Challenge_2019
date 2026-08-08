@@ -5,7 +5,7 @@ nenhum. A interface é servida pelo cartão SD de um ESP32, o ESP32 conversa
 com o hub Zigbee, e o cliente instala o app no iPhone pela tela de início.
 Sem conta, sem nuvem, sem depender da operadora.
 
-![Início, ficha do dispositivo e energia](docs/telas.png)
+![Paleta Aurora com sugestão da casa, ficha do dispositivo em Âmbar, rotinas por modo](docs/telas.png)
 
 ## Ver funcionando agora
 
@@ -20,13 +20,25 @@ nó de sinal fraco que às vezes não responde — dá para sentir como a
 interface se comporta quando a malha falha, que é o que separa um painel
 de automação de uma tela bonita.
 
-Arraste a coluna de brilho na ficha de um dispositivo. É o gesto central
-do app.
+Arraste a coluna de brilho na ficha de um dispositivo — é o gesto central
+do app. Depois troque a paleta em **Ajustes → Paleta**, mude o **modo da
+casa** no Início e veja as rotinas dormirem, e responda a uma sugestão.
+
+## Duas paletas
+
+**Âmbar** (padrão) e **Aurora**, cada uma com tema claro e escuro — quatro
+combinações saindo de um só conjunto de variáveis CSS. A escolha fica em
+Ajustes; a paleta é ortogonal ao claro/escuro, e âmbar não carimba nada na
+raiz, então o custo de ter as duas é um bloco de tokens.
+
+O que **não** muda de paleta: a faixa de temperatura de cor. 2000 K é
+laranja e 6500 K é azul em qualquer tema — ali a cor é grandeza física, não
+decisão de estilo.
 
 ## O que tem aqui
 
 ```
-app/                interface (documento único, 21 KB gzipado)
+app/                interface (documento único, 25 KB gzipado)
   index.html        HTML, CSS e JS juntos — ver "por que um arquivo só"
   manifest.webmanifest
   sw.js             cache da casca, só em contexto seguro
@@ -43,6 +55,7 @@ tools/
 docs/
   arquitetura.md    contratos, tradução Zigbee, decisões, limites
   ios-pwa.md        o requisito de HTTPS do iOS e as quatro saídas
+  produto.md        onde dá para ganhar deste mercado, e por onde começar
 ```
 
 ## Instalar numa casa
@@ -75,11 +88,31 @@ docs/
    decisão de HTTPS muda o que o app consegue fazer, e é melhor tomá-la
    antes de entregar.
 
+## A casa propõe, você aprova
+
+O painel registra cada ação manual e, quando encontra repetição, **sugere a
+rotina em português** — com o recibo (`11 dos últimos 13 dias úteis`) e a
+letra miúda do que exatamente passaria a acontecer. Você aprova, adia ou
+recusa. Ninguém escreve regra SE/ENTÃO.
+
+E o inverso também: quando uma rotina é cancelada na mão várias vezes, a
+casa propõe **recuar**. Esse segundo movimento é o que impede o ciclo em
+que o cliente desliga tudo porque o sistema erra.
+
+Junto disso vêm os **modos da casa** — Normal, Dormindo, Fora, Recebendo.
+Um modo não é uma cena: é o estado em que a casa está, e é o que permite ao
+mesmo gatilho agir diferente. Rotina fora do modo atual aparece esmaecida e
+etiquetada "dorme agora".
+
+O raciocínio completo, com o que construir depois e em que ordem, está em
+[docs/produto.md](docs/produto.md). Nada disso precisa de nuvem nem de
+modelo: é contagem de frequência em janelas de tempo, umas 200 linhas.
+
 ## Duas decisões que valem explicar
 
 **Por que um arquivo só.** O servidor web do ESP32 atende poucas conexões
 simultâneas. Doze arquivos viram doze idas e voltas disputando as mesmas
-conexões; um documento de 21 KB gzipado vira uma. A interface inteira chega
+conexões; um documento de 25 KB gzipado vira uma. A interface inteira chega
 antes de o primeiro arquivo do segundo cenário terminar de negociar.
 
 **Por que a configuração fica em JSON no cartão, e não compilada.**
@@ -104,11 +137,15 @@ endereço IEEE, LQI e IP.
 
 ## Estado
 
-A interface está completa e testada nos dois temas. O firmware é um
-esqueleto funcional: serve o cartão, faz a ponte MQTT e transmite estado.
-Falta, para virar produto: validação do PIN no firmware (hoje o app aceita
-qualquer código quando fala com um painel real), OTA, e RTC para as rotinas
-por horário. Os limites conhecidos estão em
+A interface está completa e testada nas duas paletas e nos dois temas. O
+firmware é um esqueleto funcional: serve o cartão, faz a ponte MQTT e
+transmite estado.
+
+As sugestões e os modos existem hoje **na interface**; falta o firmware
+gravar o histórico de ações e calcular os padrões, e o campo `modos` mudar
+o que o painel de fato executa. Falta também validação do PIN no firmware
+(hoje o app aceita qualquer código quando fala com um painel real), OTA, e
+RTC para as rotinas por horário. Os limites conhecidos estão em
 [docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
 
 ---
