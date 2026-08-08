@@ -35,87 +35,70 @@ certo e disco para o histórico. É o que destrava o aprendiz. O ESP32 sai
 do caminho crítico e fica disponível para o que faz bem: painel de parede
 com display, ou ponte de E/S para relé, dimmer 0–10 V e sensor com fio.
 
-**Painel no ESP32 (enxuta).** `firmware/nexo-panel` serve a interface do
-cartão SD e faz a mesma ponte MQTT. Para instalação sem Pi. Abre mão de
-histórico, aprendiz e rotina por horário — sem RTC o ESP32 não sabe a hora.
+**ESP32: periférico, não painel.** Com o contrato v1 — JWT EdDSA, modelo
+de capability, refresh rotativo — o ESP32 clássico deixou de dar conta de
+ser a central. O firmware em `firmware/nexo-panel` fica como referência da
+topologia enxuta e como ponto de partida para o que o ESP32 faz bem:
+painel de parede (cliente da central) ou ponte de E/S para relé, dimmer
+0–10 V e sensor com fio. Ver [contrato-v1.md](contrato-v1.md).
 
 O que muda entre as duas: **nada na interface**. Ver
 [raspberry.md](raspberry.md) para o que se ganha, o que se perde (o cartão
 do Pi corrompe; boot de 30 s em vez de 2 s) e como instalar.
 
-## Contrato: interface ↔ painel
+## Contrato: cliente ↔ central
 
-### REST
+A fronteira é o **contrato v1**, versionado em `/api/v1`. Os princípios
+que o estruturam:
 
-| Método | Rota | Retorno |
-|---|---|---|
-| `GET` | `/api/state` | Fotografia completa: `hub`, `painel`, `rooms`, `devices`, `scenes` |
+1. **O cliente nunca conhece o backend.** Nenhum `entity_id`, nenhum tópico
+   MQTT, nenhuma URL de Home Assistant atravessa a fronteira.
+2. **Capability sobre modelo.** A tela é montada a partir das funções que a
+   central declara, nunca de modelo ou fabricante. Aparelho novo não exige
+   publicar app.
+3. **Local-first.** Tudo funciona sem internet.
+4. **Estado por WebSocket, ação por REST.** Sem polling.
+5. **Versionamento no path.** Quebrar exige `/v2`, com `/v1` mantido por
+   no mínimo 12 meses.
 
-`/api/state` é chamado uma vez, na abertura. Daí em diante tudo é
-WebSocket. O app usa a falha dessa chamada como sinal de que não há painel
-alcançável, e cai no simulador embutido.
+O contrato completo é o documento de referência; as notas de implementação,
+os acréscimos e as decisões que ele deixou em aberto estão em
+[contrato-v1.md](contrato-v1.md).
 
-### WebSocket `/ws`
+### Verificação
 
-**Painel → telefone**
-
-```jsonc
-{ "t":"state", "id":"sala_teto", "p":{ "on":true, "bri":64, "k":3000 } }
-{ "t":"reject","id":"ent_portao" }            // o nó não confirmou
-{ "t":"hub",   "p":{ "online":true } }
-{ "t":"panel", "p":{ "rssi":-58, "heap":148, "uptime":412860 } }
-{ "t":"modo",  "p":{ "modo":"dormindo" } }    // só no painel do Pi
-{ "t":"sugestoes", "p":[ /* … */ ] }          //  idem
-{ "t":"rotinas",   "p":[ /* … */ ] }          //  idem
+```bash
+node server/ferramentas/conformidade.mjs
 ```
 
-**Telefone → painel**
+Sobe a central com o adaptador simulador e confere 67 cláusulas, uma a
+uma. É o que impede alguém de "otimizar" o BFF devolvendo `brightness`
+0–254 porque é o que o Zigbee manda — o erro aparece aqui, e não na casa
+do cliente três meses depois.
 
-```jsonc
-{ "t":"set",   "id":"sala_teto", "p":{ "on":true, "bri":72 } }
-{ "t":"scene", "id":"boanoite" }
-{ "t":"pair",  "s":60 }                        // abre a rede por 60 s
-{ "t":"modo",  "id":"dormindo" }
-{ "t":"routine","id":"r1" }                    // liga/desliga a rotina
-{ "t":"fav",   "id":"sala_teto", "v":true }
-{ "t":"sug",   "id":"h:coz_bancada:util:26", "v":"aceitar" }   // aceitar|depois|nunca
-```
+### A fronteira do backend
 
-As quatro últimas são atendidas só pelo painel do Pi. No ESP32 são
-ignoradas, e a interface segue funcionando com o estado local — nenhuma
-tela quebra por causa disso.
+`server/lib/adaptadores/` é onde o princípio 1 vira estrutura de arquivo.
+Um adaptador implementa cinco métodos e avisa a central por um `bus`;
+nada fora dele sabe o que há do outro lado. Existem dois: Zigbee2MQTT e
+um simulador que roda a casa inteira em memória.
 
-### Vocabulário de estado
-
-A interface fala em grandezas humanas; o painel traduz para Zigbee. Essa
-tradução mora num lugar só em cada painel — `zigbeeParaApp()` e
-`appParaZigbee()` em `server/nexo.mjs`, `aoMensagemMqtt()` e
-`aoReceberDoApp()` no `.ino` — e é o que permite trocar de hub sem mexer
-no app. As duas implementações espelham a mesma tabela.
-
-| Interface | Zigbee2MQTT | Observação |
-|---|---|---|
-| `on` (bool) | `state` `"ON"`/`"OFF"` | |
-| `bri` 1–100 | `brightness` 0–254 | `bri × 2,54` |
-| `k` 2000–6500 | `color_temp` em mireds | `1.000.000 ÷ K` |
-| `pos` 0–100 | `position` | cortina |
-| `trancado` (bool) | `state` `"LOCK"`/`"UNLOCK"` | |
-| `w`, `kwh` | `power`, `energy` | tomada com medição |
-| `t`, `h` | `temperature`, `humidity` | |
-| `motion` | `occupancy` | |
-| `aberto` | `contact` **invertido** | o Zigbee reporta contato fechado |
-| `lqi` | `linkquality` | 0–255 |
+A tradução de unidade — 0–254 para percentual, mired para Kelvin, xy para
+HS, LQI para sinal 0–100 — mora em `server/lib/contrato/modelo.mjs` e em
+mais lugar nenhum.
 
 ## Decisões de interface que vieram do rádio
 
 Três coisas nesta interface existem por causa de como o Zigbee se comporta.
 Se forem removidas numa versão futura, o app volta a parecer quebrado.
 
-**Comando otimista com reconciliação.** Uma ida e volta no Zigbee leva de
-100 a 500 ms, e mais que isso quando o nó está longe. Esperar a confirmação
-para mover o interruptor faz o app parecer travado. Então a interface muda
-na hora, marca o cartão com um pulso âmbar, e se em 3 s não vier
-confirmação, desfaz e avisa. `Bus.set()` e `confirmar()`, em `app/index.html`.
+**Comando otimista com reconciliação.** É por isso que o comando responde
+`202 Accepted` e não `200`: foi aceito e despachado, e a confirmação chega
+depois por `command.result`. Uma ida e volta no Zigbee leva de 100 a 500 ms,
+e mais quando o nó está longe; esperar por ela para mover o interruptor faz
+o app parecer travado. A interface muda na hora, pulsa em âmbar, e desfaz
+com aviso se o resultado vier `failed`. `comandar()` e `resolverComando()`,
+em `app/index.html`.
 
 **Arrasto limitado a ~4 comandos por segundo.** Um slider que emite a cada
 pixel derruba a malha — literalmente: os relatos dos sensores param de

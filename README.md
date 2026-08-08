@@ -1,24 +1,47 @@
 # Nexo
 
-Painel de automação residencial que roda na rede da casa e em mais lugar
-nenhum. A interface é servida pelo cartão SD de um ESP32, o ESP32 conversa
-com o hub Zigbee, e o cliente instala o app no iPhone pela tela de início.
-Sem conta, sem nuvem, sem depender da operadora.
+Central de automação residencial que roda na rede da casa e em mais lugar
+nenhum. Um Raspberry Pi serve a interface e fala com o hub Zigbee; o
+cliente instala o app no iPhone pela tela de início. Sem nuvem, sem
+depender da operadora.
+
+A fronteira entre app e central é o **contrato v1** (`/api/v1`): o cliente
+nunca conhece o backend, e a tela é montada a partir das *capabilities*
+que a central declara — aparelho de modelo novo aparece com os controles
+certos sem publicar app.
 
 ![Paleta Aurora com sugestão da casa, ficha do dispositivo em Âmbar, rotinas por modo](docs/telas.png)
 
 ## Ver funcionando agora
 
+A central inteira, sem hub nenhum:
+
 ```bash
-node tools/make-icons.mjs      # gera os ícones PNG
+npm --prefix server install
+node tools/make-icons.mjs
+NEXO_ADAPTADOR=simulador node server/nexo.mjs
+```
+
+Abra `http://localhost:8080`. Na primeira vez o app pede para criar a
+conta do dono (§4 do contrato); depois é login. A casa simulada tem 19
+aparelhos, latência de rádio de verdade e um nó de sinal fraco que às
+vezes não responde — dá para sentir como a interface se comporta quando a
+malha falha, que é o que separa um painel de automação de uma tela bonita.
+
+Só a interface, sem central:
+
+```bash
 cd app && python3 -m http.server 8000
 ```
 
-Abra `http://localhost:8000`, código **1234**. Sem ESP32 alcançável o app
-cai num simulador com 19 dispositivos, latência de rádio de verdade e um
-nó de sinal fraco que às vezes não responde — dá para sentir como a
-interface se comporta quando a malha falha, que é o que separa um painel
-de automação de uma tela bonita.
+Sem central alcançável o app cai numa demonstração que fala o mesmo
+contrato, com o selo DEMO sempre visível.
+
+Conformidade do contrato:
+
+```bash
+node server/ferramentas/conformidade.mjs   # 67 cláusulas
+```
 
 Arraste a coluna de brilho na ficha de um dispositivo — é o gesto central
 do app. Depois troque a paleta em **Ajustes → Paleta**, mude o **modo da
@@ -43,76 +66,48 @@ app/                interface (documento único, 25 KB gzipado)
   manifest.webmanifest
   sw.js             cache da casca, só em contexto seguro
   icons/            gerados por código, não versionados à mão
-casa/               configuração da instalação (serve aos dois modos)
-  devices.json      catálogo: id, friendly_name do Z2M, cômodo, recursos
-  scenes.json       cenas, no vocabulário do Zigbee
-server/             painel no Raspberry Pi (topologia recomendada)
-  nexo.mjs          HTTP + WebSocket + ponte MQTT + motor de rotinas
+casa/               configuração da instalação
+  casa.json         cômodos, apelidos, cenas, modos e automações
+  devices.json      formato antigo, usado só pelo firmware do ESP32
+server/             a central, no Raspberry Pi
+  nexo.mjs          costura tudo: estáticos, REST, stream, automações
+  lib/contrato/     modelo, auth (EdDSA), REST v1, WebSocket v1
+  lib/adaptadores/  a fronteira do backend: zigbee2mqtt e simulador
   lib/historico.mjs histórico em JSONL, sem dependência nativa
-  lib/aprendiz.mjs  os três detectores que propõem rotinas
+  lib/aprendiz.mjs  os três detectores que propõem automações
+  ferramentas/      conformidade do contrato e semeadura do aprendiz
   deploy/           Caddyfile (TLS) e unidade systemd
 firmware/nexo-panel/
-  nexo-panel.ino    mesma coisa no ESP32, para instalação sem Pi
-  config.example.h  copie para config.h e preencha
+  nexo-panel.ino    ESP32 — não implementa o v1; ver docs/contrato-v1.md
 tools/
   build.mjs         gzipa e monta dist/sd/ para o cartão
   make-icons.mjs    gera os PNG (codifica o PNG na mão, sem dependências)
 docs/
-  arquitetura.md    contratos, tradução Zigbee, decisões, limites
+  contrato-v1.md    notas de implementação, acréscimos, o que ficou aberto
+  arquitetura.md    topologia, decisões que vieram do rádio, limites
   raspberry.md      centralizar no Pi: o que muda, ganha, perde e instala
   ios-pwa.md        o requisito de HTTPS do iOS e as quatro saídas
   produto.md        onde dá para ganhar deste mercado, e por onde começar
 ```
 
-## Duas topologias, uma interface
+## Como está montado
 
-O aplicativo fala com "o painel" por REST e WebSocket e nunca soube quem
-está do outro lado. Isso permite dois arranjos com **zero linha de
-diferença na interface**:
-
-**Raspberry Pi (recomendada).** `server/nexo.mjs` roda ao lado do
-Zigbee2MQTT. É o que destrava o aprendiz — precisa de meses de histórico e
-de relógio confiável — e o que resolve o HTTPS do iOS, porque o Pi termina
-TLS com folga. Instalação em [docs/raspberry.md](docs/raspberry.md).
-
-```bash
-npm --prefix server install --omit=dev   # só mqtt e ws, nada compila
-node server/nexo.mjs
+```
+iPhone  ──HTTPS + WSS──►  Raspberry Pi  ──Zigbee 3.0──►  malha
+ PWA        contrato v1     Caddy (TLS)
+                            nexo.mjs (central)
+                            Zigbee2MQTT
+                            histórico em disco
 ```
 
-**ESP32 (enxuta).** O firmware em `firmware/` faz o mesmo, servindo do
-cartão SD, para instalação sem Pi ou para virar painel de parede depois.
-Sem histórico, sem aprendiz, sem rotina por horário.
+O app fala com **a central**, e nunca soube o que há atrás dela. Trocar
+Zigbee2MQTT por Home Assistant é escrever um adaptador em
+`server/lib/adaptadores/` — nem o resto do servidor nem uma linha do
+cliente mudam.
 
-## Instalar numa casa (topologia ESP32)
-
-1. **Preparar o cartão**
-
-   ```bash
-   node tools/make-icons.mjs
-   node tools/build.mjs
-   cp -r dist/sd/* /Volumes/CARTAO/
-   ```
-
-   Ajuste `devices.json` para os dispositivos daquela casa. O campo `z2m`
-   precisa bater exatamente com o `friendly_name` no Zigbee2MQTT.
-
-2. **Gravar o firmware**
-
-   ```bash
-   cp firmware/nexo-panel/config.example.h firmware/nexo-panel/config.h
-   # preencha Wi-Fi, broker MQTT e o código do painel
-   ```
-
-   Arduino IDE, placa ESP32 Dev Module. Bibliotecas: ESPAsyncWebServer,
-   AsyncTCP, PubSubClient, ArduinoJson 7.
-
-3. **Instalar no iPhone**
-
-   Safari em `http://nexo.local` → Compartilhar → Adicionar à Tela de
-   Início. **Antes disso, leia [docs/ios-pwa.md](docs/ios-pwa.md)** — a
-   decisão de HTTPS muda o que o app consegue fazer, e é melhor tomá-la
-   antes de entregar.
+Instalação no Pi, com TLS e systemd: [docs/raspberry.md](docs/raspberry.md).
+O HTTPS não é capricho — é o que destrava Service Worker e Web Push no
+iPhone. Leia [docs/ios-pwa.md](docs/ios-pwa.md) antes de entregar.
 
 ## A casa propõe, você aprova
 
@@ -136,16 +131,16 @@ modelo: é contagem de frequência em janelas de tempo, umas 200 linhas.
 
 ## Duas decisões que valem explicar
 
-**Por que um arquivo só.** O servidor web do ESP32 atende poucas conexões
-simultâneas. Doze arquivos viram doze idas e voltas disputando as mesmas
-conexões; um documento de 25 KB gzipado vira uma. A interface inteira chega
-antes de o primeiro arquivo do segundo cenário terminar de negociar.
+**Por que um arquivo só.** A interface inteira é um documento. Um `GET`
+gzipado carrega antes de doze arquivos terminarem de negociar conexão, e
+num Pi que também roda o Zigbee2MQTT isso se nota.
 
-**Por que a configuração fica em JSON no cartão, e não compilada.**
-Renomear um cômodo ou trocar uma lâmpada não pode exigir levar um notebook
-com o Arduino IDE até a casa do cliente. Editar um arquivo de texto no
-cartão e reiniciar resolve — a diferença entre uma visita de dez minutos e
-uma de duas horas.
+**Por que as funções dos aparelhos não estão em arquivo de configuração.**
+Elas saem do que o backend declara. Lâmpada de modelo novo entra na casa e
+aparece na tela com dimmer, temperatura de cor e matiz sem ninguém editar
+nada e sem publicar app — que é o princípio 2 do contrato. O que fica em
+`casa/casa.json` é só a camada humana: como a casa chama as coisas e onde
+elas ficam.
 
 ## O desenho
 
@@ -167,18 +162,19 @@ A interface está completa e testada nas duas paletas e nos dois temas. O
 firmware é um esqueleto funcional: serve o cartão, faz a ponte MQTT e
 transmite estado.
 
-No Raspberry Pi o ciclo está fechado e testado de ponta a ponta: broker
-MQTT real → painel → interface num navegador → toque → comando MQTT →
-relato do hub de volta à tela → histórico gravado. O aprendiz encontra os
-três padrões plantados em 30 dias sintéticos sem inventar um quarto
-(`node server/ferramentas/semear.mjs`).
+A central implementa o contrato v1 e passa 67 verificações de
+conformidade. A interface renderiza por capability, nas duas paletas e nos
+dois temas, contra a central real e no modo de demonstração. O aprendiz
+encontra os três padrões plantados em 30 dias sintéticos sem inventar um
+quarto (`node server/ferramentas/semear.mjs`).
 
-Falta: validação do PIN no painel (hoje o app aceita qualquer código
-contra um painel real), Web Push para os alertas, e o botão de ensaio.
+Falta: Web Push para os alertas (o HTTPS do Pi já destrava), o botão de
+ensaio, o relay para acesso fora da LAN, e a decisão de multi-central.
 
-No ESP32 o firmware serve o cartão e faz a ponte MQTT; sugestões, modos e
-rotinas por horário são exclusivos da versão do Pi. Os limites conhecidos
-estão em [docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
+O ESP32 deixou de ser a central — o contrato v1 é pesado demais para ele.
+O firmware fica como referência e como ponto de partida para o papel de
+periférico. Os limites conhecidos estão em
+[docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
 
 ---
 

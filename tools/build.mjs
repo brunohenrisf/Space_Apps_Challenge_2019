@@ -1,5 +1,5 @@
 /**
- * Prepara os arquivos que vão para o cartão SD do ESP32.
+ * Pré-comprime a interface para a central servir.
  *
  *   node tools/build.mjs
  *
@@ -34,9 +34,9 @@ mkdirSync(DIST, { recursive: true });
 let bruto = 0, comprimido = 0;
 const linhas = [];
 
-/* app/ é a interface; casa/ é a configuração da instalação. Os dois vão para
- * a raiz do cartão, mas a configuração fica legível — quem for atender um
- * chamado precisa conseguir abrir devices.json num editor de texto. */
+/* app/ é a interface e vai comprimida; casa/ é a configuração e fica
+ * legível — quem for atender um chamado precisa abrir casa.json num editor
+ * de texto, não descomprimir nada. */
 for (const [origem, gzipar] of [[APP, true], [CASA, false]]) {
   for (const arq of varrer(origem)) {
     const rel = relative(origem, arq);
@@ -72,4 +72,5 @@ for (const [n, a, b] of linhas) console.log('  ' + n.padEnd(30) + kb(a) + '  ' +
 console.log('  ' + '─'.repeat(56));
 console.log('  ' + 'total'.padEnd(30) + kb(bruto) + '  ' + kb(comprimido)
   + `   (${Math.round((1 - comprimido / bruto) * 100)}% menor)\n`);
-console.log('  Copie dist/sd/ para a raiz do cartão SD.\n');
+console.log('  A central serve o .gz direto de app/. Para publicar:\n'
+  + '    cp -r dist/sd/* app/\n');

@@ -619,6 +619,72 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .key.blank{background:none;border:0}
 .key.fn{font-size:13px;font-weight:600;color:var(--text-dim);background:none;border:0}
 
+/* ── Capabilities no sheet ────────────────────────────────── */
+/* Um device tem N funções. Cada uma se desenha sozinha, e função de tipo
+   desconhecido simplesmente não aparece — o resto do aparelho continua
+   inteiro. É o §2.3 do contrato virando CSS e nada mais. */
+.cap{display:flex;flex-direction:column;gap:9px;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+.cap:last-of-type{border-bottom:0}
+.cap-topo{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.cap-nome{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint)}
+.cap-val{font-family:var(--font-display);font-size:15px;font-weight:400;
+  font-variant-numeric:tabular-nums;color:var(--text-dim)}
+
+/* Matiz: o espectro é o dado, igual à faixa de temperatura de cor. */
+.hue-track{position:relative;height:44px;border-radius:14px;touch-action:none;cursor:pointer;
+  border:1px solid var(--line);background:linear-gradient(90deg,
+    #FF4D4D,#FFD24D,#4DFF64,#4DFFE8,#4D7CFF,#B84DFF,#FF4D9E,#FF4D4D)}
+.hue-knob{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35),0 0 0 1.5px rgba(0,0,0,.07);pointer-events:none}
+
+/* Termostato */
+.termo{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.termo-alvo{font-family:var(--font-display);font-size:46px;font-weight:200;letter-spacing:-.035em;
+  line-height:1;font-variant-numeric:tabular-nums}
+.termo-alvo u{font-size:18px;font-weight:400;text-decoration:none;color:var(--text-dim)}
+.termo-btn{width:46px;height:46px;border-radius:50%;background:var(--surface-3);
+  display:grid;place-items:center;font-size:22px;font-weight:300;color:var(--text)}
+.termo-btn:active{transform:scale(.92)}
+.modos-linha{display:flex;gap:6px;flex-wrap:wrap}
+.modo-chip{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:500;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text-dim)}
+.modo-chip[aria-pressed="true"]{background:var(--accent-fill);border-color:transparent;color:var(--accent-ink)}
+
+/* Canais de um multi-teclas */
+.canais{display:flex;flex-direction:column;gap:8px}
+.canal{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 13px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line)}
+.canal-nome{font-size:14.5px;font-weight:500}
+
+/* Estado de sensor binário */
+.chip-estado{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  font-size:12px;font-weight:600;background:var(--surface-3);color:var(--text-dim)}
+.chip-estado.ativo{background:var(--alert-soft);color:var(--alert)}
+
+/* ── Entrada (login e primeira configuração) ──────────────── */
+.entrada{position:absolute;inset:0;z-index:30;background:var(--bg);overflow-y:auto;
+  display:flex;flex-direction:column;justify-content:center;gap:20px;
+  padding:32px 28px calc(38px + env(safe-area-inset-bottom))}
+.entrada h2{font-family:var(--font-display);font-size:24px;font-weight:600;
+  letter-spacing:-.02em;margin:0;text-align:center;text-wrap:balance}
+.entrada p.sub{margin:-12px 0 0;font-size:13.5px;color:var(--text-faint);
+  text-align:center;line-height:1.45;text-wrap:pretty}
+.marca{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;margin:0 auto;
+  background:var(--accent-fill);color:var(--accent-ink)}
+.marca svg{width:29px;height:29px}
+.form{display:flex;flex-direction:column;gap:10px}
+.campo{width:100%;padding:14px 15px;border-radius:14px;font-size:16px;
+  background:var(--surface);border:1px solid var(--line);color:var(--text);
+  font-family:inherit;-webkit-appearance:none}
+.campo::placeholder{color:var(--text-faint)}
+.campo:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.botao{width:100%;padding:15px;border-radius:14px;font-size:16px;font-weight:600;
+  background:var(--accent-fill);color:var(--accent-ink);text-align:center}
+.botao:active{transform:scale(.985)}
+.botao.fraco{background:var(--surface-2);border:1px solid var(--line);color:var(--text-dim);font-weight:500}
+.erro-form{font-size:13px;color:var(--alert);text-align:center;line-height:1.4}
+.aviso-mini{font-size:11.5px;color:var(--text-faint);text-align:center;line-height:1.5}
+
 /* ── Modo da casa ─────────────────────────────────────────── */
 /* O modo é o que faz uma rotina deixar de ser "se X então Y": o mesmo
    gatilho age diferente conforme o estado em que a casa está. */
@@ -742,401 +808,553 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 "use strict";
 
 /* ═══════════════════════════════════════════════════════════════
-   NEXO — painel de automação residencial local
-   Servido pelo ESP32 a partir do cartão SD. Sem nuvem, sem conta.
+   NEXO — cliente do contrato v1
+   Servido pela central. Não conhece Zigbee, Home Assistant, mireds
+   nem 0–254: fala capabilities em unidade de exibição, e só.
+
+   A regra que estrutura o arquivo inteiro: a tela é montada a partir
+   das capabilities que a central declara. Não há "se for lâmpada".
+   Capability de tipo desconhecido é ignorada em silêncio (§2.3), e
+   é por isso que aparelho novo não exige publicar app.
    ═══════════════════════════════════════════════════════════════ */
 
 const $  = (s,r)=> (r||document).querySelector(s);
+const $$ = (s,r)=> [...(r||document).querySelectorAll(s)];
 const el = (id)=> document.getElementById(id);
 const clamp = (n,a,b)=> n<a?a:n>b?b:n;
-const esc = (s)=> String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = (s)=> String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf  = (n,d)=> Number.isFinite(n)
-  ? n.toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0})
-  : '—';
+  ? n.toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}) : '—';
 
-/* O Safari em navegação privada lança ao tocar em localStorage. Sem esta
-   proteção o app inteiro morre na primeira linha. */
+/* O Safari em navegação privada lança ao tocar em localStorage. */
 const guarda = {
-  ler(chave, sessao){
-    try{ return (sessao?sessionStorage:localStorage).getItem(chave); }catch(_){ return null; }
-  },
-  gravar(chave, valor, sessao){
-    try{ (sessao?sessionStorage:localStorage).setItem(chave, valor); }catch(_){ }
-  }
+  ler(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } },
+  gravar(k,v){ try{ localStorage.setItem(k,v); }catch(_){ } },
+  apagar(k){ try{ localStorage.removeItem(k); }catch(_){ } }
 };
-
-/** fetch com prazo. AbortSignal.timeout só existe do iOS 16 em diante, e
- *  sem alternativa um iPhone antigo cairia no simulador para sempre. */
-function buscarComPrazo(url, ms){
-  if (typeof AbortSignal!=='undefined' && AbortSignal.timeout)
-    return fetch(url, { signal: AbortSignal.timeout(ms) });
-  const ac = new AbortController();
-  const t = setTimeout(()=>ac.abort(), ms);
-  return fetch(url, { signal: ac.signal }).finally(()=>clearTimeout(t));
-}
 
 /* ── Estado ─────────────────────────────────────────────────── */
 const S = {
-  view:'home', room:null, sheet:null, locked:true, demo:false,
-  conn:'connecting',                 // connecting | online | offline
-  theme: guarda.ler('nexo.theme') || 'auto',
+  tela:'carregando',        // carregando | claim | login | app
+  view:'home', area:null, sheet:null,
+  conn:'off', demo:false, erroForm:null, ocupado:false,
+  theme:   guarda.ler('nexo.theme')   || 'auto',
   palette: guarda.ler('nexo.palette') || 'ambar',
-  house:{ name:'Casa Ribeiro', tarifa:0.92 },
-  hub:{ online:true, canal:15, panId:'0x1A62', coord:'CC2652P · Zigbee2MQTT 1.42.0', permitJoin:0 },
-  painel:{ ip:'192.168.0.44', rssi:-58, uptime:412860, heap:148, fw:'1.0.0', sd:'29,1 GB livres' },
-  modo:'normal',
-  rooms:[], devices:[], scenes:[], routines:[], sugestoes:[], energia:{ horas:[], total:0 },
-  toast:null, pinBuf:'', pinBad:false
+  home:{ id:null, name:'Casa', areas:[] },
+  devices:[], scenes:[], modes:{ current:'normal', available:[] },
+  automations:[], suggestions:[], toast:null
 };
 
-/* ── Modos da casa ──────────────────────────────────────────── */
-/* Um modo não é uma cena: cena é um comando, modo é um estado em que a
-   casa fica. É o que permite ao mesmo gatilho agir diferente — presença
-   na varanda às 23h no modo Dormindo não é a mesma coisa que no modo
-   Recebendo. Sem isso, "rotina elaborada" vira uma pilha de exceções. */
-const MODOS = [
-  { id:'normal',    name:'Normal',    icon:'ic-home'  },
-  { id:'dormindo',  name:'Dormindo',  icon:'ic-moon'  },
-  { id:'fora',      name:'Fora',      icon:'ic-lock'  },
-  { id:'recebendo', name:'Recebendo', icon:'ic-scene' }
-];
-const nomeModo = id => (MODOS.find(m=>m.id===id)||{}).name || id;
-
-/* ── Catálogo de ícones por tipo ────────────────────────────── */
-const ICON = { light:'ic-bulb', plug:'ic-plug', tv:'ic-tv', ac:'ic-ac', cover:'ic-cover',
-  lock:'ic-lock', motion:'ic-motion', contact:'ic-door', temp:'ic-thermo', leak:'ic-leak' };
-
-/* ── Utilidades de domínio ──────────────────────────────────── */
 const dev  = id => S.devices.find(d=>d.id===id);
-const room = id => S.rooms.find(r=>r.id===id);
-const isLight  = d => d.caps.includes('dim') || d.caps.includes('onoff');
-const isOn     = d => !!(d.st && d.st.on);
-const acesos   = () => S.devices.filter(d=>d.caps.includes('onoff') && isOn(d)).length;
-const potencia = () => S.devices.reduce((a,d)=> a + (d.st && d.st.w ? d.st.w : 0), 0);
+const area = id => S.home.areas.find(a=>a.id===id);
+const nomeArea = id => area(id)?.name || 'Sem cômodo';
+const caps = (d,t) => d.capabilities.filter(c=>c.type===t);
+const cap1 = (d,t) => d.capabilities.find(c=>c.type===t) || null;
 
-/** Cor da luz para um valor de temperatura em kelvin (2000K → 6500K).
- *  Interpolação simples entre dois extremos calibrados a olho — não é
- *  corpo negro exato, mas é o que o olho espera ver num dimmer. */
-function kelvinHex(k){
-  const t = clamp((k-2000)/4500, 0, 1);
-  const a=[255,158,61], b=[214,233,255];
-  const c = a.map((v,i)=> Math.round(v + (b[i]-v)*t));
-  return '#' + c.map(v=>v.toString(16).padStart(2,'0')).join('');
+/* ═══════════════════════════════════════════════════════════════
+   CLIENTE DA API
+   ═══════════════════════════════════════════════════════════════ */
+const API = {
+  base:'/api/v1',
+  acc: guarda.ler('nexo.acc'),
+  ref: guarda.ler('nexo.ref'),
+
+  guardar(par){
+    this.acc = par.accessToken; this.ref = par.refreshToken;
+    guarda.gravar('nexo.acc', this.acc); guarda.gravar('nexo.ref', this.ref);
+  },
+  limpar(){
+    this.acc = this.ref = null;
+    guarda.apagar('nexo.acc'); guarda.apagar('nexo.ref');
+  },
+
+  async req(metodo, caminho, corpo, jaTentou){
+    if (S.demo) return Demo.req(metodo, caminho, corpo);
+
+    const r = await fetch(this.base + caminho, {
+      method: metodo,
+      headers: { ...(corpo ? {'content-type':'application/json'} : {}),
+                 ...(this.acc ? {authorization:'Bearer ' + this.acc} : {}) },
+      body: corpo ? JSON.stringify(corpo) : undefined
+    });
+
+    // Access token dura 15 min. Renova uma vez, em silêncio; se o refresh
+    // também morreu, aí sim volta para a tela de entrada.
+    if (r.status === 401 && this.ref && !jaTentou) {
+      if (await this.renovar()) return this.req(metodo, caminho, corpo, true);
+      this.limpar(); S.tela = 'login'; render();
+      throw Object.assign(new Error('unauthorized'), { status:401 });
+    }
+
+    const texto = await r.text();
+    const dados = texto ? JSON.parse(texto) : null;
+    // O cliente ramifica por `error`, que é estável; `message` é só para
+    // mostrar (§7).
+    if (!r.ok) throw Object.assign(new Error(dados?.message || 'Falha na central.'),
+                                   { status:r.status, error:dados?.error });
+    return dados;
+  },
+
+  async renovar(){
+    try{
+      const r = await fetch(this.base + '/auth/refresh', {
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ refreshToken: this.ref })
+      });
+      if (!r.ok) return false;
+      this.guardar(await r.json());
+      return true;
+    }catch(_){ return false; }
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   STREAM
+   ═══════════════════════════════════════════════════════════════ */
+const Stream = {
+  ws:null, backoff:800, ultimaSeq:0,
+
+  abrir(){
+    if (S.demo) return Demo.assinar(m=>this.receber(m));
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    const ws = this.ws = new WebSocket(`${proto}://${location.host}/api/v1/stream`);
+
+    // Header customizado não existe no handshake de WebSocket do
+    // navegador: a autenticação vai na primeira mensagem (§6.1).
+    ws.onopen = ()=> ws.send(JSON.stringify({ type:'auth', token: API.acc }));
+
+    ws.onmessage = e=>{ try{ this.receber(JSON.parse(e.data)); }catch(_){ } };
+
+    ws.onclose = ev=>{
+      S.conn = 'off'; render();
+      if (ev.code === 4401){       // token venceu enquanto o socket vivia
+        API.renovar().then(ok => ok ? this.abrir() : (API.limpar(), S.tela='login', render()));
+        return;
+      }
+      setTimeout(()=>this.abrir(), this.backoff);
+      this.backoff = Math.min(this.backoff*2, 15000);
+    };
+  },
+
+  async receber(m){
+    if (m.type === 'auth.ok'){
+      S.conn = 'on'; this.backoff = 800;
+      // §6.4: ao reconectar, descarta o local e refaz o GET. Buffer por
+      // conexão custaria memória na central para poupar um GET barato.
+      await carregarTudo();
+      return render();
+    }
+
+    // seq só existe para perceber buraco. Percebeu, refaz o GET.
+    if (m.seq !== undefined){
+      if (this.ultimaSeq && m.seq > this.ultimaSeq + 1) carregarDevices();
+      this.ultimaSeq = m.seq;
+    }
+
+    const p = m.payload || {};
+    switch (m.type){
+      case 'state.changed': {
+        const d = dev(p.deviceId); if(!d) break;
+        const c = d.capabilities.find(x=>x.id===p.capabilityId); if(!c) break;
+        Object.assign(c, p.changes);      // delta parcial, nunca o device todo
+        break;
+      }
+      case 'device.reachability': {
+        const d = dev(p.deviceId); if(d) d.reachability = p.reachability; break;
+      }
+      case 'device.event': {
+        const d = dev(p.deviceId); if(!d) break;
+        const c = d.capabilities.find(x=>x.id===p.capabilityId);
+        if (c){ c.lastEvent = p.event; c.lastEventAt = m.ts; }
+        aviso(`${d.name}: ${rotuloEvento(p.event)}`, 'ic-scene');
+        break;
+      }
+      case 'device.added':
+        if (!dev(p.device.id)) S.devices.push(p.device);
+        aviso(`"${p.device.name}" entrou na rede.`, 'ic-plus');
+        break;
+      case 'device.removed':
+        S.devices = S.devices.filter(d=>d.id!==p.deviceId);
+        if (S.sheet === p.deviceId) S.sheet = null;
+        break;
+      case 'command.result':   resolverComando(p); break;
+      case 'mode.changed':     S.modes.current = p.mode; break;
+      case 'suggestions.changed': S.suggestions = p.suggestions; break;
+      case 'automation.changed':  carregarExtensoes(); break;
+      default: break;          // tipo de evento novo: ignora, não quebra
+    }
+    render();
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   COMANDOS — otimista, reconciliado por command.result
+   ═══════════════════════════════════════════════════════════════ */
+const emVoo = new Map();     // commandId → { deviceId, capId, antes, prazo }
+
+async function comandar(deviceId, capId, comando){
+  const d = dev(deviceId); if(!d) return;
+  const c = d.capabilities.find(x=>x.id===capId); if(!c) return;
+
+  // A central responde 202: aceito e despachado. A confirmação chega
+  // depois, pelo stream. Esperar por ela para mexer na tela faria o app
+  // parecer travado — o rádio leva de 100 a 500 ms, e mais se o nó
+  // estiver longe. Então muda já e reconcilia.
+  const antes = { ...c };
+  Object.assign(c, previsao(c, comando));
+  c._pend = true;
+  render();
+
+  try{
+    const r = await API.req('POST',
+      `/devices/${deviceId}/capabilities/${encodeURIComponent(capId)}/command`, comando);
+    emVoo.set(r.commandId, { deviceId, capId, antes, prazo: Date.now()+8000 });
+  }catch(e){
+    Object.assign(c, antes); delete c._pend;
+    aviso(mensagemDeErro(e, d), 'ic-alert');
+    render();
+  }
 }
 
-/** Intensidade do halo atrás do sheet, em função do brilho. */
-const bloom = bri => (0.08 + clamp(bri,0,100)/100*0.28).toFixed(3);
-
-/* Onde o preenchimento do slider alcança o rótulo (≈29% da altura) e o
-   ícone (≈88%) — abaixo disso a tinta escura sumiria no fundo escuro. */
-/** Coluna vertical de arrasto. O conteúdo é emitido duas vezes: a cópia
- *  de baixo em tom claro e a de dentro do preenchimento em tom escuro. */
-function colunaVertical(valor, icone, rotulo, min){
-  const corpo = `<span class="vslider-ico"><svg><use href="#${icone}"/></svg></span>`
-              + `<span class="vslider-txt">${valor}<u>%</u></span>`;
-  return `<div class="vslider" id="vs" role="slider" tabindex="0" aria-label="${rotulo}"
-       aria-valuemin="${min}" aria-valuemax="100" aria-valuenow="${valor}">
-    ${corpo}
-    <div class="vfill" id="vfill" style="height:${valor}%"><div class="vfill-clip">${corpo}</div></div>
-  </div>`;
+/** O que o comando deve produzir na capability, para a tela mostrar já. */
+function previsao(c, cmd){
+  switch(cmd.type){
+    case 'switch':     return { state: cmd.toggle ? !c.state : cmd.state };
+    case 'dimmer':     return { value: cmd.value };
+    case 'color_temp': return { kelvin: cmd.kelvin };
+    case 'color':      return { hue: cmd.hue, saturation: cmd.saturation };
+    case 'cover':      return cmd.action
+      ? { moving: cmd.action==='open' ? 'opening' : cmd.action==='close' ? 'closing' : 'stopped' }
+      : { position: cmd.position };
+    case 'lock':       return { state: cmd.state };
+    case 'thermostat': return { ...(cmd.targetTemp!==undefined?{targetTemp:cmd.targetTemp}:{}),
+                                ...(cmd.mode!==undefined?{mode:cmd.mode}:{}) };
+    default: return {};
+  }
 }
 
-function faz(ts){
-  const s = Math.max(0, Math.round((Date.now()-ts)/1000));
+function resolverComando(p){
+  const v = emVoo.get(p.commandId); if(!v) return;
+  emVoo.delete(p.commandId);
+  const d = dev(v.deviceId); if(!d) return;
+  const c = d.capabilities.find(x=>x.id===v.capId); if(!c) return;
+  delete c._pend;
+
+  if (p.status === 'failed'){
+    Object.assign(c, v.antes);
+    c._falhou = true;
+    setTimeout(()=>{ delete c._falhou; render(); }, 420);
+    aviso(`"${d.name}" não respondeu. Sinal fraco na malha.`, 'ic-alert');
+  }
+}
+
+/* Rede que engoliu o command.result deixaria a tela pulsando para sempre. */
+setInterval(()=>{
+  const t = Date.now(); let mexeu = false;
+  for (const [id,v] of emVoo){
+    if (v.prazo > t) continue;
+    emVoo.delete(id);
+    const c = dev(v.deviceId)?.capabilities.find(x=>x.id===v.capId);
+    if (c){ delete c._pend; mexeu = true; }
+  }
+  if (mexeu) render();
+}, 2000);
+
+const mensagemDeErro = (e, d) => ({
+  device_offline: `${d.name} está fora do ar.`,
+  forbidden: 'Seu perfil não permite controlar este dispositivo.',
+  capability_readonly: 'Esta função é só leitura.'
+}[e.error] || e.message || 'Não consegui falar com a central.');
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDERIZADORES POR CAPABILITY
+   Cada entrada sabe se desenhar. Tipo ausente daqui não aparece na
+   tela e não derruba nada — que é exatamente o que o §2.3 exige.
+   ═══════════════════════════════════════════════════════════════ */
+const REND = {
+  switch: {
+    peso: 10,
+    resumo: c => c.state ? 'Ligado' : 'Desligado',
+    aceso:  c => c.state,
+    atalho: (d,c) => `<span class="sw${c.state?' on':''}" data-act="toggle"
+      data-d="${d.id}" data-c="${esc(c.id)}" role="switch" aria-checked="${c.state}"></span>`,
+    controle: (d,c) => `<button class="bigbtn" data-act="toggle" data-d="${d.id}"
+      data-c="${esc(c.id)}" aria-pressed="${c.state}">
+      <svg><use href="#${iconeDe(d)}"/></svg>${c.label ? esc(c.label)+' · ' : ''}${c.state?'Ligado':'Desligado'}
+    </button>`
+  },
+
+  dimmer: {
+    peso: 9,
+    resumo: c => `${c.value}%`,
+    aceso:  c => c.value > 0,
+    controle: (d,c) => colunaVertical(c, d, 'Brilho', '%')
+  },
+
+  color_temp: {
+    peso: 5,
+    resumo: c => `${c.kelvin}K`,
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">Temperatura de cor</span>
+          <span class="cap-val" id="ct-val">${c.kelvin}K</span></div>
+        <div class="cct-track" id="ct" data-d="${d.id}" data-c="${esc(c.id)}"
+             data-min="${c.minKelvin}" data-max="${c.maxKelvin}"
+             role="slider" tabindex="0" aria-label="Temperatura de cor"
+             aria-valuemin="${c.minKelvin}" aria-valuemax="${c.maxKelvin}"
+             aria-valuenow="${c.kelvin}" aria-valuetext="${c.kelvin} kelvin">
+          <span class="cct-knob" id="ct-knob"
+                style="left:${pctEntre(c.kelvin,c.minKelvin,c.maxKelvin)}%"></span>
+        </div>
+        <div class="cct-scale"><span>${c.minKelvin}K quente</span><span>${c.maxKelvin}K frio</span></div>
+      </div>`
+  },
+
+  color: {
+    peso: 4,
+    resumo: c => c.saturation < 8 ? 'branco' : `matiz ${c.hue}°`,
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">Cor</span>
+          <span class="cap-val" id="hue-val">${c.hue}° · ${c.saturation}%</span></div>
+        <div class="hue-track" id="hue" data-d="${d.id}" data-c="${esc(c.id)}"
+             role="slider" tabindex="0" aria-label="Matiz"
+             aria-valuemin="0" aria-valuemax="360" aria-valuenow="${c.hue}">
+          <span class="hue-knob" id="hue-knob" style="left:${(c.hue/360*100).toFixed(1)}%"></span>
+        </div>
+      </div>`
+  },
+
+  cover: {
+    peso: 8,
+    resumo: c => c.moving==='opening' ? 'Abrindo…' : c.moving==='closing' ? 'Fechando…'
+      : c.position===0 ? 'Fechada' : c.position===100 ? 'Aberta' : `${c.position}% aberta`,
+    aceso: c => c.position > 0,
+    controle: (d,c) => `
+      <div class="control">
+        ${colunaVerticalCrua(c.position, 'ic-cover', 'Abertura', d.id, c.id, 0)}
+        <div class="control-side">
+          <button class="bigbtn" data-act="cover" data-d="${d.id}" data-c="${esc(c.id)}" data-v="open">
+            <svg><use href="#ic-sun"/></svg>Abrir</button>
+          <button class="bigbtn" data-act="cover" data-d="${d.id}" data-c="${esc(c.id)}" data-v="stop">
+            <svg><use href="#ic-x"/></svg>Parar</button>
+          <button class="bigbtn" data-act="cover" data-d="${d.id}" data-c="${esc(c.id)}" data-v="close">
+            <svg><use href="#ic-moon"/></svg>Fechar</button>
+        </div>
+      </div>`
+  },
+
+  lock: {
+    peso: 10,
+    resumo: c => ({locked:'Trancada', unlocked:'Destrancada',
+                   jammed:'Travada — verifique', unknown:'Estado desconhecido'})[c.state],
+    aceso: c => c.state === 'locked',
+    atalho: (d,c) => `<span class="sw${c.state==='locked'?' on':''}" data-act="toggle"
+      data-d="${d.id}" data-c="${esc(c.id)}" role="switch" aria-checked="${c.state==='locked'}"></span>`,
+    controle: (d,c) => `<button class="bigbtn" style="flex:1;min-height:130px"
+      data-act="toggle" data-d="${d.id}" data-c="${esc(c.id)}" aria-pressed="${c.state==='locked'}">
+      <svg style="width:30px;height:30px"><use href="#ic-lock"/></svg>
+      ${REND.lock.resumo(c)}</button>`
+  },
+
+  thermostat: {
+    peso: 9,
+    resumo: c => `${nf(c.currentTemp,1)}°C · alvo ${nf(c.targetTemp,1)}°`,
+    aceso: c => c.mode !== 'off',
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">Temperatura</span>
+          <span class="cap-val">agora ${nf(c.currentTemp,1)} °C</span></div>
+        <div class="termo">
+          <button class="termo-btn" data-act="termo" data-d="${d.id}" data-c="${esc(c.id)}"
+                  data-v="-" aria-label="Diminuir">−</button>
+          <span class="termo-alvo">${nf(c.targetTemp,1)}<u> °C</u></span>
+          <button class="termo-btn" data-act="termo" data-d="${d.id}" data-c="${esc(c.id)}"
+                  data-v="+" aria-label="Aumentar">+</button>
+        </div>
+        <div class="modos-linha">${c.availableModes.map(m=>`
+          <button class="modo-chip" data-act="termo-modo" data-d="${d.id}" data-c="${esc(c.id)}"
+                  data-v="${m}" aria-pressed="${c.mode===m}">${
+            ({off:'Desligado',heat:'Aquecer',cool:'Resfriar',auto:'Automático'})[m]||m}</button>`).join('')}
+        </div>
+      </div>`
+  },
+
+  sensor: {
+    peso: 2,
+    resumo: c => `${nf(c.value, c.precision)} ${c.unit}`,
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">${rotuloMedida(c.measure)}</span></div>
+        <div style="font-family:var(--font-display);font-size:40px;font-weight:200;
+                    letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums">
+          ${nf(c.value, c.precision)}<u style="font-size:16px;font-weight:400;
+            text-decoration:none;color:var(--text-dim);margin-left:4px">${esc(c.unit)}</u></div>
+      </div>`
+  },
+
+  binary_sensor: {
+    peso: 3,
+    resumo: c => textoBinario(c.measure, c.state),
+    aceso: c => c.state,
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">${rotuloMedida(c.measure)}</span>
+          <span class="chip-estado${c.state?' ativo':''}">${textoBinario(c.measure, c.state)}</span></div>
+      </div>`
+  },
+
+  event: {
+    peso: 1,
+    resumo: c => c.lastEvent ? rotuloEvento(c.lastEvent) : 'Nenhum toque ainda',
+    controle: (d,c) => `
+      <div class="cap">
+        <div class="cap-topo"><span class="cap-nome">Botão</span>
+          <span class="cap-val">${c.lastEvent ? esc(rotuloEvento(c.lastEvent)) : '—'}</span></div>
+        <div style="font-size:12.5px;color:var(--text-faint);line-height:1.45">
+          ${c.supportedEvents.length
+            ? 'Reconhece: ' + c.supportedEvents.map(e=>esc(rotuloEvento(e))).join(', ') + '.'
+            : ''}
+          Não guarda estado — só dispara.</div>
+      </div>`
+  }
+};
+
+const rotuloMedida = m => ({
+  temperature:'Temperatura', humidity:'Umidade', illuminance:'Luminosidade',
+  pressure:'Pressão', co2:'CO₂', voc:'COV', pm25:'Partículas 2,5',
+  power:'Potência', energy:'Energia', voltage:'Tensão', current:'Corrente',
+  contact:'Abertura', occupancy:'Presença', motion:'Movimento',
+  water_leak:'Vazamento', smoke:'Fumaça', gas:'Gás',
+  vibration:'Vibração', tamper:'Violação'
+}[m] || m);
+
+const textoBinario = (m, on) => ({
+  contact:    on ? 'Aberta' : 'Fechada',
+  occupancy:  on ? 'Alguém aí' : 'Vazio',
+  motion:     on ? 'Movimento' : 'Parado',
+  water_leak: on ? 'Água detectada' : 'Seco',
+  smoke:      on ? 'Fumaça!' : 'Sem fumaça',
+  gas:        on ? 'Gás detectado' : 'Sem gás',
+  vibration:  on ? 'Vibração' : 'Parado',
+  tamper:     on ? 'Violado' : 'Íntegro'
+}[m] || (on ? 'Ativo' : 'Inativo'));
+
+const rotuloEvento = e => ({
+  single:'toque', double:'toque duplo', triple:'toque triplo',
+  hold:'pressionado', release:'solto', on:'ligar', off:'desligar',
+  brightness_move_up:'aumentar', brightness_move_down:'diminuir'
+}[e] || e);
+
+/** Ícone do device, deduzido das capabilities — não do modelo. */
+function iconeDe(d){
+  const t = new Set(d.capabilities.map(c=>c.type));
+  const m = new Set(d.capabilities.map(c=>c.measure).filter(Boolean));
+  if (t.has('lock'))       return 'ic-lock';
+  if (t.has('cover'))      return 'ic-cover';
+  if (t.has('thermostat')) return 'ic-ac';
+  if (t.has('event'))      return 'ic-scene';
+  if (m.has('water_leak')) return 'ic-leak';
+  if (m.has('occupancy') || m.has('motion')) return 'ic-motion';
+  if (m.has('contact'))    return 'ic-door';
+  if (m.has('temperature'))return 'ic-thermo';
+  if (m.has('power') && !t.has('dimmer')) return 'ic-plug';
+  if (t.has('dimmer') || t.has('color_temp') || t.has('color')) return 'ic-bulb';
+  if (t.has('switch'))     return 'ic-plug';
+  return 'ic-bulb';
+}
+
+/** A capability que representa o aparelho na lista. */
+function principal(d){
+  const uteis = d.capabilities
+    .filter(c => REND[c.type])
+    .sort((a,b) => (REND[b.type].peso||0) - (REND[a.type].peso||0));
+  return uteis[0] || null;
+}
+
+const desatualizado = d =>
+  !d.reachability.online || Date.now() - Date.parse(d.reachability.lastSeen) > 3*3600e3;
+
+/** Uma linha de texto que diz a verdade sobre o aparelho. */
+function resumoDevice(d){
+  if (desatualizado(d)) return 'sem reportar · ' + faz(d.reachability.lastSeen);
+
+  const teclas = caps(d,'switch');
+  if (teclas.length > 1){
+    const n = teclas.filter(c=>c.state).length;
+    return n ? `${n} de ${teclas.length} ligados` : 'Tudo desligado';
+  }
+
+  const p = principal(d);
+  if (!p) return d.model.friendlyType;
+
+  if (p.type === 'switch'){
+    if (!p.state) return 'Desligado';
+    const dim = cap1(d,'dimmer'), ct = cap1(d,'color_temp');
+    if (dim) return `${dim.value}%` + (ct ? ` · ${ct.kelvin}K` : '');
+    const pot = d.capabilities.find(c=>c.measure==='power');
+    if (pot) return `${nf(pot.value)} ${pot.unit}`;
+    return 'Ligado';
+  }
+  return REND[p.type].resumo(p);
+}
+
+const acesoDevice = d => {
+  const p = principal(d);
+  return !!(p && REND[p.type].aceso?.(p));
+};
+const pendenteDevice = d => d.capabilities.some(c=>c._pend);
+const falhouDevice   = d => d.capabilities.some(c=>c._falhou);
+
+function faz(iso){
+  const s = Math.max(0, Math.round((Date.now()-Date.parse(iso))/1000));
   if (s < 60)   return 'agora';
   if (s < 3600) return 'há ' + Math.floor(s/60) + ' min';
   if (s < 86400)return 'há ' + Math.floor(s/3600) + ' h';
   return 'há ' + Math.floor(s/86400) + ' d';
 }
-function dur(s){
-  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
-  return d ? d+'d '+h+'h' : h ? h+'h '+m+'min' : m+'min';
-}
+const pctEntre = (v,a,b) => (clamp((v-a)/(b-a),0,1)*100).toFixed(1);
 
 /* ═══════════════════════════════════════════════════════════════
-   TRANSPORTE
-   Em produção: WebSocket com o ESP32. Sem ESP32 alcançável, o app
-   cai para um simulador para que a interface possa ser avaliada.
+   CARGA
    ═══════════════════════════════════════════════════════════════ */
-const Bus = {
-  ws:null, backoff:800,
-
-  async start(){
-    try{
-      const r = await buscarComPrazo('api/state', 1200);
-      if (!r.ok) throw new Error('http '+r.status);
-      Object.assign(S, await r.json());
-      this.openSocket();
-      S.conn='online';
-    }catch(_){
-      S.demo = true; S.conn = 'online';
-      Sim.seed();
-      Sim.tick();
+async function carregarDevices(){
+  const r = await API.req('GET','/devices');
+  // Preserva o que é só do cliente (pendências em voo) ao refazer o GET.
+  const antes = new Map(S.devices.map(d=>[d.id,d]));
+  for (const d of r.devices){
+    const velho = antes.get(d.id);
+    if (!velho) continue;
+    for (const c of d.capabilities){
+      const vc = velho.capabilities.find(x=>x.id===c.id);
+      if (vc?._pend) c._pend = true;
     }
-    render();
-  },
-
-  openSocket(){
-    const proto = location.protocol==='https:' ? 'wss' : 'ws';
-    const ws = this.ws = new WebSocket(proto+'://'+location.host+'/ws');
-    ws.onopen    = ()=>{ this.backoff=800; S.conn='online'; render(); };
-    ws.onmessage = e=>{ try{ this.recv(JSON.parse(e.data)); }catch(_){ } };
-    ws.onclose   = ()=>{
-      S.conn='offline'; render();
-      setTimeout(()=>this.openSocket(), this.backoff);
-      this.backoff = Math.min(this.backoff*2, 15000);
-    };
-  },
-
-  /* Mensagens vindas do ESP32 */
-  recv(m){
-    if (m.t==='state'){
-      const d = dev(m.id); if(!d) return;
-      Object.assign(d.st, m.p); d.seen = Date.now(); d.rx = true;
-      confirmar(d, true);
-    }
-    else if (m.t==='reject'){ const d=dev(m.id); if(d) confirmar(d, false); }
-    else if (m.t==='hub')   { Object.assign(S.hub, m.p); }
-    else if (m.t==='panel') { Object.assign(S.painel, m.p); }
-    else if (m.t==='modo')      { S.modo = m.p.modo; }
-    else if (m.t==='sugestoes') { S.sugestoes = m.p; }
-    else if (m.t==='rotinas')   { S.routines = m.p.map(r=>({...r, name:r.name||r.nome})); }
-    render();
-  },
-
-  /* Comando para um dispositivo. Otimista: a interface muda já e o
-     rádio confirma depois. Zigbee leva 100–500 ms; esperar por isso
-     faz o app parecer quebrado. */
-  set(id, patch){
-    const d = dev(id); if(!d) return;
-    Object.assign(d.st, patch);
-    d.pend = { t:setTimeout(()=>confirmar(d,false), 3000) };
-    if (S.demo) Sim.set(id, patch);
-    else if (this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'set', id, p:patch}));
-    else { clearTimeout(d.pend.t); d.pend=null; toast('Sem conexão com o painel.'); }
-    render();
-  },
-
-  /** Ações que não mexem num dispositivo: modo, rotina, favorito,
-   *  decisão sobre sugestão. No simulador não há para onde mandar. */
-  enviar(msg){
-    if (!S.demo && this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify(msg));
-  },
-
-  scene(id){
-    if (S.demo) Sim.scene(id);
-    else if (this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'scene', id}));
-    const sc = S.scenes.find(s=>s.id===id);
-    toast('Cena "'+ (sc?sc.name:id) +'" aplicada.', 'ic-check');
-    render();
-  },
-
-  pair(seg){
-    S.hub.permitJoin = seg;
-    if (!S.demo && this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'pair', s:seg}));
-    render();
   }
-};
-
-/** Fecha (ou desfaz) o comando otimista de um dispositivo. */
-function confirmar(d, ok){
-  if (!d.pend) return;
-  clearTimeout(d.pend.t); d.pend = null;
-  if (!ok){
-    if (d.prev) Object.assign(d.st, d.prev);
-    d.falhou = true;
-    setTimeout(()=>{ d.falhou=false; render(); }, 400);
-    toast('"'+d.name+'" não respondeu. Sinal fraco na malha.', 'ic-alert');
-  }
-  render();
+  S.devices = r.devices;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SIMULADOR — só entra em cena quando não há ESP32 na rede.
-   ═══════════════════════════════════════════════════════════════ */
-const Sim = {
-  seed(){
-    const now = Date.now(), min = 60000;
-    S.rooms = [
-      {id:'sala',   name:'Sala'},
-      {id:'cozinha',name:'Cozinha'},
-      {id:'suite',  name:'Suíte'},
-      {id:'quarto', name:'Quarto 2'},
-      {id:'escrit', name:'Escritório'},
-      {id:'varanda',name:'Varanda'},
-      {id:'entrada',name:'Entrada'}
-    ];
-    // Endereço IEEE plausível: prefixo OUI + hash FNV-1a do id, em hexa.
-    const ieee = id=>{
-      let h = 0x811c9dc5;
-      for (let i=0;i<id.length;i++){ h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193)>>>0; }
-      return '0x00158d00' + h.toString(16).padStart(8,'0');
-    };
-    const D = (id,name,rm,type,caps,st,x)=> Object.assign(
-      {id,name,room:rm,type,caps,st,lqi:120,bat:null,seen:now,
-       model:'—',ieee:ieee(id),fav:false,fraco:false}, x||{});
+async function carregarExtensoes(){
+  const [sc, md, au, sg] = await Promise.all([
+    API.req('GET','/scenes').catch(()=>({scenes:[]})),
+    API.req('GET','/modes').catch(()=>({current:'normal',available:[]})),
+    API.req('GET','/automations').catch(()=>({automations:[]})),
+    API.req('GET','/suggestions').catch(()=>({suggestions:[]}))
+  ]);
+  S.scenes = sc.scenes; S.modes = md;
+  S.automations = au.automations; S.suggestions = sg.suggestions;
+}
 
-    S.devices = [
-      D('sala_teto','Luz principal','sala','light',['onoff','dim','cct'],
-        {on:true,bri:64,k:3000}, {fav:true,lqi:158,model:'IKEA TRADFRI E27 CWS'}),
-      D('sala_sanca','Sanca LED','sala','light',['onoff','dim'],
-        {on:true,bri:28}, {fav:true,lqi:143,model:'Tuna Zigbee Dimmer 2CH'}),
-      D('sala_tv','TV e rack','sala','plug',['onoff','power'],
-        {on:true,w:96,kwh:1.42}, {fav:true,lqi:151,model:'Tuya TS011F 16A'}),
-      D('sala_cort','Cortina','sala','cover',['cover'],
-        {pos:100}, {lqi:132,model:'Zemismart ZM25TQ'}),
-      D('sala_pres','Presença sala','sala','motion',['motion'],
-        {motion:false}, {lqi:118,bat:82,seen:now-14*min,model:'Aqara RTCGQ11LM'}),
-
-      D('coz_bancada','Luz da bancada','cozinha','light',['onoff','dim','cct'],
-        {on:false,bri:80,k:4000}, {fav:true,lqi:147,model:'Philips Hue LTA001'}),
-      D('coz_gelad','Geladeira','cozinha','plug',['onoff','power'],
-        {on:true,w:118,kwh:2.86}, {lqi:139,model:'Tuya TS011F 16A'}),
-      D('coz_vaz','Sensor de vazamento','cozinha','leak',['leak'],
-        {leak:false}, {lqi:104,bat:91,seen:now-52*min,model:'Aqara SJCGQ11LM'}),
-
-      D('sui_teto','Luz do teto','suite','light',['onoff','dim','cct'],
-        {on:false,bri:55,k:2700}, {lqi:149,model:'IKEA TRADFRI E27 WS'}),
-      D('sui_abajur','Abajur','suite','light',['onoff','dim'],
-        {on:false,bri:22}, {fav:true,lqi:126,model:'Tuya TS0501B'}),
-      D('sui_ac','Ar-condicionado','suite','ac',['onoff','power'],
-        {on:false,w:0,kwh:3.21}, {lqi:135,model:'Moes IR + TS011F'}),
-      D('sui_janela','Janela','suite','contact',['contact'],
-        {aberto:false}, {lqi:112,bat:74,seen:now-6*min,model:'Aqara MCCGQ11LM'}),
-
-      D('qt2_teto','Luz do quarto','quarto','light',['onoff','dim'],
-        {on:false,bri:70}, {lqi:128,model:'Tuya TS0502B'}),
-
-      D('esc_teto','Luz do escritório','escrit','light',['onoff','dim','cct'],
-        {on:true,bri:88,k:4600}, {fav:true,lqi:154,model:'Philips Hue LTA001'}),
-      D('esc_mesa','Tomada da bancada','escrit','plug',['onoff','power'],
-        {on:true,w:212,kwh:4.07}, {lqi:141,model:'Tuya TS011F 16A'}),
-
-      D('var_luz','Luz da varanda','varanda','light',['onoff','dim'],
-        {on:false,bri:45}, {lqi:96,model:'Tuya TS0502A'}),
-      D('var_temp','Temperatura externa','varanda','temp',['temp'],
-        {t:19.4,h:71}, {lqi:88,bat:63,seen:now-3*min,model:'Aqara WSDCGQ11LM'}),
-
-      D('ent_fech','Fechadura','entrada','lock',['lock'],
-        {trancado:true}, {fav:true,lqi:121,bat:57,model:'Tuya ZS-SF-EU'}),
-      // Nó no limite da malha: existe em toda instalação real e é a razão
-      // de a interface precisar tratar comando que não volta.
-      D('ent_portao','Luz do portão','entrada','light',['onoff','dim'],
-        {on:false,bri:60}, {lqi:38,fraco:true,model:'Tuya TS0502A'})
-    ];
-
-    S.scenes = [
-      {id:'bomdia',  name:'Bom dia',      icon:'ic-sun',   n:6},
-      {id:'cinema',  name:'Cinema',       icon:'ic-tv',    n:5},
-      {id:'jantar',  name:'Jantar',       icon:'ic-scene', n:4},
-      {id:'boanoite',name:'Boa noite',    icon:'ic-moon',  n:11},
-      {id:'sair',    name:'Sair de casa', icon:'ic-lock',  n:14}
-    ];
-
-    S.routines = [
-      {id:'r1', name:'Pôr do sol', desc:'Acende varanda e portão a 45%', on:true, icon:'ic-sun',
-       modos:['normal','recebendo']},
-      {id:'r2', name:'23h30', desc:'Modo noturno: apaga áreas comuns', on:true, icon:'ic-moon',
-       modos:['normal']},
-      {id:'r3', name:'Presença na varanda', desc:'Depois das 22h, luz a 30% por 3 min', on:true, icon:'ic-motion',
-       modos:['normal','dormindo']},
-      {id:'r4', name:'Vazamento na cozinha', desc:'Corta a tomada e alerta no painel', on:true, icon:'ic-leak',
-       modos:['normal','dormindo','fora','recebendo']},
-      {id:'r5', name:'Ninguém em casa', desc:'Desliga tomadas não essenciais', on:false, icon:'ic-home',
-       modos:['fora']}
-    ];
-
-    /* Sugestões: o painel observa o que a família faz na mão e propõe.
-       Três tipos diferentes de aprendizado, de propósito — padrão de
-       horário, recuo de uma rotina que incomoda, e correlação entre
-       dispositivos. Nada disso precisa de nuvem nem de modelo: é
-       contagem de frequência em janelas de tempo. */
-    S.sugestoes = [
-      { id:'g1', tipo:'criar', confianca:85,
-        texto:'Você acende a Luz da bancada entre 6h40 e 6h55 em quase todo dia útil.',
-        evidencia:'11 dos últimos 13 dias úteis · nunca aos sábados',
-        acao:'Acender a Luz da bancada a 90%, 4600K, às 6h45, de segunda a sexta',
-        rotina:{ id:'r6', name:'Bancada às 6h45', desc:'90%, 4600K, de segunda a sexta',
-                 icon:'ic-clock', modos:['normal'] } },
-      { id:'g2', tipo:'recuar', confianca:74,
-        texto:'A rotina "Pôr do sol" foi cancelada na mão três vezes esta semana.',
-        evidencia:'3 cancelamentos em 7 disparos · sempre antes das 18h30',
-        acao:'Suspender a rotina e perguntar de novo daqui a duas semanas',
-        alvo:'r1' },
-      { id:'g3', tipo:'criar', confianca:62,
-        texto:'A TV continua ligada, em média, 40 minutos depois que a casa entra no modo Dormindo.',
-        evidencia:'8 das últimas 10 noites · média de 38 min',
-        acao:'Desligar a tomada do rack 30 min após o modo Dormindo',
-        rotina:{ id:'r7', name:'TV depois do Dormindo', desc:'Desliga o rack 30 min após o modo Dormindo',
-                 icon:'ic-tv', modos:['dormindo'] } }
-    ];
-
-    // Curva de 24 h com forma de casa: manhã, vale, pico da noite.
-    const perfil=[.22,.18,.16,.15,.16,.21,.42,.58,.46,.36,.33,.38,
-                  .52,.44,.36,.34,.41,.66,.88,1,.94,.72,.48,.31];
-    S.energia.horas = perfil.map(v=> +(v*1.42).toFixed(2));
-    S.energia.total = +S.energia.horas.reduce((a,b)=>a+b,0).toFixed(1);
-  },
-
-  /* Resposta do rádio: latência real e um nó que às vezes some. */
-  set(id, patch){
-    const d = dev(id); if(!d) return;
-    const lat = 140 + Math.random()*260;
-    const perde = d.fraco && Math.random() < 0.34;
-    setTimeout(()=>{
-      if (perde) { confirmar(d,false); return; }
-      if ('on' in patch && d.caps.includes('power'))
-        d.st.w = patch.on ? (d.id==='esc_mesa'?212:d.id==='coz_gelad'?118:96) : 0;
-      d.seen = Date.now();
-      confirmar(d,true);
-    }, lat);
-  },
-
-  scene(id){
-    const set=(ids,p)=> ids.forEach(i=>{ const d=dev(i); if(d) Object.assign(d.st,p); });
-    const off=ids=> set(ids,{on:false});
-    if (id==='boanoite'){
-      off(['sala_teto','sala_sanca','coz_bancada','esc_teto','var_luz','sala_tv','esc_mesa']);
-      set(['sui_abajur'],{on:true,bri:12}); set(['ent_fech'],{trancado:true});
-    }
-    if (id==='cinema'){
-      set(['sala_teto'],{on:false}); set(['sala_sanca'],{on:true,bri:14});
-      set(['sala_tv'],{on:true}); set(['sala_cort'],{pos:0});
-    }
-    if (id==='bomdia'){
-      set(['sui_teto'],{on:true,bri:70,k:4200}); set(['coz_bancada'],{on:true,bri:90,k:4600});
-      set(['sala_cort'],{pos:100});
-    }
-    if (id==='jantar'){
-      set(['sala_teto'],{on:true,bri:38,k:2700}); set(['coz_bancada'],{on:true,bri:60,k:3000});
-      set(['sala_sanca'],{on:true,bri:20});
-    }
-    if (id==='sair'){
-      S.devices.forEach(d=>{ if(d.caps.includes('onoff') && d.id!=='coz_gelad') d.st.on=false; });
-      set(['ent_fech'],{trancado:true});
-    }
-    S.devices.forEach(d=>{ if(d.st && 'w' in d.st) d.st.w = d.st.on ? d.st.w||96 : 0; });
-  },
-
-  /* Deriva lenta dos sensores e do consumo, para o painel não ficar morto. */
-  tick(){
-    setInterval(()=>{
-      const t = dev('var_temp');
-      if (t){ t.st.t = +(clamp(t.st.t + (Math.random()-.5)*.22, 14, 34)).toFixed(1); t.seen = Date.now(); }
-      const g = dev('coz_gelad');
-      if (g && g.st.on) g.st.w = Math.round(clamp(118 + (Math.random()-.5)*26, 92, 146));
-      if (S.hub.permitJoin > 0) S.hub.permitJoin--;
-      S.painel.uptime++;
-      if (!S.sheet || S.view==='energy' || S.view==='home') render();
-    }, 1000);
-  }
-};
+async function carregarTudo(){
+  S.home = await API.req('GET','/home');
+  await carregarDevices();
+  await carregarExtensoes();
+  if (!S.area && S.home.areas.length) S.area = S.home.areas[0].id;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    RENDERIZAÇÃO
    ═══════════════════════════════════════════════════════════════ */
-let travado = false;    // não redesenhar durante o arrasto de um slider
-let agendado = false;
+let travado = false, agendado = false;
 
 function render(){
   if (travado || agendado) return;
@@ -1145,22 +1363,30 @@ function render(){
 }
 
 function desenhar(){
-  if (S.locked){ el('layer').innerHTML = telaBloqueio(); return; }
+  const camada = el('layer');
 
-  const T = { home:['Início', saudacao()], rooms:['Cômodos', room(S.room)?room(S.room).name:'Cômodos'],
-              scenes:['Cenas e rotinas','Cenas'], energy:['Consumo','Energia'], settings:['Sistema','Ajustes'] }[S.view];
+  if (S.tela !== 'app'){
+    el('shell').setAttribute('data-entrada','1');
+    camada.innerHTML = telaEntrada() + (S.toast ? toastHTML() : '');
+    return;
+  }
+  el('shell').removeAttribute('data-entrada');
+
+  const T = { home:['Início', saudacao()],
+              rooms:['Cômodos', nomeArea(S.area)],
+              scenes:['Cenas e automações','Cenas'],
+              energy:['Consumo','Energia'],
+              settings:['Sistema','Ajustes'] }[S.view];
   el('eyebrow').textContent = T[0];
   el('title').textContent   = T[1];
   el('statusbar').innerHTML = barraStatus();
 
-  el('view').innerHTML = ({ home:vHome, rooms:vRooms, scenes:vScenes,
-                            energy:vEnergy, settings:vSettings })[S.view]();
+  el('view').innerHTML = ({ home:vHome, rooms:vAreas, scenes:vCenas,
+                            energy:vEnergia, settings:vAjustes })[S.view]();
 
-  document.querySelectorAll('#tabs .tab').forEach(t=>
-    t.setAttribute('aria-selected', String(t.dataset.v===S.view)));
+  $$('#tabs .tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.v===S.view)));
 
-  el('layer').innerHTML = (S.sheet ? sheetDispositivo(S.sheet) : '')
-                        + (S.toast ? toastHTML() : '');
+  camada.innerHTML = (S.sheet ? sheetDevice(S.sheet) : '') + (S.toast ? toastHTML() : '');
   if (S.sheet) ligarControles();
 }
 
@@ -1170,76 +1396,188 @@ function saudacao(){
 }
 
 function barraStatus(){
-  const off = S.devices.filter(d=> Date.now()-d.seen > 3*3600e3).length;
+  const fora = S.devices.filter(desatualizado).length;
   const p = [];
-  p.push('<span class="dot '+(S.hub.online?'':'warn')+'"></span>hub ' + (S.hub.online?'ativo':'fora do ar'));
-  p.push('<span class="status-sep">/</span>' + S.devices.length + ' nós');
-  if (off) p.push('<span class="status-sep">/</span><span style="color:var(--alert)">' + off + ' sem reportar</span>');
-  p.push('<span class="status-sep">/</span>' + nf(potencia()) + ' W');
-  if (S.conn==='offline') p.push('<span class="status-sep">/</span><span style="color:var(--alert)">reconectando…</span>');
+  p.push(`<span class="dot ${S.conn==='on'?'':'warn'}"></span>central ${S.conn==='on'?'ligada':'reconectando…'}`);
+  p.push(`<span class="status-sep">/</span>${S.devices.length} aparelhos`);
+  if (fora) p.push(`<span class="status-sep">/</span><span style="color:var(--alert)">${fora} sem reportar</span>`);
+  p.push(`<span class="status-sep">/</span>${nf(potenciaTotal())} W`);
   if (S.demo) p.push('<span class="chip-demo">DEMO</span>');
   return p.join(' ');
 }
 
+const potenciaTotal = () => S.devices.reduce((a,d)=>
+  a + d.capabilities.filter(c=>c.measure==='power')
+        .reduce((x,c)=> x + (Number.isFinite(c.value)?c.value:0), 0), 0);
+
 /* ── Início ─────────────────────────────────────────────────── */
 function vHome(){
-  const temp = dev('var_temp'), favs = S.devices.filter(d=>d.fav);
+  const favs = S.devices.filter(d=>d.favorite);
+  const temp = S.devices.flatMap(d=>d.capabilities).find(c=>c.measure==='temperature');
+  const acesos = S.devices.filter(acesoDevice).length;
   const alertas = avisos();
+
   return `
   <div class="readouts">
-    <div class="readout"><span class="k">Acesos</span><span class="v">${acesos()}</span></div>
-    <div class="readout"><span class="k">Agora</span><span class="v">${nf(potencia())}<u>W</u></span></div>
-    <div class="readout"><span class="k">Externa</span><span class="v">${temp?nf(temp.st.t,1):'—'}<u>°C</u></span></div>
+    <div class="readout"><span class="k">Ligados</span><span class="v">${acesos}</span></div>
+    <div class="readout"><span class="k">Agora</span><span class="v">${nf(potenciaTotal())}<u>W</u></span></div>
+    <div class="readout"><span class="k">Externa</span><span class="v">${
+      temp ? nf(temp.value,temp.precision) : '—'}<u>°C</u></span></div>
   </div>
 
-  <div class="section">
-    <div class="section-head"><h2>Modo da casa</h2><span class="aux">muda o que as rotinas fazem</span></div>
-    <div class="modos" role="tablist">${MODOS.map(m=>`
-      <button class="modo" role="tab" data-act="modo" data-id="${m.id}"
-              aria-selected="${S.modo===m.id}">
-        <svg><use href="#${m.icon}"/></svg>${m.name}
+  ${S.modes.available.length ? `<div class="section">
+    <div class="section-head"><h2>Modo da casa</h2><span class="aux">muda o que as automações fazem</span></div>
+    <div class="modos" role="tablist">${S.modes.available.map(m=>`
+      <button class="modo" role="tab" data-act="modo" data-v="${m.id}"
+              aria-selected="${S.modes.current===m.id}">
+        <svg><use href="#${m.icon||'ic-home'}"/></svg>${esc(m.name)}
       </button>`).join('')}</div>
-  </div>
+  </div>` : ''}
 
   ${alertas.length ? `<div class="section">${alertas.join('')}</div>` : ''}
 
-  ${S.sugestoes.length ? `<div class="section">
+  ${S.suggestions.length ? `<div class="section">
     <div class="section-head"><h2>A casa aprendeu algo</h2>${
-      S.sugestoes.length>1 ? `<span class="aux">${S.sugestoes.length-1} depois desta</span>` : ''}</div>
-    ${cartaoSugestao(S.sugestoes[0])}
+      S.suggestions.length>1 ? `<span class="aux">${S.suggestions.length-1} depois desta</span>`:''}</div>
+    ${cartaoSugestao(S.suggestions[0])}
+  </div>` : ''}
+
+  ${S.scenes.length ? `<div class="section">
+    <div class="section-head"><h2>Cenas</h2></div>
+    <div class="scenerow">${S.scenes.map(s=>`
+      <button class="scene" data-act="cena" data-v="${s.id}">
+        <svg><use href="#${s.icon||'ic-scene'}"/></svg>${esc(s.name)}
+      </button>`).join('')}</div>
   </div>` : ''}
 
   <div class="section">
-    <div class="section-head"><h2>Cenas</h2></div>
-    <div class="scenerow">${S.scenes.map(s=>`
-      <button class="scene" data-act="scene" data-id="${s.id}">
-        <svg><use href="#${s.icon}"/></svg>${esc(s.name)}
-      </button>`).join('')}</div>
-  </div>
-
-  <div class="section">
     <div class="section-head"><h2>Favoritos</h2><span class="aux">${favs.length} de ${S.devices.length}</span></div>
-    <div class="grid">${favs.map(cartao).join('')}</div>
+    <div class="grid">${ favs.length ? favs.map(cartao).join('')
+      : '<p class="empty" style="grid-column:1/-1">Nenhum favorito ainda. Abra um aparelho e toque em Favoritar.</p>' }</div>
   </div>`;
 }
 
 function avisos(){
   const out = [];
-  const bat = S.devices.filter(d=> d.bat!==null && d.bat<60);
-  const vaz = S.devices.find(d=> d.st.leak);
-  const jan = S.devices.filter(d=> d.st.aberto);
-  if (vaz) out.push(banner('ic-leak', 'Água detectada em ' + nomeSala(vaz.room) + '. Tomada cortada pela rotina.'));
-  if (jan.length) out.push(banner('ic-door', jan.map(d=>d.name).join(', ') + ' aberta.'));
-  if (bat.length) out.push(banner('ic-batt',
-    bat.length===1 ? `Bateria de "${bat[0].name}" em ${bat[0].bat}%.`
-                   : `${bat.length} sensores com bateria abaixo de 60%.`, true));
+  const molhado = S.devices.find(d=>d.capabilities.some(c=>c.measure==='water_leak' && c.state));
+  const abertos = S.devices.filter(d=>d.capabilities.some(c=>c.measure==='contact' && c.state));
+  const pilha   = S.devices.filter(d=> d.reachability.battery!==null && d.reachability.battery < 60);
+  const fumaca  = S.devices.find(d=>d.capabilities.some(c=>
+    (c.measure==='smoke'||c.measure==='gas') && c.state));
+
+  if (fumaca)  out.push(banner('ic-alert', `Alarme em ${nomeArea(fumaca.areaId)}. Verifique agora.`));
+  if (molhado) out.push(banner('ic-leak', `Água detectada em ${nomeArea(molhado.areaId)}.`));
+  if (abertos.length) out.push(banner('ic-door', abertos.map(d=>d.name).join(', ') + ' aberta.'));
+  if (pilha.length) out.push(banner('ic-batt', pilha.length===1
+    ? `Bateria de "${pilha[0].name}" em ${pilha[0].reachability.battery}%.`
+    : `${pilha.length} sensores com bateria abaixo de 60%.`, true));
   return out;
 }
-/** O cartão traz o argumento, o recibo em monoespaçado e a letra miúda
- *  do que exatamente passará a acontecer. Quem aprova precisa poder ver
- *  no que está concordando. */
+const banner=(ic,txt,calmo)=>`<div class="banner${calmo?' calm':''}"><svg><use href="#${ic}"/></svg><span>${esc(txt)}</span></div>`;
+
+function cartao(d){
+  const on = acesoDevice(d), velho = desatualizado(d);
+  return `<div class="tile${on?' on':''}${pendenteDevice(d)?' pending':''}${
+      falhouDevice(d)?' rejected':''}${velho?' off-net':''}"
+      data-act="abrir" data-d="${d.id}">
+    <div class="tile-top">
+      <span class="tile-ico"><svg><use href="#${iconeDe(d)}"/></svg></span>
+      <span class="tile-more"><svg><use href="#ic-chev"/></svg></span>
+    </div>
+    <div>
+      <div class="tile-name">${esc(d.name)}</div>
+      <div class="tile-sub">${esc(resumoDevice(d))}</div>
+    </div>
+  </div>`;
+}
+
+/* ── Cômodos ────────────────────────────────────────────────── */
+function vAreas(){
+  const aid = S.area || S.home.areas[0]?.id;
+  const lista = S.devices.filter(d=>d.areaId===aid);
+  const semArea = S.devices.filter(d=>!d.areaId);
+  const n = lista.filter(acesoDevice).length;
+
+  return `
+  <div class="pills" role="tablist">${S.home.areas.map(a=>`
+    <button class="pill" role="tab" data-act="area" data-v="${a.id}"
+            aria-selected="${a.id===aid}">${esc(a.name)}</button>`).join('')}
+    ${semArea.length ? `<button class="pill" role="tab" data-act="area" data-v="__sem"
+      aria-selected="${aid==='__sem'}">Sem cômodo · ${semArea.length}</button>` : ''}</div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>${esc(aid==='__sem' ? 'Sem cômodo' : nomeArea(aid))}</h2>
+      <span class="aux">${n ? n + (n>1?' ligados':' ligado') : 'tudo desligado'}</span>
+    </div>
+    <div class="list">${
+      (aid==='__sem' ? semArea : lista).map(linha).join('') ||
+      '<p class="empty">Nenhum aparelho aqui ainda.</p>'}</div>
+  </div>`;
+}
+
+function linha(d){
+  const velho = desatualizado(d);
+  const p = principal(d);
+  const teclas = caps(d,'switch');
+
+  let aux;
+  if (teclas.length > 1) aux = `<span class="row-val">${teclas.filter(c=>c.state).length}/${teclas.length}</span>
+    <svg><use href="#ic-chev"/></svg>`;
+  else if (p && REND[p.type].atalho) aux = REND[p.type].atalho(d,p);
+  else if (p?.type === 'cover') aux = `<span class="row-val">${p.position}%</span><svg><use href="#ic-chev"/></svg>`;
+  else if (p?.type === 'sensor') aux = `<span class="row-val">${nf(p.value,p.precision)}</span>
+    <span style="font-size:11px;color:var(--text-faint)">${esc(p.unit)}</span>`;
+  else aux = `<svg><use href="#ic-chev"/></svg>`;
+
+  return `<button class="row${pendenteDevice(d)?' pending':''}${falhouDevice(d)?' rejected':''}"
+      data-act="abrir" data-d="${d.id}" style="${velho?'opacity:.55':''}">
+    <span class="row-ico${acesoDevice(d)?' lit':''}"><svg><use href="#${iconeDe(d)}"/></svg></span>
+    <span class="row-main">
+      <span class="row-name">${esc(d.name)}</span>
+      <span class="row-sub">${esc(resumoDevice(d))}</span>
+    </span>
+    <span class="row-aux">${aux}</span>
+  </button>`;
+}
+
+/* ── Cenas e automações ─────────────────────────────────────── */
+function vCenas(){
+  return `
+  ${S.scenes.length ? `<div class="section">
+    <div class="section-head"><h2>Cenas</h2><span class="aux">um toque, um round-trip</span></div>
+    <div class="list">${S.scenes.map(s=>`
+      <button class="row" data-act="cena" data-v="${s.id}">
+        <span class="row-ico"><svg><use href="#${s.icon||'ic-scene'}"/></svg></span>
+        <span class="row-main"><span class="row-name">${esc(s.name)}</span>
+          <span class="row-sub">${s.deviceCount} aparelhos</span></span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>`).join('')}</div>
+  </div>` : ''}
+
+  ${S.suggestions.length ? `<div class="section">
+    <div class="section-head"><h2>Sugeridas pela casa</h2><span class="aux">você aprova ou recusa</span></div>
+    ${S.suggestions.map(cartaoSugestao).join('')}
+  </div>` : ''}
+
+  <div class="section">
+    <div class="section-head"><h2>Automações</h2><span class="aux">rodam na central, sem internet</span></div>
+    <div class="list">${ S.automations.length ? S.automations.map(a=>`
+      <div class="row" style="${a.activeNow?'':'opacity:.55'}">
+        <span class="row-ico${a.activeNow?' lit':''}"><svg><use href="#${a.icon||'ic-clock'}"/></svg></span>
+        <span class="row-main">
+          <span class="row-name">${esc(a.name)}${
+            a.on && !a.activeNow ? `<em class="dorme" title="Inativa no modo atual">dorme agora</em>` : ''}</span>
+          <span class="row-sub">${esc(a.desc||'')}</span>
+        </span>
+        <span class="row-aux"><span class="sw${a.on?' on':''}" data-act="automacao" data-v="${a.id}"
+          role="switch" aria-checked="${a.on}"></span></span>
+      </div>`).join('') : '<p class="empty">Nenhuma automação ainda.</p>'}</div>
+  </div>`;
+}
+
 function cartaoSugestao(g){
-  const recuo = g.tipo==='recuar';
+  const recuo = g.tipo === 'recuar';
   return `<article class="sug${recuo?' recuo':''}">
     <div class="sug-head">
       <span class="sug-tag"><svg><use href="#${recuo?'ic-alert':'ic-scene'}"/></svg>${
@@ -1250,224 +1588,105 @@ function cartaoSugestao(g){
     <p class="sug-ev">${esc(g.evidencia)}</p>
     <div class="sug-acao"><svg><use href="#ic-clock"/></svg><span>${esc(g.acao)}</span></div>
     <div class="sug-btns">
-      <button class="sug-b sim" data-act="sug" data-id="${g.id}" data-v="aceitar">${
-        recuo ? 'Pode suspender' : 'Criar rotina'}</button>
-      <button class="sug-b" data-act="sug" data-id="${g.id}" data-v="depois">Agora não</button>
-      <button class="sug-b" data-act="sug" data-id="${g.id}" data-v="nunca">Nunca</button>
+      <button class="sug-b sim" data-act="sug" data-v="${g.id}" data-x="aceitar">${
+        recuo ? 'Pode suspender' : 'Criar automação'}</button>
+      <button class="sug-b" data-act="sug" data-v="${g.id}" data-x="depois">Agora não</button>
+      <button class="sug-b" data-act="sug" data-v="${g.id}" data-x="nunca">Nunca</button>
     </div>
   </article>`;
 }
 
-const banner=(ic,txt,calm)=>`<div class="banner${calm?' calm':''}"><svg><use href="#${ic}"/></svg><span>${esc(txt)}</span></div>`;
-const nomeSala = id => { const r=room(id); return r?r.name:id; };
-
-/** Cartão de dispositivo. O corpo alterna; o canto abre a ficha. */
-function cartao(d){
-  const on = isOn(d), stale = Date.now()-d.seen > 3*3600e3;
-  return `<div class="tile${on?' on':''}${d.pend?' pending':''}${d.falhou?' rejected':''}${stale?' off-net':''}"
-               data-act="open" data-id="${d.id}">
-    <div class="tile-top">
-      <span class="tile-ico"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
-      <span class="tile-more"><svg><use href="#ic-chev"/></svg></span>
-    </div>
-    <div>
-      <div class="tile-name">${esc(d.name)}</div>
-      <div class="tile-sub">${esc(resumo(d, stale))}</div>
-    </div>
-  </div>`;
-}
-
-/** Uma linha de texto que diz a verdade sobre o dispositivo. */
-function resumo(d, stale){
-  if (stale) return 'sem reportar · ' + faz(d.seen);
-  if (d.caps.includes('lock'))  return d.st.trancado ? 'Trancada' : 'Destrancada';
-  if (d.caps.includes('cover')) return d.st.pos===0 ? 'Fechada' : d.st.pos===100 ? 'Aberta' : d.st.pos+'% aberta';
-  if (d.caps.includes('motion'))return d.st.motion ? 'Movimento agora' : 'Parado · ' + faz(d.seen);
-  if (d.caps.includes('contact'))return d.st.aberto ? 'Aberta' : 'Fechada';
-  if (d.caps.includes('leak'))  return d.st.leak ? 'Água detectada' : 'Seco';
-  if (d.caps.includes('temp'))  return nf(d.st.t,1) + ' °C · ' + d.st.h + '% umidade';
-  if (!isOn(d)) return 'Desligada';
-  if (d.caps.includes('dim'))   return d.st.bri + '%' + (d.st.k ? ' · ' + d.st.k + 'K' : '');
-  if (d.caps.includes('power')) return nf(d.st.w) + ' W';
-  return 'Ligada';
-}
-
-/* ── Cômodos ────────────────────────────────────────────────── */
-function vRooms(){
-  const rid = S.room || S.rooms[0].id;
-  const ds  = S.devices.filter(d=>d.room===rid);
-  const n   = ds.filter(d=>d.caps.includes('onoff') && isOn(d)).length;
-  return `
-  <div class="pills" role="tablist">${S.rooms.map(r=>`
-    <button class="pill" role="tab" data-act="room" data-id="${r.id}"
-            aria-selected="${r.id===rid}">${esc(r.name)}</button>`).join('')}</div>
-
-  <div class="section">
-    <div class="section-head">
-      <h2>${esc(nomeSala(rid))}</h2>
-      <span class="aux">${n ? n + (n>1?' acesos':' aceso') : 'tudo apagado'}</span>
-    </div>
-    <div class="list">${ ds.length ? ds.map(linha).join('') : '<p class="empty">Nenhum dispositivo aqui ainda.</p>' }</div>
-  </div>`;
-}
-
-/** Linha de lista: nome, estado real e o controle mais provável. */
-function linha(d){
-  const stale = Date.now()-d.seen > 3*3600e3;
-  const passivo = !d.caps.includes('onoff') && !d.caps.includes('cover') && !d.caps.includes('lock');
-  let aux;
-  if (d.caps.includes('temp'))       aux = `<span class="row-val">${nf(d.st.t,1)}°</span>`;
-  else if (passivo)                  aux = `<svg><use href="#ic-chev"/></svg>`;
-  else if (d.caps.includes('cover')) aux = `<span class="row-val">${d.st.pos}%</span><svg><use href="#ic-chev"/></svg>`;
-  else if (d.caps.includes('lock'))  aux = `<span class="sw${d.st.trancado?' on':''}" data-act="toggle" data-id="${d.id}"></span>`;
-  else                               aux = `<span class="sw${isOn(d)?' on':''}" data-act="toggle" data-id="${d.id}"></span>`;
-
-  return `<button class="row${d.pend?' pending':''}${d.falhou?' rejected':''}"
-                  data-act="open" data-id="${d.id}" style="${stale?'opacity:.55':''}">
-    <span class="row-ico${isOn(d)?' lit':''}"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
-    <span class="row-main">
-      <span class="row-name">${esc(d.name)}</span>
-      <span class="row-sub">${esc(resumo(d, stale))}</span>
-    </span>
-    <span class="row-aux">${aux}</span>
-  </button>`;
-}
-
-/* ── Cenas e rotinas ────────────────────────────────────────── */
-function vScenes(){
-  return `
-  <div class="section">
-    <div class="section-head"><h2>Cenas</h2><span class="aux">toque para aplicar</span></div>
-    <div class="list">${S.scenes.map(s=>`
-      <button class="row" data-act="scene" data-id="${s.id}">
-        <span class="row-ico"><svg><use href="#${s.icon}"/></svg></span>
-        <span class="row-main">
-          <span class="row-name">${esc(s.name)}</span>
-          <span class="row-sub">${s.n} dispositivos</span>
-        </span>
-        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
-      </button>`).join('')}</div>
-  </div>
-
-  ${S.sugestoes.length ? `<div class="section">
-    <div class="section-head"><h2>Sugeridas pela casa</h2><span class="aux">você aprova ou recusa</span></div>
-    ${S.sugestoes.map(cartaoSugestao).join('')}
-  </div>` : ''}
-
-  <div class="section">
-    <div class="section-head"><h2>Rotinas</h2><span class="aux">rodam no painel, sem internet</span></div>
-    <div class="list">${S.routines.map(r=>{
-      const vale = !r.modos || r.modos.includes(S.modo);
-      const ativa = r.on && vale;
-      return `
-      <div class="row" style="${ativa?'':'opacity:.55'}">
-        <span class="row-ico${ativa?' lit':''}"><svg><use href="#${r.icon}"/></svg></span>
-        <span class="row-main">
-          <span class="row-name">${esc(r.name)}${
-            r.on && !vale ? `<em class="dorme" title="Inativa no modo ${esc(nomeModo(S.modo))}">dorme agora</em>` : ''}</span>
-          <span class="row-sub">${esc(r.desc)}</span>
-        </span>
-        <span class="row-aux"><span class="sw${r.on?' on':''}" data-act="routine" data-id="${r.id}"></span></span>
-      </div>`;}).join('')}</div>
-  </div>`;
-}
-
 /* ── Energia ────────────────────────────────────────────────── */
-function vEnergy(){
-  const h = S.energia.horas, max = Math.max.apply(null,h) || 1;
-  const agora = new Date().getHours();
-  const W = 300, H = 100, g = 2.2, bw = (W - g*(h.length-1))/h.length;
+function vEnergia(){
+  const medidos = S.devices
+    .map(d => ({ d, pot: d.capabilities.find(c=>c.measure==='power'),
+                    ene: d.capabilities.find(c=>c.measure==='energy') }))
+    .filter(x => x.pot || x.ene)
+    .sort((a,b) => (b.ene?.value||0) - (a.ene?.value||0));
 
-  const barras = h.map((v,i)=>{
-    const bh = Math.max(2, v/max*H), x = i*(bw+g), y = H-bh;
-    const cor = i===agora ? 'var(--accent-fill)' : 'var(--chart-bar)';
-    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}"
-             rx="${Math.min(2.4,bw/2).toFixed(1)}" fill="${cor}"/>`;
-  }).join('');
-
-  const top = S.devices.filter(d=>d.st && 'kwh' in d.st).sort((a,b)=>b.st.kwh-a.st.kwh);
-  const custo = S.energia.total * S.house.tarifa;
+  const totalKwh = medidos.reduce((a,x)=> a + (x.ene?.value||0), 0);
+  const agora = potenciaTotal();
 
   return `
   <div class="chart">
     <div class="chart-top">
       <div>
-        <div class="chart-big">${nf(S.energia.total,1)}<u>kWh</u></div>
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-top:4px">Últimas 24 horas</div>
+        <div class="chart-big">${nf(agora)}<u>W</u></div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+                    color:var(--text-faint);margin-top:4px">Consumo agora</div>
       </div>
-      <div class="chart-note">≈ R$ ${nf(custo,2)}<br>a R$ ${nf(S.house.tarifa,2)}/kWh</div>
+      <div class="chart-note">${nf(totalKwh,2)} kWh<br>acumulados</div>
     </div>
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
-         aria-label="Consumo por hora nas últimas 24 horas">${barras}</svg>
-    <div class="chart-axis"><span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span></div>
+    ${barrasPorAparelho(medidos)}
   </div>
 
   <div class="section">
     <div class="section-head"><h2>Quem mais consome</h2><span class="aux">medido na tomada</span></div>
-    <div class="list">${top.map(d=>`
-      <button class="row" data-act="open" data-id="${d.id}">
-        <span class="row-ico${isOn(d)?' lit':''}"><svg><use href="#${ICON[d.type]||'ic-plug'}"/></svg></span>
-        <span class="row-main">
-          <span class="row-name">${esc(d.name)}</span>
-          <span class="row-sub">${esc(nomeSala(d.room))} · ${nf(d.st.w)} W agora</span>
-        </span>
-        <span class="row-aux"><span class="row-val">${nf(d.st.kwh,2)}</span>
-          <span style="font-size:11px;color:var(--text-faint)">kWh</span></span>
-      </button>`).join('')}</div>
+    <div class="list">${ medidos.length ? medidos.map(({d,pot,ene})=>`
+      <button class="row" data-act="abrir" data-d="${d.id}">
+        <span class="row-ico${acesoDevice(d)?' lit':''}"><svg><use href="#${iconeDe(d)}"/></svg></span>
+        <span class="row-main"><span class="row-name">${esc(d.name)}</span>
+          <span class="row-sub">${esc(nomeArea(d.areaId))}${pot?` · ${nf(pot.value)} W agora`:''}</span></span>
+        <span class="row-aux">${ene?`<span class="row-val">${nf(ene.value,2)}</span>
+          <span style="font-size:11px;color:var(--text-faint)">kWh</span>`:''}</span>
+      </button>`).join('') : '<p class="empty">Nenhuma tomada com medição na casa.</p>'}</div>
   </div>
 
   <div class="banner calm">
     <svg><use href="#ic-bolt"/></svg>
-    <span>Só aparece aqui o que passa por uma tomada Zigbee com medição. Iluminação em circuito direto não é medida.</span>
+    <span>Só aparece aqui o que passa por uma tomada com medição. Iluminação em circuito direto não é medida.</span>
   </div>`;
 }
 
+function barrasPorAparelho(medidos){
+  const comPot = medidos.filter(x=>x.pot && x.pot.value>0);
+  if (!comPot.length) return '<p class="empty" style="padding:14px 0">Nada consumindo agora.</p>';
+  const max = Math.max(...comPot.map(x=>x.pot.value));
+  const W = 300, H = 100, g = 6, bw = (W - g*(comPot.length-1)) / comPot.length;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+    aria-label="Consumo por aparelho">${comPot.map((x,i)=>{
+      const h = Math.max(3, x.pot.value/max*H);
+      return `<rect x="${(i*(bw+g)).toFixed(1)}" y="${(H-h).toFixed(1)}"
+        width="${bw.toFixed(1)}" height="${h.toFixed(1)}"
+        rx="${Math.min(3,bw/2).toFixed(1)}" fill="${i===0?'var(--accent-fill)':'var(--chart-bar)'}"/>`;
+    }).join('')}</svg>
+    <div class="chart-axis">${comPot.slice(0,3).map(x=>
+      `<span>${esc(x.d.name.slice(0,14))}</span>`).join('')}</div>`;
+}
+
 /* ── Ajustes ────────────────────────────────────────────────── */
-function vSettings(){
-  const pj = S.hub.permitJoin;
-  const linhasMalha = S.devices.slice().sort((a,b)=>a.lqi-b.lqi).slice(0,5);
+function vAjustes(){
+  const fracos = S.devices.filter(d=>d.reachability.signal!==null)
+    .sort((a,b)=>a.reachability.signal-b.reachability.signal).slice(0,5);
+
   return `
   <div class="section">
-    <div class="section-head"><h2>Hub Zigbee</h2></div>
+    <div class="section-head"><h2>Casa</h2></div>
     <div class="list">
-      ${spec('Coordenador', S.hub.coord)}
-      ${spec('Canal / PAN ID', S.hub.canal + ' · ' + S.hub.panId, true)}
-      ${spec('Dispositivos', S.devices.length + ' pareados')}
-      <button class="row" data-act="pair">
-        <span class="row-ico${pj?' lit':''}"><svg><use href="#ic-plus"/></svg></span>
-        <span class="row-main">
-          <span class="row-name">Parear novo dispositivo</span>
-          <span class="row-sub">${pj ? 'Aberto por mais ' + pj + ' s — coloque o dispositivo em modo de pareamento'
-                                     : 'Abre a rede por 60 segundos'}</span>
-        </span>
+      ${spec('Nome', S.home.name)}
+      ${spec('Fuso', S.home.timezone || '—')}
+      ${spec('Aparelhos', `${S.devices.length} pareados`)}
+      ${spec('Identificador', S.home.id || '—', true)}
+      <button class="row" data-act="parear">
+        <span class="row-ico"><svg><use href="#ic-plus"/></svg></span>
+        <span class="row-main"><span class="row-name">Parear novo aparelho</span>
+          <span class="row-sub">Abre a rede por 2 minutos</span></span>
         <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
       </button>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-head"><h2>Elos mais fracos da malha</h2><span class="aux">LQI 0–255</span></div>
-    <div class="list">${linhasMalha.map(d=>`
-      <button class="row" data-act="open" data-id="${d.id}">
-        <span class="row-ico"><svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg></span>
-        <span class="row-main">
-          <span class="row-name">${esc(d.name)}</span>
-          <span class="row-sub">${esc(nomeSala(d.room))}${d.lqi<60?' · considere um repetidor por perto':''}</span>
-        </span>
-        <span class="row-aux">${barrasLQI(d.lqi)}<span class="row-val">${d.lqi}</span></span>
+    <div class="section-head"><h2>Elos mais fracos</h2><span class="aux">sinal 0–100</span></div>
+    <div class="list">${fracos.map(d=>`
+      <button class="row" data-act="abrir" data-d="${d.id}">
+        <span class="row-ico"><svg><use href="#${iconeDe(d)}"/></svg></span>
+        <span class="row-main"><span class="row-name">${esc(d.name)}</span>
+          <span class="row-sub">${esc(nomeArea(d.areaId))}${
+            d.reachability.signal<30?' · considere um repetidor por perto':''}</span></span>
+        <span class="row-aux">${barrasSinal(d.reachability.signal)}
+          <span class="row-val">${d.reachability.signal}</span></span>
       </button>`).join('')}</div>
-  </div>
-
-  <div class="section">
-    <div class="section-head"><h2>Painel ESP32</h2></div>
-    <div class="list">
-      ${spec('Endereço', S.painel.ip + ' · nexo.local', true)}
-      ${spec('Wi-Fi', S.painel.rssi + ' dBm')}
-      ${spec('No ar há', dur(S.painel.uptime))}
-      ${spec('Memória livre', S.painel.heap + ' KB')}
-      ${spec('Cartão SD', S.painel.sd)}
-      ${spec('Firmware', 'v' + S.painel.fw, true)}
-    </div>
   </div>
 
   <div class="section">
@@ -1476,9 +1695,7 @@ function vSettings(){
       ${[['ambar','Âmbar','#100E0C','#F6A93B','#5C3F14'],
          ['aurora','Aurora','#F5F7FD','#6C63FF','#2FD3C6']].map(([id,nome,a,b,c])=>`
       <button class="swatch" data-act="palette" data-v="${id}" aria-pressed="${S.palette===id}">
-        <span class="swatch-cores">
-          <i style="background:${a}"></i><i style="background:${b}"></i><i style="background:${c}"></i>
-        </span>
+        <span class="swatch-cores"><i style="background:${a}"></i><i style="background:${b}"></i><i style="background:${c}"></i></span>
         <span class="swatch-nome">${nome}</span>
       </button>`).join('')}
     </div>
@@ -1486,164 +1703,195 @@ function vSettings(){
 
   <div class="section">
     <div class="section-head"><h2>Aparência</h2></div>
-    <div class="list">
-      ${['auto','light','dark'].map(t=>`
+    <div class="list">${['auto','light','dark'].map(t=>`
       <button class="row" data-act="theme" data-v="${t}">
         <span class="row-ico"><svg><use href="#${t==='dark'?'ic-moon':t==='light'?'ic-sun':'ic-gear'}"/></svg></span>
-        <span class="row-main"><span class="row-name">${ {auto:'Seguir o sistema',light:'Claro',dark:'Escuro'}[t] }</span></span>
+        <span class="row-main"><span class="row-name">${
+          {auto:'Seguir o sistema',light:'Claro',dark:'Escuro'}[t]}</span></span>
         <span class="row-aux">${S.theme===t?'<svg style="color:var(--accent)"><use href="#ic-check"/></svg>':''}</span>
       </button>`).join('')}
     </div>
   </div>
 
+  <div class="section">
+    <div class="list">
+      <button class="row" data-act="sair">
+        <span class="row-ico"><svg><use href="#ic-lock"/></svg></span>
+        <span class="row-main"><span class="row-name">Sair desta conta</span></span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>
+    </div>
+  </div>
+
   <div class="banner calm">
     <svg><use href="#ic-hub"/></svg>
-    <span>Esta casa não fala com a internet. O painel e o hub conversam só dentro da sua rede — se a operadora cair, tudo continua funcionando.</span>
+    <span>Esta casa não fala com a internet. O aplicativo conversa só com a central, dentro da sua
+    rede — se a operadora cair, tudo continua funcionando.</span>
   </div>`;
 }
-const spec=(k,v,mono)=>`<div class="row"><span class="row-main"><span class="row-sub" style="font-size:12px">${esc(k)}</span>
-  <span class="row-name" style="font-weight:400;font-size:14px${mono?';font-family:var(--font-mono);font-size:12.5px':''}">${esc(v)}</span></span></div>`;
 
-function barrasLQI(lqi){
-  const n = lqi>150?4:lqi>110?3:lqi>60?2:1;
+const spec=(k,v,mono)=>`<div class="row"><span class="row-main">
+  <span class="row-sub" style="font-size:12px">${esc(k)}</span>
+  <span class="row-name" style="font-weight:400;font-size:14px${
+    mono?';font-family:var(--font-mono);font-size:11.5px':''}">${esc(v)}</span></span></div>`;
+
+function barrasSinal(s){
+  if (s === null) return '';
+  const n = s>75?4 : s>50?3 : s>25?2 : 1;
   return `<span class="bars${n<2?' weak':''}">${[6,8.5,11,13.5].map((h,i)=>
     `<i style="height:${h}px" class="${i<n?'f':''}"></i>`).join('')}</span>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SHEET DO DISPOSITIVO
+   SHEET — monta o aparelho a partir das capabilities dele
    ═══════════════════════════════════════════════════════════════ */
-function sheetDispositivo(id){
+function sheetDevice(id){
   const d = dev(id); if(!d) return '';
-  const on = isOn(d), dim = d.caps.includes('dim'), cct = d.caps.includes('cct');
-  const bri = d.st.bri ?? 100;
-  const corInline = cct ? '--bloom-c:' + kelvinHex(d.st.k) + ';' : '';
-  const bloomA = on ? bloom(bri) : '0';
 
-  let controle = '';
+  const teclas = caps(d,'switch');
+  const dim = cap1(d,'dimmer'), ct = cap1(d,'color_temp');
+  const cor = cap1(d,'color'), cov = cap1(d,'cover'), lock = cap1(d,'lock');
+  const brilho = dim ? dim.value : 0;
+  const bloomA = (dim && teclas[0]?.state !== false) ? bloom(brilho) : '0';
+  const bloomC = ct ? `--bloom-c:${kelvinHex(ct.kelvin, ct.minKelvin, ct.maxKelvin)};` : '';
+
+  /* Bloco principal: o controle que mais importa neste aparelho. */
+  let topo = '';
   if (dim){
-    const pct = on ? bri : 0;
-    controle = `
-    <div class="control">
-      ${colunaVertical(pct, ICON[d.type]||'ic-bulb', 'Brilho de ' + esc(d.name), 1)}
+    topo = `<div class="control">
+      ${colunaVertical(dim, d, 'Brilho', '%')}
       <div class="control-side">
-        <button class="bigbtn" data-act="toggle" data-id="${d.id}" aria-pressed="${on}">
-          <svg><use href="#${ICON[d.type]||'ic-bulb'}"/></svg>${on?'Ligada':'Desligada'}
-        </button>
-        <button class="bigbtn quiet" data-act="fav" data-id="${d.id}" aria-pressed="${d.fav}">
-          <svg><use href="#ic-scene"/></svg>${d.fav?'Nos favoritos':'Favoritar'}
+        ${teclas[0] ? REND.switch.controle(d, teclas[0]) : ''}
+        <button class="bigbtn quiet" data-act="fav" data-d="${d.id}" aria-pressed="${d.favorite}">
+          <svg><use href="#ic-scene"/></svg>${d.favorite?'Nos favoritos':'Favoritar'}
         </button>
       </div>
     </div>`;
-  } else if (d.caps.includes('cover')){
-    controle = `<div class="control">
-      ${colunaVertical(d.st.pos, 'ic-cover', 'Abertura da cortina', 0)}
-      <div class="control-side">
-        <button class="bigbtn" data-act="cover" data-id="${d.id}" data-v="100"><svg><use href="#ic-sun"/></svg>Abrir</button>
-        <button class="bigbtn" data-act="cover" data-id="${d.id}" data-v="0"><svg><use href="#ic-moon"/></svg>Fechar</button>
-      </div>
+  } else if (cov){
+    topo = REND.cover.controle(d, cov);
+  } else if (lock){
+    topo = `<div class="control">${REND.lock.controle(d, lock)}</div>`;
+  } else if (teclas.length === 1){
+    const pot = d.capabilities.find(c=>c.measure==='power');
+    topo = `<div class="control" style="min-height:130px">
+      ${REND.switch.controle(d, teclas[0])}
+      ${pot ? `<div class="bigbtn" style="pointer-events:none">
+        <span style="font-family:var(--font-display);font-size:29px;font-weight:200;
+          letter-spacing:-.03em">${nf(pot.value)}<u style="font-size:13px;font-weight:500;
+          text-decoration:none">${esc(pot.unit)}</u></span></div>` : ''}
     </div>`;
-  } else if (d.caps.includes('lock')){
-    controle = `<div class="control" style="height:150px">
-      <button class="bigbtn" style="flex:1" data-act="toggle" data-id="${d.id}" aria-pressed="${d.st.trancado}">
-        <svg style="width:32px;height:32px"><use href="#ic-lock"/></svg>${d.st.trancado?'Trancada':'Destrancada'}
-      </button>
-    </div>`;
-  } else if (d.caps.includes('onoff')){
-    controle = `<div class="control" style="height:150px">
-      <button class="bigbtn" style="flex:1" data-act="toggle" data-id="${d.id}" aria-pressed="${on}">
-        <svg style="width:32px;height:32px"><use href="#${ICON[d.type]||'ic-plug'}"/></svg>${on?'Ligado':'Desligado'}
-      </button>
-      ${d.caps.includes('power')?`<div class="bigbtn" style="flex:1;pointer-events:none">
-        <span style="font-family:var(--font-display);font-size:31px;font-weight:200;letter-spacing:-.03em">${nf(d.st.w)}<u style="font-size:14px;font-weight:500;text-decoration:none">W</u></span>
-        <span style="font-weight:400;color:var(--text-faint)">${nf(d.st.kwh,2)} kWh hoje</span></div>`:''}
-    </div>`;
-  } else {
-    // Sensor: não há o que comandar. Mostrar a leitura, grande.
-    const leitura = d.caps.includes('temp') ? nf(d.st.t,1)+'<u style="font-size:20px;font-weight:400;text-decoration:none"> °C</u>'
-                  : d.caps.includes('motion')? (d.st.motion?'Movimento':'Parado')
-                  : d.caps.includes('contact')? (d.st.aberto?'Aberta':'Fechada')
-                  : (d.st.leak?'Água detectada':'Seco');
-    controle = `<div style="text-align:center;padding:14px 0 28px">
-      <div style="font-family:var(--font-display);font-size:60px;font-weight:200;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums">${leitura}</div>
-      ${d.caps.includes('temp')?`<div style="color:var(--text-faint);font-size:13.5px;margin-top:8px">${d.st.h}% de umidade</div>`:''}
-      <div style="color:var(--text-faint);font-size:12.5px;margin-top:6px">reportado ${faz(d.seen)}</div>
-    </div>`;
+  } else if (teclas.length > 1){
+    // Multi-canal: um device, uma linha por tecla (§2.1).
+    topo = `<div class="canais">${teclas.map(c=>`
+      <div class="canal">
+        <span class="canal-nome">${esc(c.label || c.id)}</span>
+        ${REND.switch.atalho(d,c)}
+      </div>`).join('')}</div>`;
   }
 
-  const faixaCCT = cct ? `
-    <div class="cct">
-      <div class="cct-track" id="cct" role="slider" tabindex="0" aria-label="Temperatura de cor"
-           aria-valuemin="2000" aria-valuemax="6500" aria-valuenow="${d.st.k}"
-           aria-valuetext="${d.st.k} kelvin">
-        <span class="cct-knob" id="cctknob" style="left:${((d.st.k-2000)/4500*100).toFixed(1)}%"></span>
-      </div>
-      <div class="cct-scale"><span>2000K quente</span><span id="cctval">${d.st.k}K</span><span>6500K frio</span></div>
-    </div>` : '';
+  /* Demais capabilities, cada uma se desenhando. Tipo que este cliente
+     não conhece some daqui sem alarde — e sem levar o aparelho junto. */
+  const jaMostradas = new Set([
+    ...teclas.map(c=>c.id), dim?.id, cov?.id, lock?.id
+  ].filter(Boolean));
 
-  const stale = Date.now()-d.seen > 3*3600e3;
+  const resto = d.capabilities
+    .filter(c => !jaMostradas.has(c.id) && REND[c.type]?.controle)
+    .map(c => REND[c.type].controle(d, c)).join('');
+
+  const ignoradas = d.capabilities.filter(c => !REND[c.type]).length;
+  const velho = desatualizado(d);
+  const r = d.reachability;
 
   return `
-  <div class="scrim" data-act="close"></div>
-  <section class="sheet" style="${corInline}--bloom-a:${bloomA}" role="dialog" aria-modal="true"
+  <div class="scrim" data-act="fechar"></div>
+  <section class="sheet" style="${bloomC}--bloom-a:${bloomA}" role="dialog" aria-modal="true"
            aria-label="${esc(d.name)}">
     <div class="sheet-in">
       <div class="grab"></div>
       <div class="sheet-head">
         <div>
           <h2>${esc(d.name)}</h2>
-          <div class="where">${esc(nomeSala(d.room))}${stale?' · sem reportar':''}</div>
+          <div class="where">${esc(nomeArea(d.areaId))}${velho?' · sem reportar':''}</div>
         </div>
-        <button class="head-btn" data-act="close" aria-label="Fechar">
+        <button class="head-btn" data-act="fechar" aria-label="Fechar">
           <svg width="17" height="17"><use href="#ic-x"/></svg>
         </button>
       </div>
-      ${controle}
-      ${faixaCCT}
+
+      ${topo}
+      ${resto}
+
       <div class="specs">
-        <div class="spec"><span class="k">Sinal na malha</span>
-          <span class="v">${barrasLQI(d.lqi)}LQI ${d.lqi}${d.lqi<60?' · fraco':''}</span></div>
-        ${d.bat!==null?`<div class="spec"><span class="k">Bateria</span>
-          <span class="v" style="${d.bat<60?'color:var(--alert)':''}">${d.bat}%</span></div>`:''}
-        <div class="spec"><span class="k">Última resposta</span><span class="v">${faz(d.seen)}</span></div>
-        <div class="spec"><span class="k">Modelo</span><span class="v">${esc(d.model)}</span></div>
-        <div class="spec"><span class="k">Endereço IEEE</span><span class="v mono">${esc(d.ieee)}</span></div>
+        ${r.signal!==null ? `<div class="spec"><span class="k">Sinal na malha</span>
+          <span class="v">${barrasSinal(r.signal)}${r.signal}${r.signal<30?' · fraco':''}</span></div>`:''}
+        ${r.battery!==null ? `<div class="spec"><span class="k">Bateria</span>
+          <span class="v" style="${r.battery<60?'color:var(--alert)':''}">${r.battery}%</span></div>`:''}
+        <div class="spec"><span class="k">Última resposta</span><span class="v">${faz(r.lastSeen)}</span></div>
+        <div class="spec"><span class="k">Tipo</span><span class="v">${esc(d.model.friendlyType)}</span></div>
+        <div class="spec"><span class="k">Fabricante</span>
+          <span class="v">${esc(d.model.manufacturer)} ${esc(d.model.model)}</span></div>
+        <div class="spec"><span class="k">Identificador</span><span class="v mono">${esc(d.id)}</span></div>
+        ${ignoradas ? `<div class="spec"><span class="k">Funções não suportadas</span>
+          <span class="v">${ignoradas} — este app é mais antigo que a central</span></div>`:''}
       </div>
     </div>
   </section>`;
 }
 
-/* ── Arrasto dos sliders ────────────────────────────────────── */
-function ligarControles(){
-  const d = dev(S.sheet); if(!d) return;
-  const vs = $('#vs');
+/** Coluna de brilho, com a leitura desenhada duas vezes e recortada
+ *  pelo preenchimento — o número troca de cor na linha da luz. */
+function colunaVerticalCrua(valor, icone, rotulo, devId, capId, min){
+  const corpo = `<span class="vslider-ico"><svg><use href="#${icone}"/></svg></span>`
+              + `<span class="vslider-txt">${valor}<u>%</u></span>`;
+  return `<div class="vslider" id="vs" data-d="${devId}" data-c="${esc(capId)}" data-min="${min}"
+       role="slider" tabindex="0" aria-label="${esc(rotulo)}"
+       aria-valuemin="${min}" aria-valuemax="100" aria-valuenow="${valor}">
+    ${corpo}
+    <div class="vfill" id="vfill" style="height:${valor}%"><div class="vfill-clip">${corpo}</div></div>
+  </div>`;
+}
+const colunaVertical = (c, d, rotulo) =>
+  colunaVerticalCrua(c.value, iconeDe(d), `${rotulo} de ${esc(d.name)}`, d.id, c.id, 0);
 
+/** Cor aproximada de uma temperatura em Kelvin — o halo atrás do sheet. */
+function kelvinHex(k, min, max){
+  const t = clamp((k - (min||2000)) / ((max||6500) - (min||2000)), 0, 1);
+  const a=[255,158,61], b=[214,233,255];
+  return '#' + a.map((v,i)=> Math.round(v + (b[i]-v)*t).toString(16).padStart(2,'0')).join('');
+}
+const bloom = v => (0.08 + clamp(v,0,100)/100*0.28).toFixed(3);
+
+/* ── Arrasto ────────────────────────────────────────────────── */
+function ligarControles(){
+  const vs = $('#vs');
   if (vs){
-    const fill = $('#vfill'), rotulos = vs.querySelectorAll('.vslider-txt');
-    const min = d.caps.includes('cover') ? 0 : 1;
-    let ultimo = 0, valor = d.caps.includes('cover') ? d.st.pos : d.st.bri;
+    const fill = $('#vfill'), rotulos = $$('.vslider-txt', vs);
+    const min = +vs.dataset.min || 0;
+    const devId = vs.dataset.d, capId = vs.dataset.c;
+    const d = dev(devId);
+    const ehCortina = !!d?.capabilities.find(c=>c.id===capId && c.type==='cover');
+    let ultimo = 0, valor = +vs.getAttribute('aria-valuenow');
 
     const ler = y=>{ const r = vs.getBoundingClientRect();
-      return clamp(Math.round((1 - (y - r.top)/r.height)*100), min, 100); };
+      return clamp(Math.round((1 - (y-r.top)/r.height)*100), min, 100); };
 
     const pintar = v=>{
       fill.style.height = v + '%';
-      rotulos.forEach(n=>{ n.innerHTML = v + '<u>%</u>'; });   // as duas cópias
+      rotulos.forEach(n=>{ n.innerHTML = v + '<u>%</u>'; });
       vs.setAttribute('aria-valuenow', v);
       const sheet = $('.sheet');
-      if (sheet && !d.caps.includes('cover'))
-        sheet.style.setProperty('--bloom-a', v===0 ? '0' : bloom(v));
+      if (sheet && !ehCortina) sheet.style.setProperty('--bloom-a', v===0 ? '0' : bloom(v));
     };
 
-    /* A malha Zigbee congestiona se cada pixel virar um comando.
-       Envia no máximo ~4x por segundo enquanto arrasta, e o valor
-       final sempre, ao soltar. */
+    /* A malha congestiona se cada pixel virar um comando: os relatos dos
+       sensores param de chegar enquanto se arrasta. No máximo ~4 por
+       segundo, e o valor final sempre, ao soltar. */
     const enviar = (v, final)=>{
-      const agora = Date.now();
-      if (!final && agora - ultimo < 240) return;
-      ultimo = agora;
-      if (d.caps.includes('cover')) Bus.set(d.id, {pos:v});
-      else Bus.set(d.id, v===0 ? {on:false} : {on:true, bri:v});
+      const t = Date.now();
+      if (!final && t - ultimo < 240) return;
+      ultimo = t;
+      comandar(devId, capId, ehCortina ? {type:'cover', position:v} : {type:'dimmer', value:v});
     };
 
     vs.addEventListener('pointerdown', e=>{
@@ -1654,219 +1902,576 @@ function ligarControles(){
       if (!vs.hasPointerCapture(e.pointerId)) return;
       valor = ler(e.clientY); pintar(valor); enviar(valor, false);
     });
-    const soltar = ()=>{
-      if (!travado) return;
-      travado = false; vs.classList.remove('dragging');
-      enviar(valor, true); render();
-    };
+    const soltar = ()=>{ if(!travado) return;
+      travado = false; vs.classList.remove('dragging'); enviar(valor, true); render(); };
     vs.addEventListener('pointerup', soltar);
     vs.addEventListener('pointercancel', soltar);
     vs.addEventListener('keydown', e=>{
-      const passo = e.key==='ArrowUp'?5 : e.key==='ArrowDown'?-5 : 0;
-      if (!passo) return;
-      e.preventDefault(); valor = clamp(valor+passo, min, 100); pintar(valor); enviar(valor, true);
+      const p = e.key==='ArrowUp'?5 : e.key==='ArrowDown'?-5 : 0;
+      if(!p) return; e.preventDefault();
+      valor = clamp(valor+p, min, 100); pintar(valor); enviar(valor, true);
     });
   }
 
-  const cct = $('#cct');
-  if (cct){
-    const knob = $('#cctknob'), lab = $('#cctval');
-    let ultimo = 0, k = d.st.k;
-    const ler = x=>{ const r = cct.getBoundingClientRect();
-      return Math.round((2000 + clamp((x-r.left)/r.width,0,1)*4500)/50)*50; };
-    const pintar = v=>{
-      k = v;
-      knob.style.left = ((v-2000)/4500*100).toFixed(1) + '%';
-      lab.textContent = v + 'K';
-      cct.setAttribute('aria-valuenow', v);
-      cct.setAttribute('aria-valuetext', v + ' kelvin');
-      const sheet = $('.sheet'); if (sheet) sheet.style.setProperty('--bloom-c', kelvinHex(v));
-    };
-    const enviar = (v,final)=>{ const a=Date.now();
-      if(!final && a-ultimo<240) return; ultimo=a; Bus.set(d.id,{on:true,k:v}); };
+  faixaHorizontal('#ct', '#ct-knob', '#ct-val', (v,el)=>`${v}K`,
+    (v,el)=>({type:'color_temp', kelvin:v}), 50);
+  faixaHorizontal('#hue', '#hue-knob', '#hue-val', v=>`${v}°`,
+    v=>({type:'color', hue:v, saturation:80}), 1, 0, 360);
+}
 
-    cct.addEventListener('pointerdown', e=>{
-      travado = true; cct.setPointerCapture(e.pointerId); pintar(ler(e.clientX)); e.preventDefault(); });
-    cct.addEventListener('pointermove', e=>{
-      if (!cct.hasPointerCapture(e.pointerId)) return; pintar(ler(e.clientX)); enviar(k,false); });
-    const soltar = ()=>{ if(!travado) return; travado=false; enviar(k,true); render(); };
-    cct.addEventListener('pointerup', soltar);
-    cct.addEventListener('pointercancel', soltar);
-    cct.addEventListener('keydown', e=>{
-      const p = e.key==='ArrowRight'?100 : e.key==='ArrowLeft'?-100 : 0;
-      if(!p) return; e.preventDefault(); pintar(clamp(k+p,2000,6500)); enviar(k,true);
-    });
-  }
+function faixaHorizontal(sel, selKnob, selVal, texto, comando, passo, forcaMin, forcaMax){
+  const t = $(sel); if(!t) return;
+  const knob = $(selKnob), lab = $(selVal);
+  const min = forcaMin ?? +t.dataset.min, max = forcaMax ?? +t.dataset.max;
+  const devId = t.dataset.d, capId = t.dataset.c;
+  let ultimo = 0, valor = +t.getAttribute('aria-valuenow');
+
+  const ler = x=>{ const r = t.getBoundingClientRect();
+    return Math.round((min + clamp((x-r.left)/r.width,0,1)*(max-min))/passo)*passo; };
+  const pintar = v=>{
+    valor = clamp(v, min, max);
+    knob.style.left = pctEntre(valor,min,max) + '%';
+    if (lab) lab.textContent = texto(valor);
+    t.setAttribute('aria-valuenow', valor);
+    const sheet = $('.sheet');
+    if (sheet && sel === '#ct') sheet.style.setProperty('--bloom-c', kelvinHex(valor,min,max));
+  };
+  const enviar = final=>{ const n = Date.now();
+    if(!final && n-ultimo < 240) return; ultimo = n; comandar(devId, capId, comando(valor)); };
+
+  t.addEventListener('pointerdown', e=>{
+    travado = true; t.setPointerCapture(e.pointerId); pintar(ler(e.clientX)); e.preventDefault(); });
+  t.addEventListener('pointermove', e=>{
+    if (!t.hasPointerCapture(e.pointerId)) return; pintar(ler(e.clientX)); enviar(false); });
+  const soltar = ()=>{ if(!travado) return; travado = false; enviar(true); render(); };
+  t.addEventListener('pointerup', soltar);
+  t.addEventListener('pointercancel', soltar);
+  t.addEventListener('keydown', e=>{
+    const p = e.key==='ArrowRight'? passo*10 : e.key==='ArrowLeft'? -passo*10 : 0;
+    if(!p) return; e.preventDefault(); pintar(valor+p); enviar(true);
+  });
 }
 
 /* ── Avisos efêmeros ────────────────────────────────────────── */
 let toastT = null;
-function toast(msg, ic){
+function aviso(msg, ic){
   S.toast = { msg, ic: ic||'ic-alert' };
   clearTimeout(toastT);
-  toastT = setTimeout(()=>{ S.toast=null; render(); }, 3600);
+  toastT = setTimeout(()=>{ S.toast = null; render(); }, 3600);
   render();
 }
-const toastHTML=()=>`<div class="toast" role="status"><svg><use href="#${S.toast.ic}"/></svg><span>${esc(S.toast.msg)}</span></div>`;
+const toastHTML=()=>`<div class="toast" role="status">
+  <svg><use href="#${S.toast.ic}"/></svg><span>${esc(S.toast.msg)}</span></div>`;
 
-/* ── Tela de bloqueio ───────────────────────────────────────── */
-function telaBloqueio(){
-  const teclas = [1,2,3,4,5,6,7,8,9,'.',0,'←'];
-  return `<div class="lock">
-    <div class="lock-mark"><svg><use href="#ic-hub"/></svg></div>
-    <h2>${esc(S.house.name)}</h2>
-    <p>Digite o código do painel${S.demo?' — nesta demonstração é 1234':''}</p>
-    <div class="pips${S.pinBad?' bad':''}">${[0,1,2,3].map(i=>
-      `<i class="${i<S.pinBuf.length?'f':''}"></i>`).join('')}</div>
-    <div class="keys">${teclas.map(t=>
-      t==='.' ? '<span class="key blank"></span>'
-      : t==='←' ? '<button class="key fn" data-act="pinDel">apagar</button>'
-      : `<button class="key" data-act="pin" data-v="${t}">${t}</button>`).join('')}</div>
+/* ═══════════════════════════════════════════════════════════════
+   ENTRADA — claim na central virgem, login depois (§4)
+   ═══════════════════════════════════════════════════════════════ */
+function telaEntrada(){
+  if (S.tela === 'carregando')
+    return `<div class="entrada"><div class="marca"><svg><use href="#ic-hub"/></svg></div>
+      <p class="sub">Procurando a central…</p></div>`;
+
+  const claim = S.tela === 'claim';
+  return `<div class="entrada">
+    <div class="marca"><svg><use href="#ic-hub"/></svg></div>
+    <h2>${claim ? 'Vamos configurar sua casa' : esc(S.home.name || 'Entrar na casa')}</h2>
+    <p class="sub">${claim
+      ? 'Esta central ainda não tem dono. Quem criar a conta agora será o administrador.'
+      : 'Entre com a conta que você criou nesta central.'}</p>
+
+    <form class="form" data-act="entrar" data-v="${claim?'claim':'login'}">
+      ${claim ? `<input class="campo" name="homeName" placeholder="Nome da casa" value="Minha casa" required>
+                 <input class="campo" name="name" placeholder="Seu nome" required>` : ''}
+      <input class="campo" name="email" type="email" inputmode="email" autocomplete="username"
+             placeholder="E-mail" required>
+      <input class="campo" name="password" type="password"
+             autocomplete="${claim?'new-password':'current-password'}"
+             placeholder="Senha${claim?' (mínimo 8 caracteres)':''}" required
+             ${claim?'minlength="8"':''}>
+      ${S.erroForm ? `<p class="erro-form">${esc(S.erroForm)}</p>` : ''}
+      <button class="botao" type="submit" ${S.ocupado?'disabled':''}>${
+        S.ocupado ? 'Um momento…' : claim ? 'Criar conta e assumir a central' : 'Entrar'}</button>
+    </form>
+
+    ${S.demo ? '' : `<button class="botao fraco" data-act="demo">Ver demonstração sem central</button>`}
+    <p class="aviso-mini">A conta vive só nesta central. Nada é enviado para a internet.</p>
   </div>`;
 }
 
-function digitar(n){
-  if (S.pinBuf.length>=4) return;
-  S.pinBuf += n;
-  if (S.pinBuf.length===4){
-    const ok = S.demo ? S.pinBuf==='1234' : true;   // no ESP32, quem valida é o firmware
-    setTimeout(()=>{
-      if (ok){ S.locked=false; S.pinBuf=''; guarda.gravar('nexo.aberto','1',true); }
-      else   { S.pinBad=true; S.pinBuf=''; setTimeout(()=>{S.pinBad=false;render();},400); }
-      render();
-    }, 140);
+async function submeterEntrada(form, modo){
+  const dados = Object.fromEntries(new FormData(form));
+  S.ocupado = true; S.erroForm = null; render();
+  try{
+    const par = await API.req('POST', modo==='claim' ? '/setup/claim' : '/auth/login', dados);
+    API.guardar(par);
+    await entrarNoApp();
+  }catch(e){
+    S.erroForm = e.message || 'Não consegui entrar.';
+  }finally{
+    S.ocupado = false; render();
   }
+}
+
+async function entrarNoApp(){
+  await carregarTudo();
+  S.tela = 'app';
+  Stream.abrir();
   render();
 }
 
 /* ═══════════════════════════════════════════════════════════════
    EVENTOS
    ═══════════════════════════════════════════════════════════════ */
-document.addEventListener('click', e=>{
+document.addEventListener('submit', e=>{
+  const f = e.target.closest('[data-act="entrar"]');
+  if (!f) return;
+  e.preventDefault();
+  submeterEntrada(f, f.dataset.v);
+});
+
+document.addEventListener('click', async e=>{
   const t = e.target.closest('[data-act]'); if(!t) return;
-  const { act, id, v } = t.dataset;
-  const d = id ? dev(id) : null;
+  const { act, d:devId, c:capId, v, x } = t.dataset;
 
-  if (act==='tab'){ S.view = v; S.sheet = null; el('view').scrollTop = 0; render(); }
+  if (act === 'tab'){ S.view = v; S.sheet = null; el('view').scrollTop = 0; return render(); }
+  if (act === 'area'){ S.area = v; return render(); }
+  if (act === 'fechar'){ S.sheet = null; return render(); }
 
-  else if (act==='room'){ S.room = id; render(); }
-
-  else if (act==='open'){
-    // Um toque no interruptor alterna; no resto do cartão, abre a ficha.
-    if (e.target.closest('.sw')) return;
-    S.sheet = id; render();
+  if (act === 'abrir'){
+    if (e.target.closest('.sw')) return;     // o interruptor da linha alterna
+    S.sheet = devId; return render();
   }
 
-  else if (act==='toggle'){
+  if (act === 'toggle'){
     e.stopPropagation();
-    if (!d) return;
-    d.prev = Object.assign({}, d.st);
-    if (d.caps.includes('lock')) Bus.set(id, {trancado: !d.st.trancado});
-    else Bus.set(id, {on: !isOn(d)});
+    const c = dev(devId)?.capabilities.find(x=>x.id===capId); if(!c) return;
+    return comandar(devId, capId, c.type==='lock'
+      ? { type:'lock', state: c.state==='locked' ? 'unlocked' : 'locked' }
+      : { type:'switch', toggle:true });
   }
 
-  else if (act==='cover'){ if(d){ d.prev = Object.assign({},d.st); Bus.set(id,{pos:+v}); } }
+  if (act === 'cover') return comandar(devId, capId, { type:'cover', action:v });
 
-  else if (act==='fav'){
-    if(d){ d.fav = !d.fav; Bus.enviar({t:'fav', id, v:d.fav}); render(); }
+  if (act === 'termo'){
+    const c = dev(devId)?.capabilities.find(y=>y.id===capId); if(!c) return;
+    const alvo = clamp(c.targetTemp + (v==='+' ? c.step : -c.step), c.minTemp, c.maxTemp);
+    return comandar(devId, capId, { type:'thermostat', targetTemp:+alvo.toFixed(1) });
+  }
+  if (act === 'termo-modo') return comandar(devId, capId, { type:'thermostat', mode:v });
+
+  if (act === 'fav'){
+    const d = dev(devId); if(!d) return;
+    d.favorite = !d.favorite;
+    API.req('POST', `/devices/${devId}/favorite`, { favorite:d.favorite }).catch(()=>{});
+    return render();
   }
 
-  else if (act==='scene'){ Bus.scene(id); }
+  if (act === 'cena'){
+    try{
+      const r = await API.req('POST', `/scenes/${v}/activate`);
+      aviso(`Cena aplicada em ${r.commandIds.length} aparelhos.`, 'ic-check');
+    }catch(err){ aviso(err.message, 'ic-alert'); }
+    return;
+  }
 
-  else if (act==='modo'){
-    S.modo = id;
-    Bus.enviar({t:'modo', id});
-    toast('Modo da casa: ' + nomeModo(id) + '.', 'ic-check');
+  if (act === 'modo'){
+    S.modes.current = v; render();
+    try{ await API.req('PUT','/modes/current',{ mode:v });
+         aviso('Modo da casa: ' + (S.modes.available.find(m=>m.id===v)?.name||v) + '.', 'ic-check');
+         await carregarExtensoes(); }
+    catch(err){ aviso(err.message, 'ic-alert'); }
+    return render();
+  }
+
+  if (act === 'automacao'){
+    const a = S.automations.find(y=>y.id===v); if(!a) return;
+    a.on = !a.on; render();
+    try{ await API.req('PATCH', `/automations/${v}`, { on:a.on }); await carregarExtensoes(); }
+    catch(err){ a.on = !a.on; aviso(err.message, 'ic-alert'); }
+    return render();
+  }
+
+  if (act === 'sug'){
+    const g = S.suggestions.find(y=>y.id===v);
+    S.suggestions = S.suggestions.filter(y=>y.id!==v);
     render();
+    try{
+      await API.req('POST', `/suggestions/${encodeURIComponent(v)}/decide`, { decision:x });
+      if (x === 'aceitar') aviso(g?.tipo==='recuar'
+        ? 'Automação suspensa. Pergunto de novo em duas semanas.'
+        : 'Automação criada. Nos primeiros 3 dias eu aviso antes de agir.', 'ic-check');
+      else if (x === 'depois') aviso('Guardado. Trago de novo mais para a frente.', 'ic-clock');
+      else aviso('Não sugiro mais isso.', 'ic-check');
+      await carregarExtensoes();
+    }catch(err){ aviso(err.message, 'ic-alert'); }
+    return render();
   }
 
-  else if (act==='sug'){
-    const i = S.sugestoes.findIndex(x=>x.id===id);
-    if (i<0) return;
-    const g = S.sugestoes[i];
-    Bus.enviar({t:'sug', id, v});
-
-    if (v==='aceitar'){
-      if (g.tipo==='recuar'){
-        const alvo = S.routines.find(r=>r.id===g.alvo);
-        if (alvo) alvo.on = false;
-        toast('Rotina suspensa. Pergunto de novo em duas semanas.', 'ic-check');
-      } else {
-        S.routines.push(Object.assign({on:true, supervisionada:true}, g.rotina));
-        // Período de supervisão: nos primeiros dias a casa avisa antes de
-        // agir. É o que faz alguém aceitar a segunda sugestão.
-        toast('Rotina criada. Nos primeiros 3 dias eu aviso antes de agir.', 'ic-check');
-      }
-      S.sugestoes.splice(i,1);
-    }
-    else if (v==='depois'){
-      S.sugestoes.push(S.sugestoes.splice(i,1)[0]);
-      toast('Guardado. Trago de novo mais para a frente.', 'ic-clock');
-    }
-    else {
-      S.sugestoes.splice(i,1);
-      toast('Não sugiro mais isso.', 'ic-check');
-    }
-    render();
+  if (act === 'parear'){
+    try{
+      const r = await API.req('POST','/pairing/start',{ durationSec:120 });
+      aviso(`Rede aberta por ${r.durationSec}s. Coloque o aparelho em pareamento.`, 'ic-plus');
+    }catch(err){ aviso(err.message, 'ic-alert'); }
+    return;
   }
 
-  else if (act==='routine'){
-    const r = S.routines.find(x=>x.id===id);
-    if (r){ r.on = !r.on; Bus.enviar({t:'routine', id}); render(); }
+  if (act === 'demo'){ S.demo = true; Demo.iniciar(); return entrarNoApp(); }
+
+  if (act === 'sair'){
+    try{ await API.req('POST','/auth/logout',{ refreshToken: API.ref }); }catch(_){ }
+    API.limpar(); try{ Stream.ws?.close(); }catch(_){ }
+    S.tela = 'login'; S.devices = []; return render();
   }
 
-  else if (act==='pair'){
-    if (S.hub.permitJoin>0){ Bus.pair(0); toast('Pareamento encerrado.','ic-check'); }
-    else { Bus.pair(60); toast('Rede aberta por 60 s. Coloque o dispositivo em pareamento.','ic-plus'); }
-  }
-
-  else if (act==='theme'){
-    S.theme = v; guarda.gravar('nexo.theme', v);
-    aplicarTema(); render();
-  }
-
-  else if (act==='palette'){
-    S.palette = v; guarda.gravar('nexo.palette', v);
-    aplicarTema(); render();
-  }
-
-  else if (act==='close'){ S.sheet = null; render(); }
-  else if (act==='pin'){ digitar(v); }
-  else if (act==='pinDel'){ S.pinBuf = S.pinBuf.slice(0,-1); render(); }
+  if (act === 'theme'){ S.theme = v; guarda.gravar('nexo.theme', v); aplicarTema(); return render(); }
+  if (act === 'palette'){ S.palette = v; guarda.gravar('nexo.palette', v); aplicarTema(); return render(); }
 });
 
 document.addEventListener('keydown', e=>{
-  if (e.key==='Escape' && S.sheet){ S.sheet=null; render(); }
-  if (S.locked && /^[0-9]$/.test(e.key)) digitar(e.key);
-  if (S.locked && e.key==='Backspace'){ S.pinBuf=S.pinBuf.slice(0,-1); render(); }
+  if (e.key === 'Escape' && S.sheet){ S.sheet = null; render(); }
 });
 
 function aplicarTema(){
-  // 'auto' devolve a decisão ao sistema — não carimba nada na raiz.
-  if (S.theme==='auto') delete document.documentElement.dataset.theme;
+  if (S.theme === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = S.theme;
-
-  // A paleta é ortogonal ao claro/escuro: âmbar é o padrão e não
-  // carimba nada, então as quatro combinações saem de um só CSS.
-  if (S.palette==='ambar') delete document.documentElement.dataset.palette;
+  if (S.palette === 'ambar') delete document.documentElement.dataset.palette;
   else document.documentElement.dataset.palette = S.palette;
 
-  const meta = document.querySelector('meta[name="theme-color"]:not([media])');
+  const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = getComputedStyle(document.documentElement)
     .getPropertyValue('--bg').trim();
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   DEMONSTRAÇÃO — a mesma API, servida da memória do navegador.
+   Existe para a interface poder ser avaliada sem central nenhuma;
+   fala exatamente o contrato v1, então nada no app acima sabe que
+   está falando com ela.
+   ═══════════════════════════════════════════════════════════════ */
+const Demo = {
+  ouvinte:null, seq:0, devices:[], home:null,
+  modes:{ current:'normal', available:[] }, scenes:[], automations:[], suggestions:[],
+
+  assinar(fn){
+    this.ouvinte = fn;
+    setTimeout(()=>fn({ type:'auth.ok', serverTime:new Date().toISOString() }), 60);
+  },
+  emitir(type, payload){
+    this.ouvinte?.({ type, seq:++this.seq, ts:new Date().toISOString(), payload });
+  },
+
+  iniciar(){
+    if (this.home) return;
+    const A = (k,n,i,o)=>({ id:'area-'+k, name:n, icon:i, order:o });
+    this.home = { id:'demo-home', name:'Casa Ribeiro', timezone:'America/Sao_Paulo',
+      areas:[A('sala','Sala','living-room',1), A('cozinha','Cozinha','kitchen',2),
+             A('suite','Suíte','bedroom',3), A('escrit','Escritório','office',4),
+             A('varanda','Varanda','balcony',5), A('entrada','Entrada','entrance',6)] };
+
+    const S_ = (id,measure,value,unit,precision)=>({ id, type:'sensor', measure, value, unit, precision, readonly:true });
+    const B  = (id,measure,state)=>({ id, type:'binary_sensor', measure, state, readonly:true });
+    const D  = (id,name,ak,fab,mod,tipo,capabilities,r={})=>({
+      id, name, areaId: ak?('area-'+ak):null,
+      model:{ manufacturer:fab, model:mod, friendlyType:tipo, protocol:'zigbee' },
+      capabilities,
+      reachability:{ online:true, lastSeen:new Date().toISOString(),
+                     signal:r.signal??85, battery:r.battery??null },
+      createdAt:new Date().toISOString(), favorite:!!r.fav, _fraco:!!r.fraco, _watts:r.watts
+    });
+
+    this.devices = [
+      D('d1','Luz principal','sala','IKEA','LED2109G6','Lâmpada RGBW E27',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        {id:'dimmer',type:'dimmer',value:64,readonly:false},
+        {id:'color_temp',type:'color_temp',kelvin:3000,minKelvin:2200,maxKelvin:6500,readonly:false},
+        {id:'color',type:'color',hue:32,saturation:18,readonly:false}
+      ],{signal:92,fav:true}),
+      D('d2','Sanca LED','sala','Tuya','TS0502B','Fita LED dimerizável',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        {id:'dimmer',type:'dimmer',value:28,readonly:false}
+      ],{signal:84,fav:true}),
+      D('d3','TV e rack','sala','Tuya','TS011F','Tomada 16 A com medição',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        S_('power','power',96,'W',0), S_('energy','energy',1.42,'kWh',2)
+      ],{signal:88,fav:true,watts:96}),
+      D('d4','Cortina','sala','Zemismart','ZM25TQ','Motor de cortina',[
+        {id:'cover',type:'cover',position:100,tilt:null,moving:'stopped',readonly:false}
+      ],{signal:79}),
+      D('d5','Presença sala','sala','Aqara','RTCGQ11LM','Sensor de presença',[
+        B('occupancy','occupancy',false), S_('illuminance','illuminance',42,'lx',0)
+      ],{signal:71,battery:82}),
+      D('d6','Interruptor da sala','sala','Tuya','TS0013','Interruptor 3 teclas',[
+        {id:'switch',type:'switch',label:'Teto',state:true,readonly:false},
+        {id:'switch:l2',type:'switch',label:'Sanca',state:true,readonly:false},
+        {id:'switch:l3',type:'switch',label:'Arandela',state:false,readonly:false}
+      ],{signal:90}),
+      D('d7','Luz da bancada','cozinha','Philips','LTA001','Lâmpada branco ajustável',[
+        {id:'switch',type:'switch',state:false,readonly:false},
+        {id:'dimmer',type:'dimmer',value:80,readonly:false},
+        {id:'color_temp',type:'color_temp',kelvin:4000,minKelvin:2200,maxKelvin:6500,readonly:false}
+      ],{signal:86,fav:true}),
+      D('d8','Geladeira','cozinha','Tuya','TS011F','Tomada 16 A com medição',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        S_('power','power',118,'W',0), S_('energy','energy',2.86,'kWh',2)
+      ],{signal:82,watts:118}),
+      D('d9','Sensor de vazamento','cozinha','Aqara','SJCGQ11LM','Sensor de vazamento',[
+        B('water_leak','water_leak',false)
+      ],{signal:64,battery:91}),
+      D('d10','Abajur','suite','Tuya','TS0501B','Lâmpada dimerizável',[
+        {id:'switch',type:'switch',state:false,readonly:false},
+        {id:'dimmer',type:'dimmer',value:22,readonly:false}
+      ],{signal:76,fav:true}),
+      D('d11','Ar-condicionado','suite','Moes','BHT-002','Termostato',[
+        {id:'thermostat',type:'thermostat',currentTemp:24.2,targetTemp:22,minTemp:16,maxTemp:30,
+         step:0.5,mode:'off',availableModes:['off','cool','heat','auto'],readonly:false}
+      ],{signal:81}),
+      D('d12','Janela','suite','Aqara','MCCGQ11LM','Sensor de abertura',[
+        B('contact','contact',false)
+      ],{signal:68,battery:74}),
+      D('d13','Botão da cabeceira','suite','IKEA','E1743','Botão de 2 teclas',[
+        {id:'action',type:'event',measure:'button',
+         supportedEvents:['on','off','brightness_move_up','brightness_move_down'],readonly:true}
+      ],{signal:73,battery:88}),
+      D('d14','Luz do escritório','escrit','Philips','LTA001','Lâmpada branco ajustável',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        {id:'dimmer',type:'dimmer',value:88,readonly:false},
+        {id:'color_temp',type:'color_temp',kelvin:4600,minKelvin:2200,maxKelvin:6500,readonly:false}
+      ],{signal:91,fav:true}),
+      D('d15','Tomada da bancada','escrit','Tuya','TS011F','Tomada 16 A com medição',[
+        {id:'switch',type:'switch',state:true,readonly:false},
+        S_('power','power',212,'W',0), S_('energy','energy',4.07,'kWh',2)
+      ],{signal:85,watts:212}),
+      // Capability fora do contrato v1: o app deve mostrar as duas que
+      // conhece e ignorar a terceira, sem alarde.
+      D('d16','Estação da varanda','varanda','Aqara','WSDCGQ11LM','Sensor de clima',[
+        S_('temperature','temperature',19.4,'°C',1), S_('humidity','humidity',71,'%',0),
+        { id:'air_quality', type:'air_quality', index:42, category:'boa', readonly:true }
+      ],{signal:52,battery:63}),
+      D('d17','Fechadura','entrada','Tuya','ZS-SF-EU','Fechadura eletrônica',[
+        {id:'lock',type:'lock',state:'locked',readonly:false}
+      ],{signal:70,battery:57,fav:true}),
+      D('d18','Luz do portão','entrada','Tuya','TS0502A','Lâmpada dimerizável',[
+        {id:'switch',type:'switch',state:false,readonly:false},
+        {id:'dimmer',type:'dimmer',value:60,readonly:false}
+      ],{signal:18,fraco:true})
+    ];
+
+    this.modes = { current:'normal', available:[
+      {id:'normal',name:'Normal',icon:'ic-home'}, {id:'dormindo',name:'Dormindo',icon:'ic-moon'},
+      {id:'fora',name:'Fora',icon:'ic-lock'}, {id:'recebendo',name:'Recebendo',icon:'ic-scene'} ]};
+
+    this.scenes = [
+      {id:'bomdia',name:'Bom dia',icon:'ic-sun',deviceCount:4},
+      {id:'cinema',name:'Cinema',icon:'ic-tv',deviceCount:4},
+      {id:'jantar',name:'Jantar',icon:'ic-scene',deviceCount:3},
+      {id:'boanoite',name:'Boa noite',icon:'ic-moon',deviceCount:7},
+      {id:'sair',name:'Sair de casa',icon:'ic-lock',deviceCount:9}
+    ];
+
+    this.automations = [
+      {id:'a1',name:'Fim de tarde',desc:'Acende varanda e portão a 45%',icon:'ic-sun',
+       on:true,modos:['normal','recebendo'],activeNow:true},
+      {id:'a2',name:'23h30',desc:'Modo noturno: apaga áreas comuns',icon:'ic-moon',
+       on:true,modos:['normal'],activeNow:true},
+      {id:'a3',name:'Presença na varanda',desc:'Luz a 30% quando alguém chega',icon:'ic-motion',
+       on:true,modos:['normal','dormindo'],activeNow:true},
+      {id:'a4',name:'Vazamento na cozinha',desc:'Corta a tomada e alerta no painel',icon:'ic-leak',
+       on:true,modos:['normal','dormindo','fora','recebendo'],activeNow:true},
+      {id:'a5',name:'Ninguém em casa',desc:'Desliga tomadas não essenciais',icon:'ic-home',
+       on:true,modos:['fora'],activeNow:false}
+    ];
+
+    this.suggestions = [
+      { id:'h:d7:util:26', tipo:'criar', confianca:87,
+        texto:'Você acende "Luz da bancada" por volta das 6h45 em quase todo dia útil.',
+        evidencia:'19 dos últimos 21 dias · sempre entre 06h15 e 06h45',
+        acao:'Acender "Luz da bancada" a 87%, 4600K, às 6h45, de segunda a sexta' },
+      { id:'r:a1', tipo:'recuar', confianca:59,
+        texto:'A automação "Fim de tarde" foi cancelada na mão treze vezes nas últimas semanas.',
+        evidencia:'13 cancelamentos em 22 disparos · até 10 min depois',
+        acao:'Suspender a automação e perguntar de novo daqui a duas semanas' },
+      { id:'c:d3:dormindo', tipo:'criar', confianca:73,
+        texto:'"TV e rack" continua ligada, em média, 38 minutos depois que a casa entra no modo Dormindo.',
+        evidencia:'25 das últimas 30 vezes · mediana de 38 min',
+        acao:'Desligar "TV e rack" 40 min após o modo Dormindo' }
+    ];
+
+    // Deriva de sensores: painel parado engana quem está avaliando.
+    setInterval(()=>{
+      const est = this.devices.find(d=>d.id==='d16');
+      const t = est?.capabilities.find(c=>c.measure==='temperature');
+      if (t){ t.value = +clamp(t.value + (Math.random()-.5)*.3, 14, 34).toFixed(1);
+              est.reachability.lastSeen = new Date().toISOString();
+              this.emitir('state.changed', {deviceId:est.id, capabilityId:t.id, changes:{value:t.value}}); }
+    }, 4000);
+  },
+
+  async req(metodo, caminho, corpo){
+    const espera = ms => new Promise(r=>setTimeout(r,ms));
+    await espera(20);
+
+    if (caminho === '/setup/status') return { setup:0, homeName:'Casa Ribeiro', version:1 };
+    if (caminho === '/auth/login' || caminho === '/setup/claim')
+      return { accessToken:'demo', refreshToken:'demo', expiresIn:900 };
+    if (caminho === '/home')    return this.home;
+    if (caminho === '/devices') return { devices: structuredClone(this.devices).map(limparInternos) };
+    if (caminho === '/scenes')  return { scenes: this.scenes };
+    if (caminho === '/modes')   return this.modes;
+    if (caminho === '/automations') return { automations: this.automations };
+    if (caminho === '/suggestions') return { suggestions: this.suggestions };
+
+    const cmd = caminho.match(/^\/devices\/([^/]+)\/capabilities\/([^/]+)\/command$/);
+    if (cmd) return this.comandar(cmd[1], decodeURIComponent(cmd[2]), corpo);
+
+    const cena = caminho.match(/^\/scenes\/([^/]+)\/activate$/);
+    if (cena) return this.cena(cena[1]);
+
+    if (caminho === '/modes/current'){ this.modes.current = corpo.mode;
+      this.recalcularAtivas(); return { mode: corpo.mode }; }
+
+    const aut = caminho.match(/^\/automations\/(.+)$/);
+    if (aut){ const a = this.automations.find(x=>x.id===aut[1]);
+      if (a) Object.assign(a, corpo); this.recalcularAtivas(); return a; }
+
+    const sug = caminho.match(/^\/suggestions\/(.+)\/decide$/);
+    if (sug){ const id = decodeURIComponent(sug[1]);
+      const g = this.suggestions.find(x=>x.id===id);
+      if (corpo.decision === 'aceitar' && g?.tipo === 'criar')
+        this.automations.push({ id:'auto_'+Date.now().toString(36),
+          name:g.acao.split(',')[0].replace(/^Acender |^Desligar /,''), desc:g.acao,
+          icon:'ic-clock', on:true, modos:['normal'], activeNow:true });
+      if (corpo.decision === 'aceitar' && g?.tipo === 'recuar'){
+        const a = this.automations.find(x=>x.id === 'a1'); if (a) a.on = false;
+      }
+      if (corpo.decision !== 'depois') this.suggestions = this.suggestions.filter(x=>x.id!==id);
+      else this.suggestions.push(this.suggestions.splice(this.suggestions.findIndex(x=>x.id===id),1)[0]);
+      return null; }
+
+    if (caminho === '/pairing/start') return { durationSec:120 };
+    if (caminho === '/auth/logout') return null;
+    if (/\/favorite$/.test(caminho)){
+      const id = caminho.split('/')[2];
+      const d = this.devices.find(x=>x.id===id); if(d) d.favorite = corpo.favorite;
+      return null;
+    }
+    return null;
+  },
+
+  recalcularAtivas(){
+    for (const a of this.automations)
+      a.activeNow = a.on && (!a.modos || a.modos.includes(this.modes.current));
+  },
+
+  comandar(deviceId, capId, cmd){
+    const d = this.devices.find(x=>x.id===deviceId);
+    if (!d) { const e = new Error('Dispositivo não encontrado.'); e.status=404; e.error='not_found'; throw e; }
+    const c = d.capabilities.find(x=>x.id===capId);
+    if (!c) { const e = new Error('Função não encontrada.'); e.status=404; e.error='not_found'; throw e; }
+
+    const commandId = 'cmd-' + (++this.seq);
+    const atraso = 140 + Math.random()*260;
+    const perde = d._fraco && Math.random() < 0.3;
+
+    setTimeout(()=>{
+      if (perde) return this.emitir('command.result', { commandId, status:'failed',
+                                                        error:'device_no_response' });
+      const mudou = {};
+      if (cmd.type==='switch') mudou.state = cmd.toggle ? !c.state : cmd.state;
+      if (cmd.type==='dimmer'){ mudou.value = cmd.value;
+        const sw = d.capabilities.find(x=>x.type==='switch');
+        if (sw){ sw.state = cmd.value>0;
+          this.emitir('state.changed',{deviceId,capabilityId:sw.id,changes:{state:sw.state}}); } }
+      if (cmd.type==='color_temp') mudou.kelvin = cmd.kelvin;
+      if (cmd.type==='color'){ mudou.hue = cmd.hue; mudou.saturation = cmd.saturation; }
+      if (cmd.type==='cover') mudou.position = cmd.action==='open'?100
+        : cmd.action==='close'?0 : cmd.action==='stop'?c.position : cmd.position;
+      if (cmd.type==='lock') mudou.state = cmd.state;
+      if (cmd.type==='thermostat'){
+        if (cmd.targetTemp!==undefined) mudou.targetTemp = cmd.targetTemp;
+        if (cmd.mode!==undefined) mudou.mode = cmd.mode; }
+
+      Object.assign(c, mudou);
+      d.reachability.lastSeen = new Date().toISOString();
+      this.emitir('state.changed', { deviceId, capabilityId:capId, changes:mudou });
+
+      const pot = d.capabilities.find(x=>x.measure==='power');
+      if (pot && 'state' in mudou){
+        pot.value = mudou.state ? (d._watts||90) : 0;
+        this.emitir('state.changed',{deviceId,capabilityId:pot.id,changes:{value:pot.value}});
+      }
+      this.emitir('command.result', { commandId, status:'applied' });
+    }, atraso);
+
+    return { commandId, accepted:true };
+  },
+
+  cena(id){
+    const passos = {
+      boanoite:[['d1','switch',false],['d2','switch',false],['d7','switch',false],
+                ['d14','switch',false],['d3','switch',false],['d10','switch',true]],
+      cinema:  [['d1','switch',false],['d2','switch',true],['d3','switch',true]],
+      bomdia:  [['d7','switch',true],['d14','switch',true]],
+      jantar:  [['d1','switch',true],['d2','switch',true]],
+      sair:    [['d1','switch',false],['d2','switch',false],['d3','switch',false],
+                ['d7','switch',false],['d14','switch',false],['d15','switch',false]]
+    }[id] || [];
+    const ids = [];
+    for (const [dv,cp,estado] of passos)
+      ids.push(this.comandar(dv, cp, { type:'switch', state:estado }).commandId);
+    return { commandIds: ids };
+  }
+};
+
+const limparInternos = d => { delete d._fraco; delete d._watts; return d; };
+
+/* ═══════════════════════════════════════════════════════════════
    PARTIDA
    ═══════════════════════════════════════════════════════════════ */
 aplicarTema();
-if (guarda.ler('nexo.aberto', true)) S.locked = false;
-Bus.start();
-render();
 
-/* O service worker exige contexto seguro. Sobre http:// puro o iOS
-   recusa o registro — o app continua funcionando, só sem cache
-   offline. Ver docs/ios-pwa.md. */
+/** Procura a central com prazo e uma segunda chance.
+ *
+ *  Uma tentativa curta seria pior que inútil: central recém-ligada, Pi
+ *  sob carga ou Wi-Fi ruim fariam o app cair na demonstração e mostrar
+ *  uma casa que não existe. Duas tentativas de 4 s custam pouco e evitam
+ *  o pior tipo de erro que este app pode cometer — mentir sobre o estado
+ *  da casa. */
+async function procurarCentral(){
+  for (let tentativa = 0; tentativa < 2; tentativa++){
+    try{
+      const ac = new AbortController();
+      const t = setTimeout(()=>ac.abort(), 4000);
+      const r = await fetch('/api/v1/setup/status', { signal: ac.signal }).finally(()=>clearTimeout(t));
+      if (r.ok) return await r.json();
+    }catch(_){ }
+    if (tentativa === 0) await new Promise(r=>setTimeout(r, 600));
+  }
+  return null;
+}
+
+(async function iniciar(){
+  const st = await procurarCentral();
+  if (st){
+    S.home.name = st.homeName || 'Casa';
+
+    if (st.setup === 1){ S.tela = 'claim'; return render(); }
+    if (API.acc){
+      try{ return await entrarNoApp(); }
+      catch(_){ API.limpar(); }
+    }
+    S.tela = 'login'; return render();
+  }
+
+  // Nenhuma central alcançável: cai na demonstração, que fala o mesmo
+  // contrato e permite avaliar a interface inteira. O selo DEMO na barra
+  // de status fica visível o tempo todo — ninguém pode confundir isto
+  // com a casa de verdade.
+  S.demo = true; Demo.iniciar();
+  await entrarNoApp();
+})();
+
+/* Service worker exige contexto seguro. Sobre http:// puro o iOS recusa
+   o registro — o app segue funcionando, só sem cache. Ver docs/ios-pwa.md */
 if ('serviceWorker' in navigator && window.isSecureContext){
   window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }

@@ -51,11 +51,23 @@ function padraoDeHorario(hist, catalogo) {
   const elegiveis = diasElegiveis(JANELA_DIAS);
 
   for (const dev of catalogo.devices) {
-    if (!dev.caps?.includes('onoff')) continue;
+    if (!dev.switchCap) continue;
 
     const acoes = hist.desde(JANELA_DIAS,
-      e => e.id === dev.id && e.origem === 'manual' && e.acao === 'on');
+      e => e.id === dev.id && e.cap === dev.switchCap &&
+           e.origem === 'manual' && e.acao === 'on');
     if (acoes.length < MIN_OCORRENCIAS) continue;
+
+    /* Com capabilities separadas, ligar e ajustar o brilho são dois
+       comandos. Para propor "a 87%, 4600K" é preciso olhar o que foi
+       ajustado perto do momento de acender — não dá para ler do próprio
+       evento de switch, que só diz ON. */
+    const pertoDe = (ts, capId, campo) => {
+      if (!capId) return undefined;
+      const v = hist.desde(JANELA_DIAS, e => e.id === dev.id && e.cap === capId &&
+        e.origem === 'manual' && Math.abs(e.ts - ts) <= 10 * 60e3);
+      return v.length ? v[v.length - 1].valor?.[campo] : undefined;
+    };
 
     for (const tipo of ['util', 'fds']) {
       const doTipo = acoes.filter(e => tipoDeDia(e.ts) === tipo);
@@ -86,8 +98,8 @@ function padraoDeHorario(hist, catalogo) {
         const d = new Date(e.ts); return d.getHours() * 60 + d.getMinutes();
       }));
       const hora  = hhmm(arred5(minutos));
-      const bri   = mediana(naJanela.map(e => e.valor?.bri).filter(Number.isFinite));
-      const kelvin= mediana(naJanela.map(e => e.valor?.k).filter(Number.isFinite));
+      const bri   = mediana(naJanela.map(e => pertoDe(e.ts, dev.dimmerCap, 'value')).filter(Number.isFinite));
+      const kelvin= mediana(naJanela.map(e => pertoDe(e.ts, dev.ctCap, 'kelvin')).filter(Number.isFinite));
       const quando= tipo === 'util' ? 'de segunda a sexta' : 'aos fins de semana';
       const ajuste= [bri ? `${bri}%` : null, kelvin ? `${kelvin}K` : null].filter(Boolean).join(', ');
 
@@ -108,7 +120,13 @@ function padraoDeHorario(hist, catalogo) {
           // Minuto do dia, não o balde de 15 min: o cartão anuncia um
           // horário e a rotina precisa agir naquele horário.
           gatilho: { tipo: 'hora', minuto: arred5(minutos), dias: tipo },
-          passos: [{ id: dev.id, set: montarSet(bri, kelvin) }]
+          steps: [
+            { deviceId: dev.id, capability: dev.switchCap, command: { type: 'switch', state: true } },
+            ...(Number.isFinite(bri) ? [{ deviceId: dev.id, capability: dev.dimmerCap,
+              command: { type: 'dimmer', value: bri } }] : []),
+            ...(Number.isFinite(kelvin) ? [{ deviceId: dev.id, capability: dev.ctCap,
+              command: { type: 'color_temp', kelvin } }] : [])
+          ]
         }
       });
       break;   // um padrão por dispositivo já basta; mais que isso vira ruído
@@ -128,11 +146,12 @@ function recuo(hist, rotinas) {
 
   for (const r of rotinas) {
     if (!r.on) continue;
-    const disparos = hist.desde(RECUO_DIAS, e => e.origem === 'rotina' && e.rotina === r.id);
+    const disparos = hist.desde(RECUO_DIAS,
+      e => e.origem === 'rotina' && e.rotina === r.id && e.id !== '_casa');
     if (disparos.length < RECUO_MIN) continue;
 
     const cancelados = disparos.filter(d => hist.desde(RECUO_DIAS, e =>
-      e.origem === 'manual' && e.id === d.id &&
+      e.origem === 'manual' && e.id === d.id && e.cap === d.cap &&
       e.ts > d.ts && e.ts - d.ts <= janela &&
       e.acao !== d.acao                       // desfez o que a rotina fez
     ).length > 0);
@@ -166,12 +185,13 @@ function correlacaoComModo(hist, catalogo, modoAlvo = 'dormindo') {
   if (viradas.length < CORR_MIN) return out;
 
   for (const dev of catalogo.devices) {
-    if (!dev.caps?.includes('onoff')) continue;
+    if (!dev.switchCap) continue;
 
     const atrasos = [];
     for (const v of viradas) {
       const desligou = hist.desde(JANELA_DIAS, e =>
-        e.id === dev.id && e.origem === 'manual' && e.acao === 'off' &&
+        e.id === dev.id && e.cap === dev.switchCap &&
+        e.origem === 'manual' && e.acao === 'off' &&
         e.ts > v.ts && e.ts - v.ts <= janela)[0];
       if (desligou) atrasos.push(Math.round((desligou.ts - v.ts) / 60e3));
     }
@@ -196,7 +216,8 @@ function correlacaoComModo(hist, catalogo, modoAlvo = 'dormindo') {
         icon: 'ic-clock',
         modos: [modoAlvo],
         gatilho: { tipo: 'apos-modo', modo: modoAlvo, minutos: proposto },
-        passos: [{ id: dev.id, set: { state: 'OFF' } }]
+        steps: [{ deviceId: dev.id, capability: dev.switchCap,
+                  command: { type: 'switch', state: false } }]
       }
     });
   }
@@ -207,13 +228,6 @@ function correlacaoComModo(hist, catalogo, modoAlvo = 'dormindo') {
 const aspas = s => `"${s}"`;
 const nomeModo = id => ({ normal:'Normal', dormindo:'Dormindo', fora:'Fora', recebendo:'Recebendo' }[id] || id);
 const porExtenso = n => ['zero','uma','duas','três','quatro','cinco','seis'][n] || String(n);
-
-function montarSet(bri, kelvin) {
-  const s = { state: 'ON' };
-  if (Number.isFinite(bri))    s.brightness = Math.round(bri * 2.54);
-  if (Number.isFinite(kelvin)) s.color_temp = Math.round(1e6 / kelvin);
-  return s;
-}
 
 /**
  * Roda os três detectores e devolve as sugestões pendentes, já filtradas

@@ -1,0 +1,166 @@
+{
+  "_comentario": [
+    "Configuração da central v1. É a camada humana: como a casa chama as",
+    "coisas e onde elas ficam. As FUNÇÕES de cada aparelho não estão aqui —",
+    "elas vêm do backend (o `exposes` do Zigbee2MQTT), porque é isso que",
+    "permite parear um modelo novo sem editar arquivo nem publicar app.",
+    "",
+    "'devices' é um apelido opcional por chave nativa. Aparelho pareado que",
+    "não estiver listado aparece assim mesmo, com o nome que o backend deu —",
+    "sumir da tela seria pior que aparecer sem nome bonito.",
+    "",
+    "O firmware do ESP32 (topologia enxuta) usa os arquivos devices.json,",
+    "scenes.json e routines.json deste mesmo diretório: formato mais simples,",
+    "sem capabilities, porque lá não há a fronteira do contrato."
+  ],
+
+  "home": {
+    "name": "Casa Ribeiro",
+    "timezone": "America/Sao_Paulo",
+    "tarifa": 0.92
+  },
+
+  "areas": [
+    { "key": "sala",    "name": "Sala",       "icon": "living-room", "order": 1 },
+    { "key": "cozinha", "name": "Cozinha",    "icon": "kitchen",     "order": 2 },
+    { "key": "suite",   "name": "Suíte",      "icon": "bedroom",     "order": 3 },
+    { "key": "escrit",  "name": "Escritório", "icon": "office",      "order": 4 },
+    { "key": "varanda", "name": "Varanda",    "icon": "balcony",     "order": 5 },
+    { "key": "entrada", "name": "Entrada",    "icon": "entrance",    "order": 6 }
+  ],
+
+  "devices": {
+    "luz-sala-teto":     { "name": "Luz principal",       "area": "sala",    "favorito": true },
+    "sanca-sala":        { "name": "Sanca LED",           "area": "sala",    "favorito": true },
+    "tomada-rack":       { "name": "TV e rack",           "area": "sala",    "favorito": true },
+    "cortina-sala":      { "name": "Cortina",             "area": "sala" },
+    "presenca-sala":     { "name": "Presença sala",       "area": "sala" },
+    "interruptor-sala":  { "name": "Interruptor da sala", "area": "sala" },
+    "luz-bancada":       { "name": "Luz da bancada",      "area": "cozinha", "favorito": true },
+    "tomada-geladeira":  { "name": "Geladeira",           "area": "cozinha" },
+    "vazamento-pia":     { "name": "Sensor de vazamento", "area": "cozinha" },
+    "luz-suite":         { "name": "Luz do teto",         "area": "suite" },
+    "abajur-suite":      { "name": "Abajur",              "area": "suite",   "favorito": true },
+    "ar-suite":          { "name": "Ar-condicionado",     "area": "suite" },
+    "janela-suite":      { "name": "Janela",              "area": "suite" },
+    "botao-cabeceira":   { "name": "Botão da cabeceira",  "area": "suite" },
+    "luz-escritorio":    { "name": "Luz do escritório",   "area": "escrit",  "favorito": true },
+    "tomada-bancada":    { "name": "Tomada da bancada",   "area": "escrit" },
+    "clima-varanda":     { "name": "Estação da varanda",  "area": "varanda" },
+    "fechadura":         { "name": "Fechadura",           "area": "entrada", "favorito": true },
+    "luz-portao":        { "name": "Luz do portão",       "area": "entrada" }
+  },
+
+  "_modos": [
+    "Um modo não é uma cena: cena é um comando, modo é o estado em que a",
+    "casa fica. É o que permite ao mesmo gatilho agir diferente sem virar",
+    "uma pilha de exceções aninhadas."
+  ],
+  "modes": [
+    { "id": "normal",    "name": "Normal",    "icon": "ic-home"  },
+    { "id": "dormindo",  "name": "Dormindo",  "icon": "ic-moon"  },
+    { "id": "fora",      "name": "Fora",      "icon": "ic-lock"  },
+    { "id": "recebendo", "name": "Recebendo", "icon": "ic-scene" }
+  ],
+
+  "_cenas": [
+    "Cena vira um POST /commands/batch — um round-trip só, em vez de N.",
+    "'device' usa a chave nativa; a central resolve para UUID na partida."
+  ],
+  "scenes": [
+    { "id": "bomdia", "name": "Bom dia", "icon": "ic-sun", "steps": [
+      { "device": "luz-suite",     "capability": "switch",     "command": { "type": "switch", "state": true } },
+      { "device": "luz-suite",     "capability": "dimmer",     "command": { "type": "dimmer", "value": 70, "transition": 900 } },
+      { "device": "luz-suite",     "capability": "color_temp", "command": { "type": "color_temp", "kelvin": 4200 } },
+      { "device": "luz-bancada",   "capability": "switch",     "command": { "type": "switch", "state": true } },
+      { "device": "luz-bancada",   "capability": "dimmer",     "command": { "type": "dimmer", "value": 90 } },
+      { "device": "cortina-sala",  "capability": "cover",      "command": { "type": "cover", "action": "open" } }
+    ]},
+
+    { "id": "cinema", "name": "Cinema", "icon": "ic-tv", "steps": [
+      { "device": "luz-sala-teto", "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "sanca-sala",    "capability": "switch", "command": { "type": "switch", "state": true } },
+      { "device": "sanca-sala",    "capability": "dimmer", "command": { "type": "dimmer", "value": 14 } },
+      { "device": "tomada-rack",   "capability": "switch", "command": { "type": "switch", "state": true } },
+      { "device": "cortina-sala",  "capability": "cover",  "command": { "type": "cover", "action": "close" } }
+    ]},
+
+    { "id": "jantar", "name": "Jantar", "icon": "ic-scene", "steps": [
+      { "device": "luz-sala-teto", "capability": "switch",     "command": { "type": "switch", "state": true } },
+      { "device": "luz-sala-teto", "capability": "dimmer",     "command": { "type": "dimmer", "value": 38 } },
+      { "device": "luz-sala-teto", "capability": "color_temp", "command": { "type": "color_temp", "kelvin": 2700 } },
+      { "device": "sanca-sala",    "capability": "dimmer",     "command": { "type": "dimmer", "value": 20 } }
+    ]},
+
+    { "id": "boanoite", "name": "Boa noite", "icon": "ic-moon", "steps": [
+      { "device": "luz-sala-teto",  "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "sanca-sala",     "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "luz-bancada",    "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "luz-escritorio", "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "tomada-rack",    "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "abajur-suite",   "capability": "switch", "command": { "type": "switch", "state": true } },
+      { "device": "abajur-suite",   "capability": "dimmer", "command": { "type": "dimmer", "value": 12 } },
+      { "device": "fechadura",      "capability": "lock",   "command": { "type": "lock", "state": "locked" } }
+    ]},
+
+    { "id": "sair", "name": "Sair de casa", "icon": "ic-lock", "steps": [
+      { "device": "luz-sala-teto",   "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "sanca-sala",      "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "luz-bancada",     "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "luz-suite",       "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "abajur-suite",    "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "luz-escritorio",  "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "tomada-rack",     "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "tomada-bancada",  "capability": "switch", "command": { "type": "switch", "state": false } },
+      { "device": "fechadura",       "capability": "lock",   "command": { "type": "lock", "state": "locked" } }
+    ]}
+  ],
+
+  "_automacoes": [
+    "gatilho: hora (minuto do dia 0..1439, dias util|fds|todos),",
+    "         apos-modo (N minutos após a casa entrar no modo),",
+    "         evento (capability binary_sensor virando true).",
+    "'modos' lista onde a automação age. Fora deles, ela dorme."
+  ],
+  "automations": [
+    { "id": "a1", "name": "Fim de tarde", "desc": "Acende varanda e portão a 45%",
+      "icon": "ic-sun", "on": true, "modos": ["normal", "recebendo"],
+      "gatilho": { "tipo": "hora", "minuto": 1080, "dias": "todos" },
+      "steps": [
+        { "device": "luz-portao", "capability": "switch", "command": { "type": "switch", "state": true } },
+        { "device": "luz-portao", "capability": "dimmer", "command": { "type": "dimmer", "value": 45 } }
+      ]},
+
+    { "id": "a2", "name": "23h30", "desc": "Modo noturno: apaga áreas comuns",
+      "icon": "ic-moon", "on": true, "modos": ["normal"],
+      "gatilho": { "tipo": "hora", "minuto": 1410, "dias": "todos" },
+      "steps": [
+        { "device": "luz-sala-teto",  "capability": "switch", "command": { "type": "switch", "state": false } },
+        { "device": "sanca-sala",     "capability": "switch", "command": { "type": "switch", "state": false } },
+        { "device": "luz-escritorio", "capability": "switch", "command": { "type": "switch", "state": false } }
+      ]},
+
+    { "id": "a3", "name": "Presença na varanda", "desc": "Luz a 30% quando alguém chega",
+      "icon": "ic-motion", "on": true, "modos": ["normal", "dormindo"],
+      "gatilho": { "tipo": "evento", "device": "presenca-sala", "capability": "occupancy" },
+      "steps": [
+        { "device": "luz-portao", "capability": "switch", "command": { "type": "switch", "state": true } },
+        { "device": "luz-portao", "capability": "dimmer", "command": { "type": "dimmer", "value": 30 } }
+      ]},
+
+    { "id": "a4", "name": "Vazamento na cozinha", "desc": "Corta a tomada e alerta no painel",
+      "icon": "ic-leak", "on": true, "modos": ["normal", "dormindo", "fora", "recebendo"],
+      "gatilho": { "tipo": "evento", "device": "vazamento-pia", "capability": "water_leak" },
+      "steps": [
+        { "device": "tomada-geladeira", "capability": "switch", "command": { "type": "switch", "state": false } }
+      ]},
+
+    { "id": "a5", "name": "Ninguém em casa", "desc": "Desliga tomadas não essenciais",
+      "icon": "ic-home", "on": true, "modos": ["fora"],
+      "gatilho": { "tipo": "apos-modo", "modo": "fora", "minutos": 5 },
+      "steps": [
+        { "device": "tomada-rack",    "capability": "switch", "command": { "type": "switch", "state": false } },
+        { "device": "tomada-bancada", "capability": "switch", "command": { "type": "switch", "state": false } }
+      ]}
+  ]
+}
