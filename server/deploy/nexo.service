@@ -7,7 +7,7 @@
 
 [Unit]
 Description=Nexo — painel de automação residencial
-Documentation=https://github.com/brunohenrisf/Space_Apps_Challenge_2019
+Documentation=https://github.com/brunohenrisf/assistente_de_automa-o
 # O painel funciona sem o hub, mostrando estado desconhecido, mas subir
 # depois evita um minuto de "hub fora do ar" a cada reinício.
 After=network-online.target zigbee2mqtt.service

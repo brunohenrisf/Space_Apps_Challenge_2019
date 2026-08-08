@@ -43,7 +43,7 @@ no host — Node, Mosquitto e Zigbee2MQTT vivem só dentro das imagens.
 ## 2. Subir a central
 
 ```bash
-git clone <repo> nexo && cd nexo
+git clone https://github.com/brunohenrisf/assistente_de_automa-o nexo && cd nexo
 ./instalar.sh
 ```
 
@@ -60,7 +60,7 @@ notebook** e é o jeito mais rápido de testar tudo antes de comprar o
 hardware da casa. Num ZimaOS:
 
 1. SSH no notebook e clone em `/DATA` (é a partição que o ZimaOS
-   persiste): `git clone <repo> /DATA/nexo && cd /DATA/nexo`.
+   persiste): `git clone https://github.com/brunohenrisf/assistente_de_automa-o /DATA/nexo && cd /DATA/nexo`.
 2. O ZimaOS serve o painel dele na porta **80**. Antes de subir, edite o
    `.env` (o instalador cria na primeira execução — pode rodar, ele
    detecta o conflito e aponta a saída): `NEXO_HTTP=8090`.

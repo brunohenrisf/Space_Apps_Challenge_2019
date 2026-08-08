@@ -17,7 +17,7 @@ certos sem publicar app.
 **Num Raspberry Pi (produção)** — a pilha inteira em contêineres:
 
 ```bash
-git clone <repo> nexo && cd nexo && ./instalar.sh
+git clone https://github.com/brunohenrisf/assistente_de_automa-o nexo && cd nexo && ./instalar.sh
 ```
 
 O instalador acha o dongle, escreve o `.env` e sobe Caddy + central +

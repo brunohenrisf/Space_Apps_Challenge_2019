@@ -107,7 +107,7 @@ quiser a topologia enxuta, sem Pi.
 ```bash
 # 1. Código e dependências
 sudo mkdir -p /opt/nexo && sudo chown $USER /opt/nexo
-git clone <repo> /opt/nexo && cd /opt/nexo
+git clone https://github.com/brunohenrisf/assistente_de_automa-o /opt/nexo && cd /opt/nexo
 npm --prefix server install --omit=dev        # só mqtt e ws, nada compila
 
 # 2. Configuração

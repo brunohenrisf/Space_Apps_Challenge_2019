@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Instalador da central Nexo num Raspberry Pi com Docker.
 #
-#   git clone <repo> nexo && cd nexo && ./instalar.sh
+#   git clone https://github.com/brunohenrisf/assistente_de_automa-o nexo && cd nexo && ./instalar.sh
 #
 # O que ele faz, nesta ordem:
 #   1. confere Docker + plugin compose (e diz como instalar se faltar)
