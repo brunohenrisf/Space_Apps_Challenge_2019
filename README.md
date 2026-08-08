@@ -43,22 +43,48 @@ app/                interface (documento único, 25 KB gzipado)
   manifest.webmanifest
   sw.js             cache da casca, só em contexto seguro
   icons/            gerados por código, não versionados à mão
-sdcard/             configuração da casa, vai na raiz do cartão
+casa/               configuração da instalação (serve aos dois modos)
   devices.json      catálogo: id, friendly_name do Z2M, cômodo, recursos
   scenes.json       cenas, no vocabulário do Zigbee
+server/             painel no Raspberry Pi (topologia recomendada)
+  nexo.mjs          HTTP + WebSocket + ponte MQTT + motor de rotinas
+  lib/historico.mjs histórico em JSONL, sem dependência nativa
+  lib/aprendiz.mjs  os três detectores que propõem rotinas
+  deploy/           Caddyfile (TLS) e unidade systemd
 firmware/nexo-panel/
-  nexo-panel.ino    ESP32: serve o SD, ponte MQTT, WebSocket
+  nexo-panel.ino    mesma coisa no ESP32, para instalação sem Pi
   config.example.h  copie para config.h e preencha
 tools/
   build.mjs         gzipa e monta dist/sd/ para o cartão
   make-icons.mjs    gera os PNG (codifica o PNG na mão, sem dependências)
 docs/
   arquitetura.md    contratos, tradução Zigbee, decisões, limites
+  raspberry.md      centralizar no Pi: o que muda, ganha, perde e instala
   ios-pwa.md        o requisito de HTTPS do iOS e as quatro saídas
   produto.md        onde dá para ganhar deste mercado, e por onde começar
 ```
 
-## Instalar numa casa
+## Duas topologias, uma interface
+
+O aplicativo fala com "o painel" por REST e WebSocket e nunca soube quem
+está do outro lado. Isso permite dois arranjos com **zero linha de
+diferença na interface**:
+
+**Raspberry Pi (recomendada).** `server/nexo.mjs` roda ao lado do
+Zigbee2MQTT. É o que destrava o aprendiz — precisa de meses de histórico e
+de relógio confiável — e o que resolve o HTTPS do iOS, porque o Pi termina
+TLS com folga. Instalação em [docs/raspberry.md](docs/raspberry.md).
+
+```bash
+npm --prefix server install --omit=dev   # só mqtt e ws, nada compila
+node server/nexo.mjs
+```
+
+**ESP32 (enxuta).** O firmware em `firmware/` faz o mesmo, servindo do
+cartão SD, para instalação sem Pi ou para virar painel de parede depois.
+Sem histórico, sem aprendiz, sem rotina por horário.
+
+## Instalar numa casa (topologia ESP32)
 
 1. **Preparar o cartão**
 
@@ -141,12 +167,18 @@ A interface está completa e testada nas duas paletas e nos dois temas. O
 firmware é um esqueleto funcional: serve o cartão, faz a ponte MQTT e
 transmite estado.
 
-As sugestões e os modos existem hoje **na interface**; falta o firmware
-gravar o histórico de ações e calcular os padrões, e o campo `modos` mudar
-o que o painel de fato executa. Falta também validação do PIN no firmware
-(hoje o app aceita qualquer código quando fala com um painel real), OTA, e
-RTC para as rotinas por horário. Os limites conhecidos estão em
-[docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
+No Raspberry Pi o ciclo está fechado e testado de ponta a ponta: broker
+MQTT real → painel → interface num navegador → toque → comando MQTT →
+relato do hub de volta à tela → histórico gravado. O aprendiz encontra os
+três padrões plantados em 30 dias sintéticos sem inventar um quarto
+(`node server/ferramentas/semear.mjs`).
+
+Falta: validação do PIN no painel (hoje o app aceita qualquer código
+contra um painel real), Web Push para os alertas, e o botão de ensaio.
+
+No ESP32 o firmware serve o cartão e faz a ponte MQTT; sugestões, modos e
+rotinas por horário são exclusivos da versão do Pi. Os limites conhecidos
+estão em [docs/arquitetura.md](docs/arquitetura.md#limites-conhecidos).
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "_comentario": [
-    "Cenas da casa. Vão na raiz do cartão SD.",
+    "Cenas da casa. Lidas pelo painel, seja ele o Raspberry Pi ou o ESP32.",
     "Cada passo é publicado tal e qual em zigbee2mqtt/<z2m>/set, então",
     "aqui se escreve no vocabulário do Zigbee (state/brightness/color_temp",
     "em mireds), não no da interface.",

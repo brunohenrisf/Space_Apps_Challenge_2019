@@ -1,0 +1,71 @@
+# Caddy no Raspberry Pi — é aqui que o problema do PWA no iPhone morre.
+#
+# O Safari só habilita Service Worker, cache offline e Web Push em
+# contexto seguro. O ESP32 servindo em http:// nunca vai ter isso. O Pi
+# tem CPU sobrando para o TLS, então o handshake fica com quem aguenta e
+# o painel continua em HTTP puro atrás do proxy.
+#
+#   sudo apt install caddy
+#   sudo cp Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+
+# ─────────────────────────────────────────────────────────────────────
+# OPÇÃO A — domínio próprio com certificado real (recomendada)
+#
+# Registro A de casa.SEUDOMINIO.com.br apontando para o IP da LAN
+# (192.168.0.30). Nada é exposto para a internet: o nome resolve para um
+# endereço privado, e o certificado sai por desafio DNS-01, que não
+# precisa de porta aberta — só de acesso à API do seu provedor de DNS.
+#
+# Renovação precisa de internet por alguns segundos a cada 60 dias. Se a
+# casa for de fato isolada, use a OPÇÃO B.
+# ─────────────────────────────────────────────────────────────────────
+casa.SEUDOMINIO.com.br {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	# WebSocket e API vão direto, sem cache.
+	@vivo path /ws /api/*
+	handle @vivo {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	encode gzip
+
+	header {
+		# O painel não é para ser embutido em lugar nenhum.
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		# HSTS só depois que o certificado estiver estável — antes disso
+		# um erro trava o acesso de todo mundo por meses.
+		# Strict-Transport-Security "max-age=31536000"
+	}
+
+	log {
+		output file /var/log/caddy/nexo.log
+		level WARN
+	}
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# OPÇÃO B — autoridade certificadora própria, casa sem internet
+#
+# Gere a CA e o certificado conforme docs/ios-pwa.md, instale a CA em
+# cada iPhone (perfil + Ajustes de Confiança de Certificado) e troque o
+# bloco acima por este:
+#
+# nexo.local, 192.168.0.30 {
+# 	tls /etc/caddy/nexo.crt /etc/caddy/nexo.key
+# 	reverse_proxy 127.0.0.1:8080
+# 	encode gzip
+# }
+#
+# Custo: uma visita por aparelho novo, e trocar o certificado a cada 825
+# dias — limite que o iOS impõe e não dá para contornar.
+# ─────────────────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ   = join(dirname(fileURLToPath(import.meta.url)), '..');
 const APP    = join(RAIZ, 'app');
-const SDCARD = join(RAIZ, 'sdcard');
+const CASA   = join(RAIZ, 'casa');
 const DIST   = join(RAIZ, 'dist');
 
 const COMPRIMIVEL = /\.(html|js|css|webmanifest|svg)$/i;
@@ -34,10 +34,10 @@ mkdirSync(DIST, { recursive: true });
 let bruto = 0, comprimido = 0;
 const linhas = [];
 
-/* app/ é a interface; sdcard/ é a configuração da casa. Os dois vão para
+/* app/ é a interface; casa/ é a configuração da instalação. Os dois vão para
  * a raiz do cartão, mas a configuração fica legível — quem for atender um
  * chamado precisa conseguir abrir devices.json num editor de texto. */
-for (const [origem, gzipar] of [[APP, true], [SDCARD, false]]) {
+for (const [origem, gzipar] of [[APP, true], [CASA, false]]) {
   for (const arq of varrer(origem)) {
     const rel = relative(origem, arq);
     const dados = readFileSync(arq);

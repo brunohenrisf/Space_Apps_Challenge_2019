@@ -1,7 +1,7 @@
 {
   "_comentario": [
-    "Catálogo da casa. Vai na raiz do cartão SD.",
-    "O firmware lê este arquivo na partida — mexer aqui não exige recompilar.",
+    "Catálogo da casa. Lido pelo painel, seja ele o Raspberry Pi ou o ESP32.",
+    "O painel lê este arquivo na partida — mexer aqui não exige recompilar.",
     "'z2m' precisa bater exatamente com o friendly_name no Zigbee2MQTT."
   ],
 

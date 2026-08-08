@@ -3,44 +3,45 @@
 ## Topologia
 
 ```
-┌──────────────┐        Wi-Fi da casa          ┌──────────────────────┐
-│   iPhone     │◄─────────────────────────────►│  ESP32 + cartão SD   │
-│   PWA        │   HTTP (interface, /api)      │  "o painel"          │
-│              │   WebSocket (/ws, tempo real) │                      │
-└──────────────┘                               └──────────┬───────────┘
-                                                          │ MQTT
-                                                          │ (LAN)
-                                               ┌──────────▼───────────┐
-                                               │  Hub Zigbee          │
-                                               │  Zigbee2MQTT +       │
-                                               │  coordenador CC2652  │
-                                               └──────────┬───────────┘
-                                                          │ Zigbee 3.0
-                                            ┌─────────────┼─────────────┐
-                                         lâmpadas      tomadas       sensores
-                                         cortinas      fechadura     (a pilha)
+┌──────────────┐        Wi-Fi da casa          ┌──────────────────────────┐
+│   iPhone     │◄─────────────────────────────►│  Raspberry Pi            │
+│   PWA        │   HTTPS (interface, /api)     │   Caddy — termina TLS    │
+│              │   WSS (tempo real)            │   nexo.mjs — painel      │
+└──────────────┘                               │   Zigbee2MQTT            │
+                                               │   histórico em disco     │
+                                               └───────────┬──────────────┘
+                                                           │ Zigbee 3.0
+                                            ┌──────────────┼──────────────┐
+                                         lâmpadas       tomadas        sensores
+                                         cortinas       fechadura      (a pilha)
 ```
+
+Na topologia enxuta, o bloco do meio vira um ESP32 servindo do cartão SD e
+falando MQTT com um hub Zigbee separado.
 
 Nenhuma seta sai desse desenho para a internet. É a premissa do produto,
 não uma limitação: a casa funciona com o roteador desligado da rua.
 
-## Por que o ESP32 no meio
+## Duas topologias, um contrato
 
-O hub Zigbee poderia servir a interface sozinho. O painel existe por três
-razões:
+O aplicativo fala com **"o painel"** por REST e WebSocket, e nunca soube
+quem está do outro lado. Isso não é abstração gratuita — é o que permite
+trocar o painel inteiro sem tocar numa linha da interface, e foi exatamente
+o que aconteceu quando o projeto migrou para o Raspberry Pi.
 
-1. **Desacopla o telefone do hub.** Trocar o Zigbee2MQTT por ZHA, ou o
-   coordenador por outro modelo, muda o firmware do painel e nada mais. A
-   interface não sabe que Zigbee existe.
-2. **Estado e cenas moram fora do hub.** Se o Zigbee2MQTT reinicia, o
-   "boa noite" da casa não vai junto — está no cartão SD.
-3. **Vira painel de parede.** O mesmo ESP32 aceita um display touch e
-   passa a ser o controle fixo da sala, servindo o telefone ao mesmo tempo.
+**Painel no Pi (recomendada).** `server/nexo.mjs` roda ao lado do
+Zigbee2MQTT, no mesmo aparelho. Um salto a menos, TLS de verdade, relógio
+certo e disco para o histórico. É o que destrava o aprendiz. O ESP32 sai
+do caminho crítico e fica disponível para o que faz bem: painel de parede
+com display, ou ponte de E/S para relé, dimmer 0–10 V e sensor com fio.
 
-A troca: mais um ponto de falha, e o painel precisa estar de pé para o
-telefone funcionar. Numa instalação onde o hub já é um Raspberry Pi
-confiável e não há plano de painel de parede, servir a interface direto do
-Pi é uma escolha defensável — a interface é a mesma, muda quem a entrega.
+**Painel no ESP32 (enxuta).** `firmware/nexo-panel` serve a interface do
+cartão SD e faz a mesma ponte MQTT. Para instalação sem Pi. Abre mão de
+histórico, aprendiz e rotina por horário — sem RTC o ESP32 não sabe a hora.
+
+O que muda entre as duas: **nada na interface**. Ver
+[raspberry.md](raspberry.md) para o que se ganha, o que se perde (o cartão
+do Pi corrompe; boot de 30 s em vez de 2 s) e como instalar.
 
 ## Contrato: interface ↔ painel
 
@@ -63,6 +64,9 @@ alcançável, e cai no simulador embutido.
 { "t":"reject","id":"ent_portao" }            // o nó não confirmou
 { "t":"hub",   "p":{ "online":true } }
 { "t":"panel", "p":{ "rssi":-58, "heap":148, "uptime":412860 } }
+{ "t":"modo",  "p":{ "modo":"dormindo" } }    // só no painel do Pi
+{ "t":"sugestoes", "p":[ /* … */ ] }          //  idem
+{ "t":"rotinas",   "p":[ /* … */ ] }          //  idem
 ```
 
 **Telefone → painel**
@@ -71,13 +75,23 @@ alcançável, e cai no simulador embutido.
 { "t":"set",   "id":"sala_teto", "p":{ "on":true, "bri":72 } }
 { "t":"scene", "id":"boanoite" }
 { "t":"pair",  "s":60 }                        // abre a rede por 60 s
+{ "t":"modo",  "id":"dormindo" }
+{ "t":"routine","id":"r1" }                    // liga/desliga a rotina
+{ "t":"fav",   "id":"sala_teto", "v":true }
+{ "t":"sug",   "id":"h:coz_bancada:util:26", "v":"aceitar" }   // aceitar|depois|nunca
 ```
+
+As quatro últimas são atendidas só pelo painel do Pi. No ESP32 são
+ignoradas, e a interface segue funcionando com o estado local — nenhuma
+tela quebra por causa disso.
 
 ### Vocabulário de estado
 
 A interface fala em grandezas humanas; o painel traduz para Zigbee. Essa
-tradução mora num lugar só — `aoMensagemMqtt()` e `aoReceberDoApp()` — e é
-o que permite trocar de hub sem mexer no app.
+tradução mora num lugar só em cada painel — `zigbeeParaApp()` e
+`appParaZigbee()` em `server/nexo.mjs`, `aoMensagemMqtt()` e
+`aoReceberDoApp()` no `.ino` — e é o que permite trocar de hub sem mexer
+no app. As duas implementações espelham a mesma tabela.
 
 | Interface | Zigbee2MQTT | Observação |
 |---|---|---|
@@ -113,6 +127,12 @@ há três horas aparece esmaecido e com "sem reportar", em vez de exibir a
 última leitura como se fosse agora. Mentir sobre a idade do dado é a causa
 mais comum de "o app está errado" em automação residencial.
 
+**Só ação manual conta como aprendizado.** O histórico marca a origem de
+cada evento — `manual`, `rotina` ou `cena`. Se a rotina que a casa criou
+realimentasse o histórico como se fosse gente, ela confirmaria o próprio
+palpite para sempre. É uma linha de código e é o que separa aprendizado de
+alucinação. Ver `server/lib/aprendiz.mjs`.
+
 ## Segurança
 
 O modelo de ameaça honesto: **quem está na rede Wi-Fi da casa controla a
@@ -124,10 +144,12 @@ O que de fato sustenta a segurança:
 - o painel não é exposto para a internet — sem redirecionamento de portas,
   sem UPnP;
 - os dispositivos ficam numa VLAN ou SSID separado do resto da casa;
-- o broker MQTT exige usuário e senha (`config.h`), e não escuta em `0.0.0.0`
-  se o hub e o painel estiverem no mesmo segmento;
-- `config.h` está no `.gitignore`; as credenciais da casa do cliente não
-  entram em repositório.
+- o broker MQTT exige usuário e senha, e no Pi ele escuta só em `127.0.0.1`,
+  porque painel e Zigbee2MQTT passam a morar no mesmo aparelho;
+- `config.h` e `server/config.json` estão no `.gitignore`; as credenciais da
+  casa do cliente não entram em repositório;
+- no Pi, o serviço roda como usuário próprio e sem privilégio, com escrita
+  só em `/var/lib/nexo` (ver `server/deploy/nexo.service`).
 
 Se um dia o acesso remoto entrar no escopo, o caminho é VPN (WireGuard no
 roteador), não abrir porta. Isso mantém o modelo: para controlar a casa,
@@ -135,13 +157,21 @@ estar dentro dela — ou dentro do túnel.
 
 ## Limites conhecidos
 
-- **Sem NTP, o painel não sabe a hora.** Rotinas por horário precisam de um
-  RTC (DS3231) ou de uma janela de internet na partida. As rotinas por
-  evento (presença, vazamento, contato) não dependem disso.
+- **No ESP32, sem NTP o painel não sabe a hora.** Rotinas por horário
+  precisam de um RTC (DS3231) ou de uma janela de internet na partida. As
+  rotinas por evento (presença, vazamento, contato) não dependem disso. No
+  Pi o problema não existe.
+- **O cartão SD do Pi corrompe.** É o risco real da topologia recomendada;
+  as mitigações estão em [raspberry.md](raspberry.md).
+- **O aprendiz precisa de duas a quatro semanas** de histórico antes de
+  propor a primeira rotina. Limiares em `server/lib/aprendiz.mjs` — baixá-los
+  faz a casa sugerir bobagem, e uma sugestão ruim custa a confiança de todas
+  as próximas.
 - **Consumo só onde há medição.** A tela de Energia mostra o que passa por
   tomada Zigbee com medidor. Iluminação em circuito direto não aparece — a
   própria tela diz isso, para o cliente não achar que o número está errado.
-- **Um painel, poucos telefones.** O `ESPAsyncWebServer` atende bem uns 4 a
-  6 WebSockets simultâneos no ESP32 clássico. Para uma casa, sobra.
-- **`MAX_DISPOSITIVOS` é 64.** Acima disso, o JSON de `/api/state` começa a
-  pressionar a heap; o caminho é paginar por cômodo.
+- **No ESP32, poucos telefones.** O `ESPAsyncWebServer` atende bem uns 4 a
+  6 WebSockets simultâneos. Para uma casa, sobra. No Pi são centenas.
+- **`MAX_DISPOSITIVOS` é 64 no ESP32.** Acima disso, o JSON de `/api/state`
+  começa a pressionar a heap; o caminho é paginar por cômodo. No Pi não há
+  esse teto.

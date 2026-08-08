@@ -1,0 +1,21 @@
+{
+  "_comentario": [
+    "Copie para config.json e ajuste. config.json está no .gitignore.",
+    "Caminhos relativos são resolvidos a partir da raiz do repositório."
+  ],
+
+  "porta": 8080,
+
+  "mqtt": {
+    "url": "mqtt://127.0.0.1:1883",
+    "base": "zigbee2mqtt",
+    "usuario": "nexo",
+    "senha": "troque-esta-senha"
+  },
+
+  "pin": "1234",
+  "tarifa": 0.92,
+
+  "_dados": "Onde ficam histórico e estado persistido. Num Pi, prefira /var/lib/nexo — ver deploy/nexo.service.",
+  "dados": "./server/dados"
+}

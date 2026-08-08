@@ -1,0 +1,17 @@
+{
+  "name": "nexo-painel",
+  "version": "1.0.0",
+  "description": "Painel Nexo servido pelo Raspberry Pi: interface, ponte MQTT, motor de rotinas e aprendiz",
+  "type": "module",
+  "private": true,
+  "main": "nexo.mjs",
+  "scripts": {
+    "start": "node nexo.mjs",
+    "semear": "node ferramentas/semear.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "mqtt": "^5.10.0",
+    "ws": "^8.18.0"
+  }
+}

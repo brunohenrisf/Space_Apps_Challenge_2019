@@ -750,7 +750,9 @@ const $  = (s,r)=> (r||document).querySelector(s);
 const el = (id)=> document.getElementById(id);
 const clamp = (n,a,b)=> n<a?a:n>b?b:n;
 const esc = (s)=> String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const nf  = (n,d)=> n.toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+const nf  = (n,d)=> Number.isFinite(n)
+  ? n.toLocaleString('pt-BR',{minimumFractionDigits:d||0,maximumFractionDigits:d||0})
+  : '—';
 
 /* O Safari em navegação privada lança ao tocar em localStorage. Sem esta
    proteção o app inteiro morre na primeira linha. */
@@ -896,6 +898,9 @@ const Bus = {
     else if (m.t==='reject'){ const d=dev(m.id); if(d) confirmar(d, false); }
     else if (m.t==='hub')   { Object.assign(S.hub, m.p); }
     else if (m.t==='panel') { Object.assign(S.painel, m.p); }
+    else if (m.t==='modo')      { S.modo = m.p.modo; }
+    else if (m.t==='sugestoes') { S.sugestoes = m.p; }
+    else if (m.t==='rotinas')   { S.routines = m.p.map(r=>({...r, name:r.name||r.nome})); }
     render();
   },
 
@@ -910,6 +915,12 @@ const Bus = {
     else if (this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify({t:'set', id, p:patch}));
     else { clearTimeout(d.pend.t); d.pend=null; toast('Sem conexão com o painel.'); }
     render();
+  },
+
+  /** Ações que não mexem num dispositivo: modo, rotina, favorito,
+   *  decisão sobre sugestão. No simulador não há para onde mandar. */
+  enviar(msg){
+    if (!S.demo && this.ws && this.ws.readyState===1) this.ws.send(JSON.stringify(msg));
   },
 
   scene(id){
@@ -1756,12 +1767,15 @@ document.addEventListener('click', e=>{
 
   else if (act==='cover'){ if(d){ d.prev = Object.assign({},d.st); Bus.set(id,{pos:+v}); } }
 
-  else if (act==='fav'){ if(d){ d.fav = !d.fav; render(); } }
+  else if (act==='fav'){
+    if(d){ d.fav = !d.fav; Bus.enviar({t:'fav', id, v:d.fav}); render(); }
+  }
 
   else if (act==='scene'){ Bus.scene(id); }
 
   else if (act==='modo'){
     S.modo = id;
+    Bus.enviar({t:'modo', id});
     toast('Modo da casa: ' + nomeModo(id) + '.', 'ic-check');
     render();
   }
@@ -1770,6 +1784,7 @@ document.addEventListener('click', e=>{
     const i = S.sugestoes.findIndex(x=>x.id===id);
     if (i<0) return;
     const g = S.sugestoes[i];
+    Bus.enviar({t:'sug', id, v});
 
     if (v==='aceitar'){
       if (g.tipo==='recuar'){
@@ -1797,7 +1812,7 @@ document.addEventListener('click', e=>{
 
   else if (act==='routine'){
     const r = S.routines.find(x=>x.id===id);
-    if (r){ r.on = !r.on; render(); }
+    if (r){ r.on = !r.on; Bus.enviar({t:'routine', id}); render(); }
   }
 
   else if (act==='pair'){

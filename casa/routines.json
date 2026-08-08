@@ -1,0 +1,85 @@
+{
+  "_comentario": [
+    "Rotinas do instalador. As que a casa sugerir e o morador aceitar são",
+    "gravadas à parte, em dados/estado.json — assim uma atualização deste",
+    "arquivo nunca apaga o que a família construiu.",
+    "",
+    "Gatilhos:",
+    "  hora       minuto do dia 0..1439 (6h45 = 405), dias: util|fds|todos",
+    "  apos-modo  N minutos depois que a casa entra no modo indicado",
+    "  evento     mudança de estado de um dispositivo",
+    "",
+    "'modos' é a lista de modos em que a rotina age. Fora deles ela dorme —",
+    "é o que faz o mesmo gatilho se comportar diferente sem virar uma pilha",
+    "de exceções aninhadas."
+  ],
+
+  "routines": [
+    {
+      "id": "r1",
+      "name": "Fim de tarde",
+      "desc": "Acende varanda e portão a 45%",
+      "icon": "ic-sun",
+      "on": true,
+      "modos": ["normal", "recebendo"],
+      "gatilho": { "tipo": "hora", "minuto": 1080, "dias": "todos" },
+      "passos": [
+        { "id": "var_luz",    "set": { "state": "ON", "brightness": 114 } },
+        { "id": "ent_portao", "set": { "state": "ON", "brightness": 114 } }
+      ]
+    },
+    {
+      "id": "r2",
+      "name": "23h30",
+      "desc": "Modo noturno: apaga áreas comuns",
+      "icon": "ic-moon",
+      "on": true,
+      "modos": ["normal"],
+      "gatilho": { "tipo": "hora", "minuto": 1410, "dias": "todos" },
+      "passos": [
+        { "id": "sala_teto",   "set": { "state": "OFF" } },
+        { "id": "sala_sanca",  "set": { "state": "OFF" } },
+        { "id": "coz_bancada", "set": { "state": "OFF" } },
+        { "id": "esc_teto",    "set": { "state": "OFF" } }
+      ]
+    },
+    {
+      "id": "r3",
+      "name": "Presença na varanda",
+      "desc": "Luz a 30% quando alguém chega",
+      "icon": "ic-motion",
+      "on": true,
+      "modos": ["normal", "dormindo"],
+      "gatilho": { "tipo": "evento", "id": "sala_pres", "quando": { "motion": true } },
+      "passos": [
+        { "id": "var_luz", "set": { "state": "ON", "brightness": 76 } }
+      ]
+    },
+    {
+      "id": "r4",
+      "name": "Vazamento na cozinha",
+      "desc": "Corta a tomada e alerta no painel",
+      "icon": "ic-leak",
+      "on": true,
+      "modos": ["normal", "dormindo", "fora", "recebendo"],
+      "gatilho": { "tipo": "evento", "id": "coz_vaz", "quando": { "leak": true } },
+      "passos": [
+        { "id": "coz_gelad", "set": { "state": "OFF" } }
+      ]
+    },
+    {
+      "id": "r5",
+      "name": "Ninguém em casa",
+      "desc": "Desliga tomadas não essenciais",
+      "icon": "ic-home",
+      "on": true,
+      "modos": ["fora"],
+      "gatilho": { "tipo": "apos-modo", "modo": "fora", "minutos": 5 },
+      "passos": [
+        { "id": "sala_tv",  "set": { "state": "OFF" } },
+        { "id": "esc_mesa", "set": { "state": "OFF" } },
+        { "id": "sui_ac",   "set": { "state": "OFF" } }
+      ]
+    }
+  ]
+}

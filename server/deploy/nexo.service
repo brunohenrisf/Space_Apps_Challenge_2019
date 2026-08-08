@@ -1,0 +1,53 @@
+# Unidade systemd do painel Nexo.
+#
+#   sudo useradd --system --home /var/lib/nexo --create-home nexo
+#   sudo cp nexo.service /etc/systemd/system/
+#   sudo systemctl enable --now nexo
+#   journalctl -u nexo -f
+
+[Unit]
+Description=Nexo — painel de automação residencial
+Documentation=https://github.com/brunohenrisf/Space_Apps_Challenge_2019
+# O painel funciona sem o hub, mostrando estado desconhecido, mas subir
+# depois evita um minuto de "hub fora do ar" a cada reinício.
+After=network-online.target zigbee2mqtt.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nexo
+Group=nexo
+WorkingDirectory=/opt/nexo
+Environment=NODE_ENV=production
+Environment=NEXO_CONFIG=/etc/nexo/config.json
+ExecStart=/usr/bin/node /opt/nexo/server/nexo.mjs
+
+Restart=always
+RestartSec=5
+
+# Histórico e estado persistido. Fora de /opt para sobreviver a uma
+# atualização do código feita com git pull.
+StateDirectory=nexo
+ReadWritePaths=/var/lib/nexo
+
+# Endurecimento: o painel só precisa ler o código, escrever em
+# /var/lib/nexo e falar na rede local.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+# Um painel de casa não precisa de mais que isso, e o limite transforma
+# um vazamento de memória em reinício em vez de Pi travado.
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

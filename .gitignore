@@ -6,3 +6,8 @@ dist/
 
 node_modules/
 .DS_Store
+
+# Servidor do Raspberry Pi
+server/node_modules/
+server/config.json
+server/dados/
