@@ -1,0 +1,99 @@
+# A central Nexo inteira, em contêineres — replicar uma casa é clonar o
+# repositório, ajustar o .env e `docker compose up -d --build`.
+#
+#   ./instalar.sh          faz tudo isso, detectando o dongle sozinho
+#
+# Quatro serviços, um por camada do desenho de arquitetura:
+#
+#   caddy        termina TLS e é a única porta aberta para a LAN
+#   nexo         a central: contrato v1, automações, aprendiz
+#   zigbee2mqtt  traduz cluster Zigbee para JSON
+#   mosquitto    broker MQTT — só existe DENTRO desta rede do compose
+#
+# O broker e o Zigbee2MQTT não publicam porta nenhuma no host, de
+# propósito: quem está na LAN fala com o Caddy, e mais nada.
+
+name: nexo
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-dados:/mosquitto/data
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-W", "3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:1.42.0
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    volumes:
+      - z2m-dados:/app/data
+      - /run/udev:/run/udev:ro
+    devices:
+      # NEXO_SERIAL vem do .env — sempre o caminho /dev/serial/by-id/…,
+      # que sobrevive a reinício; /dev/ttyUSB0 muda de número.
+      - "${NEXO_SERIAL:-/dev/ttyUSB0}:/dev/zigbee"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      # Toda a configuração por ambiente: nenhum yaml para editar à mão.
+      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: mqtt://mosquitto:1883
+      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/zigbee
+      # ember = SONOFF ZBDongle-E (EFR32MG21) · zstack = ZBDongle-P (CC2652P)
+      ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ${NEXO_SERIAL_ADAPTADOR:-ember}
+      # Canal escolhido CONTRA o Wi-Fi da casa: 15, 20 ou 25 caem nas
+      # frestas dos canais Wi-Fi 1/6/11. Deixar no padrão é sortear.
+      ZIGBEE2MQTT_CONFIG_ADVANCED_CHANNEL: ${NEXO_CANAL:-15}
+      ZIGBEE2MQTT_CONFIG_ADVANCED_TRANSMIT_POWER: 20
+      # A rede NUNCA nasce aberta; o pareamento é aberto pelo app, com teto.
+      ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: "false"
+      # O frontend do Z2M já vem desligado por padrão; a interface da casa
+      # é o Nexo. Para depurar, habilite frontend no data/configuration.yaml
+      # do volume e publique a porta 8081 temporariamente.
+
+  nexo:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    volumes:
+      - nexo-dados:/dados
+      # A configuração da casa fica no host, legível: editar casa.json e
+      # `docker compose restart nexo` — sem rebuild.
+      - ./casa:/opt/nexo/casa:ro
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      NEXO_MQTT_URL: mqtt://mosquitto:1883
+    # Teto de memória: um vazamento vira reinício, não Pi travado.
+    mem_limit: 256m
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      nexo:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      # Descomente junto com um dos blocos TLS do Caddyfile — sem site
+      # :443 configurado, a porta publicada só confundiria o diagnóstico.
+      # - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+      - caddy-config:/config
+
+volumes:
+  mosquitto-dados:
+  z2m-dados:
+  nexo-dados:
+  caddy-dados:
+  caddy-config:

@@ -13,7 +13,7 @@
  * pacote que compila é uma instalação que pode travar.
  * ───────────────────────────────────────────────────────────────────── */
 import http from 'node:http';
-import { readFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { join, dirname, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,6 +24,7 @@ import { criarStream } from './lib/contrato/stream.mjs';
 import { AdaptadorZigbee2Mqtt } from './lib/adaptadores/zigbee2mqtt.mjs';
 import { AdaptadorSimulador } from './lib/adaptadores/simulador.mjs';
 import { Historico, tipoDeDia } from './lib/historico.mjs';
+import { eventoSolar, hhmmSol } from './lib/sol.mjs';
 import { sugerir } from './lib/aprendiz.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -38,7 +39,15 @@ const cfg = Object.assign({
   dados: join(RAIZ, 'server', 'dados'),
   mqtt: { url: 'mqtt://127.0.0.1:1883', base: 'zigbee2mqtt', usuario: null, senha: null }
 }, existsSync(cfgArq) ? leJson(cfgArq) : {});
-if (process.env.NEXO_ADAPTADOR) cfg.adaptador = process.env.NEXO_ADAPTADOR;
+// Dentro de um contêiner a configuração vem por ambiente, não por arquivo:
+// é o que deixa o mesmo compose replicar em qualquer casa mudando só o .env.
+if (process.env.NEXO_ADAPTADOR)    cfg.adaptador     = process.env.NEXO_ADAPTADOR;
+if (process.env.NEXO_PORTA)        cfg.porta         = +process.env.NEXO_PORTA;
+if (process.env.NEXO_DADOS)        cfg.dados         = process.env.NEXO_DADOS;
+if (process.env.NEXO_CASA)         cfg.casa          = process.env.NEXO_CASA;
+if (process.env.NEXO_MQTT_URL)     cfg.mqtt.url      = process.env.NEXO_MQTT_URL;
+if (process.env.NEXO_MQTT_USUARIO) cfg.mqtt.usuario  = process.env.NEXO_MQTT_USUARIO;
+if (process.env.NEXO_MQTT_SENHA)   cfg.mqtt.senha    = process.env.NEXO_MQTT_SENHA;
 
 const casa = leJson(cfg.casa);
 mkdirSync(cfg.dados, { recursive: true });
@@ -53,11 +62,58 @@ const areas = casa.areas.map(a => ({
   id: uuidDe('area', a.key), key: a.key, name: a.name, icon: a.icon, order: a.order
 }));
 
-let modoAtual = 'normal';
+/* Estado que pertence à família — modo, favoritos, apelidos, automações
+   criadas pelo aprendiz — sobrevive a reinício e a atualização de imagem.
+   Sem isto, cada `docker compose up` apagaria o que a casa aprendeu. */
+const persistArq = join(cfg.dados, 'estado.json');
+
+// Um estado.json truncado por queda de energia NÃO pode virar crash-loop
+// do contêiner: guarda o corpo ilegível de lado e recomeça dos padrões.
+let persistido = {};
+if (existsSync(persistArq)) {
+  try { persistido = leJson(persistArq); }
+  catch (e) {
+    console.error('[persist] estado.json ilegível — arquivando como .corrompido e recomeçando:', e.message);
+    try { renameSync(persistArq, persistArq + '.corrompido'); } catch (_) { }
+  }
+}
+const persist = Object.assign(
+  { modo: 'normal', favoritos: {}, apelidos: {}, recusadas: [], criadas: [],
+    estados: {}, areasCriadas: [], areasPatch: {}, areasApagadas: [] },
+  persistido
+);
+
+// Escrita atômica (tmp + rename): ou o arquivo antigo inteiro, ou o novo
+// inteiro — nunca metade de um JSON no disco.
+const salvar = () => {
+  try {
+    const tmp = persistArq + '.tmp';
+    writeFileSync(tmp, JSON.stringify(persist, null, 2));
+    renameSync(tmp, persistArq);
+  } catch (e) { console.error('[persist]', e.message); }
+};
+
+const arranque = Date.now();
+let modoAtual = persist.modo;
 let automacoes = structuredClone(casa.automations || []);
+for (const a of automacoes) {
+  const e = persist.estados[a.id];
+  if (typeof e === 'boolean') a.on = e;                    // formato antigo
+  else if (e && typeof e === 'object') {
+    if (typeof e.on === 'boolean') a.on = e.on;
+    if (e.name) a.name = e.name;
+    if (Array.isArray(e.modos)) a.modos = e.modos;
+  }
+}
+automacoes.push(...structuredClone(persist.criadas));
+
+// Cômodos criados/editados/apagados em runtime também sobrevivem.
+for (let i = areas.length - 1; i >= 0; i--)
+  if (persist.areasApagadas.includes(areas[i].id)) areas.splice(i, 1);
+for (const a of areas) Object.assign(a, persist.areasPatch[a.id] || {});
+areas.push(...structuredClone(persist.areasCriadas));
 let sugestoes = [];
-const recusadas = new Set();
-const favoritos = {};
+const recusadas = new Set(persist.recusadas);
 const ultimoEvento = new Map();      // deviceId:capId → { event, ts }
 
 let stream, adaptador;
@@ -123,20 +179,34 @@ const central = {
   },
 
   renomear(id, { name, areaId }) {
-    const d = adaptador.devices().find(x => x.id === id);
-    if (!d) return null;
-    if (typeof name === 'string' && name.trim()) d.name = name.trim();
-    if (areaId !== undefined) d.areaId = areaId;
-    return enfeitar(d);
+    if (!adaptador.devices().some(x => x.id === id)) return null;
+    // Apelido persistido, nunca mutação do objeto do adaptador — um resync
+    // do bridge/devices reconstruiria o Device e apagaria o rename.
+    const ap = persist.apelidos[id] || (persist.apelidos[id] = {});
+    if (typeof name === 'string' && name.trim()) ap.name = name.trim();
+    if (areaId !== undefined) ap.areaId = areaId;
+    salvar();
+    return central.device(id);
   },
 
   remover: id => adaptador.remover(id),
 
   favoritar(id, valor){
     if (!adaptador.devices().some(d => d.id === id)) return false;
-    favoritos[id] = valor;
+    persist.favoritos[id] = valor;
+    salvar();
     return true;
   },
+
+  /** Para o healthcheck do contêiner e para diagnóstico rápido. */
+  saude: () => ({
+    status: 'ok',
+    uptime: Math.round((Date.now() - arranque) / 1000),
+    adaptador: adaptador?.nome || null,
+    hub: hubOnline,
+    devices: adaptador ? adaptador.devices().length : 0,
+    historico: historico.tamanho
+  }),
 
   parear: seg => adaptador.parear(seg),
   pararPareamento: () => adaptador.pararPareamento(),
@@ -145,6 +215,8 @@ const central = {
     const a = { id: novoUuid(), key: null, name: name || 'Novo cômodo', icon,
                 order: areas.length + 1 };
     areas.push(a);
+    persist.areasCriadas.push({ ...a });
+    salvar();
     return { id: a.id, name: a.name, icon: a.icon, order: a.order };
   },
   editarArea(id, patch) {
@@ -152,12 +224,24 @@ const central = {
     if (patch.name) a.name = patch.name;
     if (patch.icon !== undefined) a.icon = patch.icon;
     if (Number.isFinite(patch.order)) a.order = patch.order;
+    const criada = persist.areasCriadas.find(x => x.id === id);
+    if (criada) Object.assign(criada, { name: a.name, icon: a.icon, order: a.order });
+    else persist.areasPatch[id] = { name: a.name, icon: a.icon, order: a.order };
+    salvar();
     return { id: a.id, name: a.name, icon: a.icon, order: a.order };
   },
   apagarArea(id) {
     const i = areas.findIndex(x => x.id === id); if (i < 0) return false;
     areas.splice(i, 1);
     for (const d of adaptador.devices()) if (d.areaId === id) d.areaId = null;
+    const iC = persist.areasCriadas.findIndex(x => x.id === id);
+    if (iC >= 0) persist.areasCriadas.splice(iC, 1);
+    else if (!persist.areasApagadas.includes(id)) persist.areasApagadas.push(id);
+    delete persist.areasPatch[id];
+    // Apelidos que apontavam para o cômodo morto não podem ficar órfãos.
+    for (const ap of Object.values(persist.apelidos))
+      if (ap.areaId === id) ap.areaId = null;
+    salvar();
     return true;
   },
 
@@ -179,6 +263,8 @@ const central = {
   trocarModo(id) {
     if (!(casa.modes || []).some(m => m.id === id)) return null;
     modoAtual = id;
+    persist.modo = id;
+    salvar();
     historico.registrar({ id: '_casa', acao: 'modo', valor: { modo: id },
                           modo: id, origem: 'manual' });
     stream?.emitir('mode.changed', { mode: id });
@@ -193,6 +279,19 @@ const central = {
     if (typeof patch.on === 'boolean') a.on = patch.on;
     if (patch.name) a.name = patch.name;
     if (Array.isArray(patch.modos)) a.modos = patch.modos;
+    // Criada pelo aprendiz? Atualiza a cópia persistida. Automação do
+    // instalador persiste o que a API aceitou mudar (on, name, modos) como
+    // sobreposição — casa.json continua sendo a base.
+    const criada = persist.criadas.find(x => x.id === a.id);
+    if (criada) Object.assign(criada, { on: a.on, name: a.name, modos: a.modos });
+    else {
+      const e = (typeof persist.estados[a.id] === 'object' && persist.estados[a.id]) || {};
+      if (typeof patch.on === 'boolean') e.on = a.on;
+      if (patch.name) e.name = a.name;
+      if (Array.isArray(patch.modos)) e.modos = a.modos;
+      persist.estados[a.id] = e;
+    }
+    salvar();
     stream?.emitir('automation.changed', { automation: a });
     return a;
   },
@@ -204,16 +303,36 @@ const central = {
     if (decisao === 'aceitar') {
       if (g.tipo === 'recuar') {
         const alvo = automacoes.find(a => a.id === g.alvo);
-        if (alvo) alvo.on = false;
+        if (alvo) {
+          alvo.on = false;
+          // O desligamento tem que sobreviver ao reinício — senão a rotina
+          // suspensa volta ligada e a sugestão de recuo, já consumida,
+          // nunca é reoferecida.
+          const criada = persist.criadas.find(x => x.id === alvo.id);
+          if (criada) criada.on = false;
+          else {
+            const e = (typeof persist.estados[alvo.id] === 'object' && persist.estados[alvo.id]) || {};
+            e.on = false;
+            persist.estados[alvo.id] = e;
+          }
+        }
         recusadas.add(g.id);
       } else {
-        automacoes.push({ id: 'auto_' + Date.now().toString(36), on: true,
+        // Aceita também entra em recusadas: os ids das sugestões são
+        // determinísticos, e sem isto o recálculo horário reofereceria a
+        // mesma sugestão — re-aceitar duplicaria a automação.
+        recusadas.add(g.id);
+        const nova = { id: 'auto_' + Date.now().toString(36), on: true,
           supervisionada: true, name: g.rotina.nome, desc: g.rotina.desc,
           icon: g.rotina.icon, modos: g.rotina.modos, gatilho: g.rotina.gatilho,
-          steps: g.rotina.steps || [] });
+          steps: g.rotina.steps || [] };
+        automacoes.push(nova);
+        persist.criadas.push(structuredClone(nova));
       }
     } else if (decisao === 'nunca') recusadas.add(g.id);
 
+    persist.recusadas = [...recusadas];
+    salvar();
     sugestoes = sugestoes.filter(s => s.id !== id);
     stream?.emitir('suggestions.changed', { suggestions: sugestoes });
     stream?.emitir('automation.changed', { automations: central.automacoes() });
@@ -223,14 +342,19 @@ const central = {
 
 /** Anexa o que é da central, não do backend: favorito e último evento. */
 function enfeitar(d) {
+  const ap = persist.apelidos[d.id] || {};
   const nativo = Object.entries(casa.devices || {}).find(([, v]) => v.name === d.name)?.[0];
-  const fav = favoritos[d.id] ?? (nativo ? !!casa.devices[nativo].favorito : false);
+  const fav = (d.id in persist.favoritos)
+    ? !!persist.favoritos[d.id]
+    : (nativo ? !!casa.devices[nativo].favorito : false);
   const caps = d.capabilities.map(c => {
     if (c.type !== 'event') return c;
     const u = ultimoEvento.get(`${d.id}:${c.id}`);
     return u ? { ...c, lastEvent: u.event, lastEventAt: u.ts } : c;
   });
-  return { ...d, capabilities: caps, favorite: fav };
+  return { ...d, name: ap.name || d.name,
+           areaId: ap.areaId !== undefined ? ap.areaId : d.areaId,
+           capabilities: caps, favorite: fav };
 }
 
 /* ── Passos de cena e automação ───────────────────────────────── */
@@ -259,18 +383,50 @@ function executarAutomacao(a) {
                         modo: modoAtual, origem: 'rotina', rotina: a.id });
 }
 
+/* O sol de hoje, calculado uma vez por dia. "Acender no pôr do sol"
+ * continua certa em junho e em dezembro sem ninguém reajustar horário —
+ * e sem internet: é astronomia, não API. */
+let solCache = { dia: '', nascer: null, por: null };
+function minutosSol(evento, d) {
+  const dia = d.toDateString();
+  if (solCache.dia !== dia) {
+    const { lat, lon } = casa.home;
+    const temCoords = Number.isFinite(lat) && Number.isFinite(lon);
+    if (!temCoords && (casa.automations || []).some(x => x.gatilho?.tipo === 'sol'))
+      console.warn('[sol] automação solar configurada mas home.lat/lon ausentes em casa.json — ela nunca vai disparar');
+    solCache = { dia,
+      nascer: temCoords ? eventoSolar(lat, lon, d, 'nascer') : null,
+      por:    temCoords ? eventoSolar(lat, lon, d, 'por')    : null };
+    if (solCache.por !== null)
+      console.log(`[sol] hoje: nasce ${hhmmSol(solCache.nascer)}, põe ${hhmmSol(solCache.por)}`);
+  }
+  return evento === 'nascer' ? solCache.nascer : solCache.por;
+}
+
 setInterval(() => {
   const d = new Date();
   const minuto = d.getHours() * 60 + d.getMinutes();
-  const tipo = tipoDeDia(Date.now());
+  const tipoDia = tipoDeDia(Date.now());
   const hoje = d.toDateString();
 
   for (const a of automacoes) {
     if (!a.on || !valeNoModo(a)) continue;
     const g = a.gatilho;
-    if (g?.tipo !== 'hora' || minuto !== g.minuto) continue;
-    if (g.dias && g.dias !== 'todos' && g.dias !== tipo) continue;
-    if (a.disparouEm === hoje) continue;    // NTP pode voltar o relógio
+
+    let alvo = null;
+    if (g?.tipo === 'hora') {
+      if (g.dias && g.dias !== 'todos' && g.dias !== tipoDia) continue;
+      alvo = g.minuto;
+    } else if (g?.tipo === 'sol') {
+      const base = minutosSol(g.evento || 'por', d);
+      if (base === null) continue;          // latitude sem o evento hoje
+      const off = Number.isFinite(g.offsetMin) ? g.offsetMin : 0;
+      // Módulo de verdade: qualquer offset, por mais absurdo, cai em 0..1439
+      // em vez de virar alvo negativo que nunca dispara.
+      alvo = (((base + off) % 1440) + 1440) % 1440;
+    } else continue;
+
+    if (minuto !== alvo || a.disparouEm === hoje) continue;   // NTP pode voltar o relógio
     a.disparouEm = hoje;
     executarAutomacao(a);
   }
@@ -374,7 +530,9 @@ const servidor = http.createServer(async (req, res) => {
   for (const [caminho, gz] of [[alvo + '.gz', true], [alvo, false]]) {
     if (gz && !aceitaGz) continue;
     if (!existsSync(caminho) || !statSync(caminho).isFile()) continue;
-    const cab = { 'content-type': tipo, 'cache-control': 'no-cache' };
+    const cab = { 'content-type': tipo,
+      // Ícones não mudam entre versões; o resto revalida sempre.
+      'cache-control': extname(alvo) === '.png' ? 'public, max-age=604800' : 'no-cache' };
     if (gz) cab['content-encoding'] = 'gzip';
     res.writeHead(200, cab);
     return res.end(readFileSync(caminho));
@@ -406,4 +564,4 @@ servidor.listen(cfg.porta, () => {
 });
 
 for (const sinal of ['SIGTERM', 'SIGINT'])
-  process.on(sinal, () => { adaptador.parar?.(); process.exit(0); });
+  process.on(sinal, () => { salvar(); adaptador.parar?.(); process.exit(0); });

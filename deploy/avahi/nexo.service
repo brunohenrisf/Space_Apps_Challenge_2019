@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<!--
+  Anúncio mDNS da central Nexo.
+
+  Na prática, basta o hostname do Pi ser "nexo" para http://nexo.local
+  funcionar — o avahi do Raspberry Pi OS já anuncia o host. Este arquivo
+  acrescenta o serviço _http._tcp com o TXT de descoberta do contrato
+  (§4: id/ver/setup), útil para ferramentas que varrem a rede.
+
+  Instalação (no host, fora do Docker):
+    sudo cp deploy/avahi/nexo.service /etc/avahi/services/
+-->
+<service-group>
+  <name replace-wildcards="yes">Nexo — central de %h</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>80</port>
+    <txt-record>ver=1</txt-record>
+    <txt-record>produto=nexo</txt-record>
+  </service>
+</service-group>

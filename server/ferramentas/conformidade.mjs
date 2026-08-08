@@ -56,7 +56,11 @@ try {
   /* ═══ §4 — Pareamento ═══════════════════════════════════════════ */
   secao('§4 Pareamento e primeiro acesso');
 
-  let r = await req('GET', '/setup/status');
+  let r = await req('GET', '/health');
+  conf(r.status === 200 && r.corpo.status === 'ok' && Number.isFinite(r.corpo.uptime),
+       'GET /health responde sem token — é o healthcheck do contêiner', r.corpo);
+
+  r = await req('GET', '/setup/status');
   conf(r.status === 200 && r.corpo.setup === 1, 'central virgem anuncia setup=1', r.corpo);
 
   r = await req('POST', '/setup/claim',
@@ -354,6 +358,23 @@ try {
 
   r = await req('PUT', '/modes/current', { token, corpo: { mode: 'inventado' } });
   conf(r.status === 400, 'modo desconhecido: 400');
+
+  /* ═══ Freio de força bruta ══════════════════════════════════════ */
+  secao('Força bruta nas rotas públicas');
+
+  // Fica por último de propósito: depois do 429 este IP está queimado
+  // por um minuto, e nada mais neste teste depende de rota pública.
+  let veio429 = false;
+  for (let i = 0; i < 25 && !veio429; i++) {
+    const t = await req('POST', '/auth/login',
+      { corpo: { email: 'ataque@x.y', password: 'chute' + i } });
+    veio429 = t.status === 429 && t.corpo.error === 'rate_limited';
+  }
+  conf(veio429, 'enxurrada de logins leva 429 rate_limited antes da 25ª tentativa');
+
+  const aposLimite = await req('GET', '/devices', { token });
+  conf(aposLimite.status === 200,
+       'o limite vale só para as rotas públicas — sessão autenticada segue normal');
 
 } catch (e) {
   nok('exceção durante o teste', e.message);

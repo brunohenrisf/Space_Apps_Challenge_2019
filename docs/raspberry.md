@@ -1,5 +1,11 @@
 # Centralizar no Raspberry Pi
 
+> **Este documento explica a decisão.** O caminho de instalação de
+> produção mudou para contêineres — siga
+> [instalacao-docker.md](instalacao-docker.md); a instalação manual via
+> systemd descrita aqui continua válida para quem não quer Docker.
+> A lista de compras com especificações está em [hardware.md](hardware.md).
+
 Sim, e é a topologia que eu levaria para produção. Este documento diz o
 que muda, o que se ganha, o que se perde, e como instalar.
 
@@ -115,7 +121,9 @@ nano casa/devices.json                        # 'z2m' = friendly_name no Z2M
 nano casa/routines.json
 
 # 4. Interface pré-comprimida (o Node serve o .gz e poupa o cartão)
-node tools/build.mjs && cp -r dist/sd/* app/
+# --so-app: os JSONs de casa/ ficam FORA de app/ — app/ é servido estático,
+# sem autenticação, e a configuração da casa não é pública.
+node tools/build.mjs --so-app && cp -r dist/sd/* app/
 
 # 5. Serviço
 sudo useradd --system --home /var/lib/nexo --create-home nexo

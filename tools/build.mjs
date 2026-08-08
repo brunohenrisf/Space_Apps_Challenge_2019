@@ -37,7 +37,11 @@ const linhas = [];
 /* app/ é a interface e vai comprimida; casa/ é a configuração e fica
  * legível — quem for atender um chamado precisa abrir casa.json num editor
  * de texto, não descomprimir nada. */
-for (const [origem, gzipar] of [[APP, true], [CASA, false]]) {
+// --so-app: só a interface. É o modo da imagem Docker — a configuração da
+// casa entra por bind mount em /opt/nexo/casa e NUNCA pode parar dentro de
+// app/, que é servido estático sem autenticação.
+const SO_APP = process.argv.includes('--so-app');
+for (const [origem, gzipar] of (SO_APP ? [[APP, true]] : [[APP, true], [CASA, false]])) {
   for (const arq of varrer(origem)) {
     const rel = relative(origem, arq);
     const dados = readFileSync(arq);

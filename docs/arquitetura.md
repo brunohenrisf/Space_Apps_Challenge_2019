@@ -71,7 +71,7 @@ os acréscimos e as decisões que ele deixou em aberto estão em
 node server/ferramentas/conformidade.mjs
 ```
 
-Sobe a central com o adaptador simulador e confere 67 cláusulas, uma a
+Sobe a central com o adaptador simulador e confere 70 cláusulas, uma a
 uma. É o que impede alguém de "otimizar" o BFF devolvendo `brightness`
 0–254 porque é o que o Zigbee manda — o erro aparece aqui, e não na casa
 do cliente três meses depois.
@@ -109,6 +109,17 @@ sempre despachado ao soltar.
 há três horas aparece esmaecido e com "sem reportar", em vez de exibir a
 última leitura como se fosse agora. Mentir sobre a idade do dado é a causa
 mais comum de "o app está errado" em automação residencial.
+
+**O agendador conhece o sol, sem internet.** Automações aceitam o gatilho
+`sol` (`nascer`/`por`, com offset em minutos): o horário é calculado
+astronomicamente de `home.lat/lon` em `server/lib/sol.mjs`, uma vez por
+dia. "Acender no pôr do sol" continua certa em junho e em dezembro sem
+ninguém reajustar — e sem depender de API de clima.
+
+**O que a família constrói sobrevive a reinício.** Modo da casa,
+favoritos, apelidos de aparelho, automações criadas pelo aprendiz e
+recusas ficam em `estado.json` no volume de dados — atualizar a imagem do
+contêiner não apaga o que a casa aprendeu.
 
 **Só ação manual conta como aprendizado.** O histórico marca a origem de
 cada evento — `manual`, `rotina` ou `cena`. Se a rotina que a casa criou

@@ -10,16 +10,21 @@
  *    por `error`, que é estável; `message` é texto para gente ler e pode
  *    mudar sem aviso.
  */
+import { gzipSync } from 'node:zlib';
 import { novoUuid, acharCap, validarComando } from './modelo.mjs';
 import { podeFazer, podeVerDevice, filtrarDevices } from './auth.mjs';
 
 const MAX_CORPO = 256 * 1024;
 
-const json = (res, codigo, corpo) => {
-  const texto = JSON.stringify(corpo);
-  res.writeHead(codigo, { 'content-type': 'application/json; charset=utf-8',
-                          'cache-control': 'no-store' });
-  res.end(texto);
+const json = (res, codigo, corpo, gz = false) => {
+  let buf = Buffer.from(JSON.stringify(corpo));
+  const cab = { 'content-type': 'application/json; charset=utf-8',
+                'cache-control': 'no-store' };
+  // GET /devices de uma casa cheia passa de 50 KB; comprimir corta ~85%
+  // e num Pi que também roda o Zigbee2MQTT isso se nota no Wi-Fi.
+  if (gz && buf.length > 1024) { buf = gzipSync(buf); cab['content-encoding'] = 'gzip'; }
+  res.writeHead(codigo, cab);
+  res.end(buf);
 };
 const erro = (res, codigo, error, message, details) =>
   json(res, codigo, { error, message, ...(details ? { details } : {}) });
@@ -53,9 +58,33 @@ function casar(padrao, caminho) {
   return params;
 }
 
+/* Freio de força bruta nas rotas públicas de credencial. Janela deslizante
+ * por IP: 15 POSTs por minuto dá folga para uma família inteira errar a
+ * senha e ainda transforma um ataque de dicionário em séculos. */
+const tentativas = new Map();
+function estourou(ip) {
+  const agora = Date.now();
+  const arr = (tentativas.get(ip) || []).filter(t => agora - t < 60_000);
+  arr.push(agora);
+  tentativas.set(ip, arr);
+  return arr.length > 15;
+}
+setInterval(() => {
+  const agora = Date.now();
+  for (const [ip, arr] of tentativas) {
+    const vivas = arr.filter(t => agora - t < 60_000);
+    vivas.length ? tentativas.set(ip, vivas) : tentativas.delete(ip);
+  }
+}, 120_000).unref?.();
+
 export function criarRest({ auth, central }) {
   const rotas = [];
   const rota = (metodo, padrao, opcoes, mao) => rotas.push({ metodo, padrao, ...opcoes, mao });
+
+  /* Healthcheck do contêiner e diagnóstico de bancada. Público e mínimo:
+     não revela nada que quem já está na LAN não veja de outro jeito. */
+  rota('GET', '/health', { publico: true }, async () =>
+    ({ codigo: 200, corpo: central.saude() }));
 
   /* ── Descoberta e pareamento (§4) ─────────────────────────────── */
 
@@ -282,6 +311,12 @@ export function criarRest({ auth, central }) {
       const params = casar(r.padrao, caminho);
       if (!params) continue;
 
+      if (r.publico && req.method === 'POST' &&
+          estourou(req.socket.remoteAddress || '?')) {
+        erro(res, 429, 'rate_limited', 'Muitas tentativas. Aguarde um minuto.');
+        return true;
+      }
+
       let claims = null;
       if (!r.publico) {
         const cab = req.headers.authorization || '';
@@ -306,7 +341,8 @@ export function criarRest({ auth, central }) {
         const out = await r.mao({ params, corpo, claims,
                                   query: Object.fromEntries(url.searchParams) });
         if (out.codigo === 204) { res.writeHead(204); res.end(); }
-        else json(res, out.codigo, out.corpo);
+        else json(res, out.codigo, out.corpo,
+                  (req.headers['accept-encoding'] || '').includes('gzip'));
       } catch (e) {
         console.error('[rest]', r.padrao, e);
         erro(res, 500, 'internal_error', 'Algo falhou na central.');

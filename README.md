@@ -14,7 +14,18 @@ certos sem publicar app.
 
 ## Ver funcionando agora
 
-A central inteira, sem hub nenhum:
+**Num Raspberry Pi (produção)** — a pilha inteira em contêineres:
+
+```bash
+git clone <repo> nexo && cd nexo && ./instalar.sh
+```
+
+O instalador acha o dongle, escreve o `.env` e sobe Caddy + central +
+Mosquitto + Zigbee2MQTT. Guia completo, backup e diagnóstico em
+[docs/instalacao-docker.md](docs/instalacao-docker.md); a lista de compras
+com especificações em [docs/hardware.md](docs/hardware.md).
+
+**Na sua máquina, sem hub nenhum:**
 
 ```bash
 npm --prefix server install
@@ -40,7 +51,7 @@ contrato, com o selo DEMO sempre visível.
 Conformidade do contrato:
 
 ```bash
-node server/ferramentas/conformidade.mjs   # 67 cláusulas
+node server/ferramentas/conformidade.mjs   # 70 cláusulas
 ```
 
 Arraste a coluna de brilho na ficha de um dispositivo — é o gesto central
@@ -69,6 +80,9 @@ app/                interface (documento único, 25 KB gzipado)
 casa/               configuração da instalação
   casa.json         cômodos, apelidos, cenas, modos e automações
   devices.json      formato antigo, usado só pelo firmware do ESP32
+docker-compose.yml  a pilha inteira: caddy + nexo + mosquitto + zigbee2mqtt
+Dockerfile          imagem da central (multi-arch, sem toolchain)
+instalar.sh         do git clone à casa no ar, detectando o dongle
 server/             a central, no Raspberry Pi
   nexo.mjs          costura tudo: estáticos, REST, stream, automações
   lib/contrato/     modelo, auth (EdDSA), REST v1, WebSocket v1
@@ -83,6 +97,8 @@ tools/
   build.mjs         gzipa e monta dist/sd/ para o cartão
   make-icons.mjs    gera os PNG (codifica o PNG na mão, sem dependências)
 docs/
+  hardware.md       lista de compras com especificação e os avisos de rádio
+  instalacao-docker.md  do cartão virgem à entrega: acesso, contas, backup
   contrato-v1.md    notas de implementação, acréscimos, o que ficou aberto
   arquitetura.md    topologia, decisões que vieram do rádio, limites
   raspberry.md      centralizar no Pi: o que muda, ganha, perde e instala

@@ -17,7 +17,10 @@
   "home": {
     "name": "Casa Ribeiro",
     "timezone": "America/Sao_Paulo",
-    "tarifa": 0.92
+    "tarifa": 0.92,
+    "_coordenadas": "Aproximadas bastam: o gatilho solar tolera dezenas de km.",
+    "lat": -8.05,
+    "lon": -34.9
   },
 
   "areas": [
@@ -118,14 +121,15 @@
 
   "_automacoes": [
     "gatilho: hora (minuto do dia 0..1439, dias util|fds|todos),",
+    "         sol (evento nascer|por, offsetMin; usa home.lat/lon, sem internet),",
     "         apos-modo (N minutos após a casa entrar no modo),",
     "         evento (capability binary_sensor virando true).",
     "'modos' lista onde a automação age. Fora deles, ela dorme."
   ],
   "automations": [
-    { "id": "a1", "name": "Fim de tarde", "desc": "Acende varanda e portão a 45%",
+    { "id": "a1", "name": "Fim de tarde", "desc": "Acende o portão 15 min antes do pôr do sol",
       "icon": "ic-sun", "on": true, "modos": ["normal", "recebendo"],
-      "gatilho": { "tipo": "hora", "minuto": 1080, "dias": "todos" },
+      "gatilho": { "tipo": "sol", "evento": "por", "offsetMin": -15 },
       "steps": [
         { "device": "luz-portao", "capability": "switch", "command": { "type": "switch", "state": true } },
         { "device": "luz-portao", "capability": "dimmer", "command": { "type": "dimmer", "value": 45 } }

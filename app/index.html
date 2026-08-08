@@ -496,6 +496,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 }
 @media (min-width:780px) and (min-height:700px){.sheet{border-radius:var(--r-xl) var(--r-xl) 44px 44px}}
 @keyframes rise{from{transform:translateY(102%)}to{transform:translateY(0)}}
+/* Re-render com o MESMO sheet aberto (chegou um delta, mexeu num slider):
+   o nó é reconstruído, mas não pode PARECER que reabriu — nada de repetir
+   a subida nem o fade do scrim. O toast fica de fora de propósito: cada
+   toast é novo de verdade e merece a entrada. */
+#layer.sem-anim .sheet,#layer.sem-anim .scrim{animation:none}
 /* O "bloom": a luz que o cômodo vai receber, antes de o rádio responder.
    Centrado sobre o slider — é de lá que a luz sai. Fica todo dentro da
    caixa para não deixar a borda do degradê aparecer como emenda. */
@@ -842,7 +847,7 @@ const S = {
   palette: guarda.ler('nexo.palette') || 'ambar',
   home:{ id:null, name:'Casa', areas:[] },
   devices:[], scenes:[], modes:{ current:'normal', available:[] },
-  automations:[], suggestions:[], toast:null
+  automations:[], suggestions:[], usuarios:[], convite:null, series:{}, toast:null
 };
 
 const dev  = id => S.devices.find(d=>d.id===id);
@@ -850,6 +855,17 @@ const area = id => S.home.areas.find(a=>a.id===id);
 const nomeArea = id => area(id)?.name || 'Sem cômodo';
 const caps = (d,t) => d.capabilities.filter(c=>c.type===t);
 const cap1 = (d,t) => d.capabilities.find(c=>c.type===t) || null;
+
+/** O papel vem do claim do access token. Decodificar aqui é só para
+ *  ESCONDER seções que o servidor negaria de qualquer jeito — a
+ *  autorização de verdade continua sendo do servidor. */
+function papelAtual(){
+  if (S.demo) return 'owner';
+  try{
+    const p = API.acc.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(p + '='.repeat((4 - p.length % 4) % 4))).role || 'member';
+  }catch(_){ return 'member'; }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    CLIENTE DA API
@@ -1334,14 +1350,18 @@ async function carregarDevices(){
 }
 
 async function carregarExtensoes(){
-  const [sc, md, au, sg] = await Promise.all([
+  const [sc, md, au, sg, us] = await Promise.all([
     API.req('GET','/scenes').catch(()=>({scenes:[]})),
     API.req('GET','/modes').catch(()=>({current:'normal',available:[]})),
     API.req('GET','/automations').catch(()=>({automations:[]})),
-    API.req('GET','/suggestions').catch(()=>({suggestions:[]}))
+    API.req('GET','/suggestions').catch(()=>({suggestions:[]})),
+    papelAtual()==='owner'
+      ? API.req('GET','/users').catch(()=>({users:[]}))
+      : Promise.resolve({users:[]})
   ]);
   S.scenes = sc.scenes; S.modes = md;
   S.automations = au.automations; S.suggestions = sg.suggestions;
+  S.usuarios = us.users;
 }
 
 async function carregarTudo(){
@@ -1355,6 +1375,9 @@ async function carregarTudo(){
    RENDERIZAÇÃO
    ═══════════════════════════════════════════════════════════════ */
 let travado = false, agendado = false;
+/* O que estava aberto no último desenho ("<deviceId>|c"). Se o próximo
+   desenho abre exatamente o mesmo, é atualização — não reabertura. */
+let desenhoAnterior = '|';
 
 function render(){
   if (travado || agendado) return;
@@ -1367,12 +1390,14 @@ function desenhar(){
 
   if (S.tela !== 'app'){
     el('shell').setAttribute('data-entrada','1');
+    desenhoAnterior = '|';
+    camada.classList.remove('sem-anim');
     camada.innerHTML = telaEntrada() + (S.toast ? toastHTML() : '');
     return;
   }
   el('shell').removeAttribute('data-entrada');
 
-  const T = { home:['Início', saudacao()],
+  const T = { home:[S.home.name || 'Início', saudacao()],
               rooms:['Cômodos', nomeArea(S.area)],
               scenes:['Cenas e automações','Cenas'],
               energy:['Consumo','Energia'],
@@ -1386,8 +1411,20 @@ function desenhar(){
 
   $$('#tabs .tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.v===S.view)));
 
-  camada.innerHTML = (S.sheet ? sheetDevice(S.sheet) : '') + (S.toast ? toastHTML() : '');
+  const chave = (S.sheet || '') + '|' + (S.convite ? 'c' : '');
+  const mesmo = chave !== '|' && chave === desenhoAnterior;
+  const rolagens = mesmo ? [...camada.querySelectorAll('.sheet-in')].map(n=>n.scrollTop) : [];
+  camada.classList.toggle('sem-anim', mesmo);
+  desenhoAnterior = chave;
+
+  camada.innerHTML = (S.sheet ? sheetDevice(S.sheet) : '')
+                   + (S.convite ? sheetConvite() : '')
+                   + (S.toast ? toastHTML() : '');
   if (S.sheet) ligarControles();
+  // A chave garante os mesmos sheets na mesma ordem — restaurar por índice.
+  if (mesmo) [...camada.querySelectorAll('.sheet-in')].forEach((n,i)=>{
+    if (rolagens[i]) n.scrollTop = rolagens[i];
+  });
 }
 
 function saudacao(){
@@ -1689,6 +1726,32 @@ function vAjustes(){
       </button>`).join('')}</div>
   </div>
 
+  ${papelAtual()==='owner' ? `<div class="section">
+    <div class="section-head"><h2>Pessoas</h2><span class="aux">as contas vivem só nesta central</span></div>
+    <div class="list">
+      ${S.usuarios.map(u=>`
+      <div class="row">
+        <span class="row-ico" style="font-weight:700;font-size:14px">${esc((u.name||u.email||'?')[0].toUpperCase())}</span>
+        <span class="row-main">
+          <span class="row-name">${esc(u.name||u.email)}</span>
+          <span class="row-sub">${esc(u.email)} · ${({owner:'dono',member:'morador',guest:'visita'})[u.role]||esc(u.role)}</span>
+        </span>
+      </div>`).join('')}
+      <button class="row" data-act="convite" data-v="member">
+        <span class="row-ico"><svg><use href="#ic-plus"/></svg></span>
+        <span class="row-main"><span class="row-name">Convidar morador</span>
+          <span class="row-sub">controla tudo e edita automações · código vale 3 dias</span></span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>
+      <button class="row" data-act="convite" data-v="guest">
+        <span class="row-ico"><svg><use href="#ic-scene"/></svg></span>
+        <span class="row-main"><span class="row-name">Convidar visita</span>
+          <span class="row-sub">vê e controla só os favoritos · código vale 24 h</span></span>
+        <span class="row-aux"><svg><use href="#ic-chev"/></svg></span>
+      </button>
+    </div>
+  </div>` : ''}
+
   <div class="section">
     <div class="section-head"><h2>Paleta</h2></div>
     <div class="swatches">
@@ -1740,6 +1803,78 @@ function barrasSinal(s){
   const n = s>75?4 : s>50?3 : s>25?2 : 1;
   return `<span class="bars${n<2?' weak':''}">${[6,8.5,11,13.5].map((h,i)=>
     `<i style="height:${h}px" class="${i<n?'f':''}"></i>`).join('')}</span>`;
+}
+
+/** O convite na tela: código grande e a instrução completa de resgate.
+ *  Quem convida mostra esta tela (ou dita o código) para o convidado. */
+function sheetConvite(){
+  const c = S.convite;
+  const ate = new Date(c.expiresAt).toLocaleString('pt-BR',
+    { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  const endereco = location.host || 'nexo.local';
+  return `<div class="scrim" data-act="fecharConvite"></div>
+  <section class="sheet" role="dialog" aria-modal="true" aria-label="Convite">
+    <div class="sheet-in">
+      <div class="grab"></div>
+      <div class="sheet-head">
+        <div>
+          <h2>${c.role==='guest' ? 'Convite de visita' : 'Convite de morador'}</h2>
+          <div class="where">vale até ${ate}</div>
+        </div>
+        <button class="head-btn" data-act="fecharConvite" aria-label="Fechar">
+          <svg width="17" height="17"><use href="#ic-x"/></svg>
+        </button>
+      </div>
+      <div style="text-align:center;padding:6px 0 24px">
+        <div style="font-family:var(--font-mono);font-size:40px;font-weight:600;
+                    letter-spacing:.16em;font-variant-numeric:tabular-nums">${esc(c.code)}</div>
+      </div>
+      <div class="banner calm">
+        <svg><use href="#ic-hub"/></svg>
+        <span>No aparelho da pessoa: conecte no Wi-Fi da casa, abra
+          <strong>http://${esc(endereco)}</strong>, toque em “Tenho um convite”
+          e digite o código.${c.role==='guest' ? ' A visita vê e controla só os favoritos.' : ''}</span>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ── Série de 24 h no sheet do aparelho ─────────────────────────── */
+/* undefined = nunca pedimos · null = pedido em voo · false = sem acesso
+   ou sem dados · array = pontos prontos. */
+function pedirSerie(deviceId, cap){
+  const k = `${deviceId}:${cap.id}`;
+  S.series[k] = null;
+  API.req('GET', `/devices/${deviceId}/history?capabilityId=${
+      encodeURIComponent(cap.id)}&bucket=15m`)
+    .then(r => { S.series[k] = (r.points && r.points.length > 2) ? r.points : false; render(); })
+    .catch(() => { S.series[k] = false; });   // visita sem permissão: silêncio
+}
+
+function sparkline(pts, cap){
+  const W = 320, H = 64;
+  const vs = pts.map(p => p.v);
+  const min = Math.min(...vs), max = Math.max(...vs), span = (max - min) || 1;
+  const xy = pts.map((p,i) => [
+    (i / (pts.length - 1)) * W,
+    H - 6 - ((p.v - min) / span) * (H - 16)
+  ]);
+  const linha = xy.map(([x,y],i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  const [ux, uy] = xy[xy.length - 1];
+  return `<div class="cap">
+    <div class="cap-topo"><span class="cap-nome">Últimas 24 h · ${esc(rotuloMedida(cap.measure))}</span>
+      <span class="cap-val">${nf(vs[vs.length-1], cap.precision)} ${esc(cap.unit)}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto" role="img"
+         aria-label="Série das últimas 24 horas">
+      <path d="${linha} L${W} ${H} L0 ${H} Z" fill="var(--accent-soft)"/>
+      <path d="${linha}" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <circle cx="${ux.toFixed(1)}" cy="${uy.toFixed(1)}" r="3" fill="var(--accent-fill)"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);
+                font-size:10px;color:var(--text-faint)">
+      <span>mín ${nf(min, cap.precision)}</span><span>máx ${nf(max, cap.precision)}</span>
+    </div>
+  </div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1803,6 +1938,16 @@ function sheetDevice(id){
   const velho = desatualizado(d);
   const r = d.reachability;
 
+  // A grandeza que vale um gráfico: potência se houver, senão temperatura.
+  const medida = d.capabilities.find(c => c.measure === 'power')
+              || d.capabilities.find(c => c.measure === 'temperature');
+  let graf = '';
+  if (medida){
+    const serie = S.series[`${d.id}:${medida.id}`];
+    if (serie === undefined) pedirSerie(d.id, medida);
+    else if (Array.isArray(serie)) graf = sparkline(serie, medida);
+  }
+
   return `
   <div class="scrim" data-act="fechar"></div>
   <section class="sheet" style="${bloomC}--bloom-a:${bloomA}" role="dialog" aria-modal="true"
@@ -1821,6 +1966,7 @@ function sheetDevice(id){
 
       ${topo}
       ${resto}
+      ${graf}
 
       <div class="specs">
         ${r.signal!==null ? `<div class="spec"><span class="k">Sinal na malha</span>
@@ -1972,37 +2118,54 @@ function telaEntrada(){
       <p class="sub">Procurando a central…</p></div>`;
 
   const claim = S.tela === 'claim';
+  const resgate = S.tela === 'resgate';
+  const modo = claim ? 'claim' : resgate ? 'resgate' : 'login';
   return `<div class="entrada">
     <div class="marca"><svg><use href="#ic-hub"/></svg></div>
-    <h2>${claim ? 'Vamos configurar sua casa' : esc(S.home.name || 'Entrar na casa')}</h2>
+    <h2>${claim ? 'Vamos configurar sua casa'
+        : resgate ? 'Entrar com um convite'
+        : esc(S.home.name || 'Entrar na casa')}</h2>
     <p class="sub">${claim
       ? 'Esta central ainda não tem dono. Quem criar a conta agora será o administrador.'
+      : resgate
+      ? 'Digite o código que apareceu na tela de quem convidou você.'
       : 'Entre com a conta que você criou nesta central.'}</p>
 
-    <form class="form" data-act="entrar" data-v="${claim?'claim':'login'}">
-      ${claim ? `<input class="campo" name="homeName" placeholder="Nome da casa" value="Minha casa" required>
+    <form class="form" data-act="entrar" data-v="${modo}">
+      ${resgate ? `<input class="campo" name="code" placeholder="Código do convite"
+             autocomplete="one-time-code" style="text-transform:uppercase;letter-spacing:.14em;
+             font-family:var(--font-mono);text-align:center" required>` : ''}
+      ${claim || resgate ? `${claim ? `<input class="campo" name="homeName" placeholder="Nome da casa" value="Minha casa" required>` : ''}
                  <input class="campo" name="name" placeholder="Seu nome" required>` : ''}
       <input class="campo" name="email" type="email" inputmode="email" autocomplete="username"
              placeholder="E-mail" required>
       <input class="campo" name="password" type="password"
-             autocomplete="${claim?'new-password':'current-password'}"
-             placeholder="Senha${claim?' (mínimo 8 caracteres)':''}" required
-             ${claim?'minlength="8"':''}>
+             autocomplete="${claim||resgate?'new-password':'current-password'}"
+             placeholder="Senha${claim||resgate?' (mínimo 8 caracteres)':''}" required
+             ${claim||resgate?'minlength="8"':''}>
       ${S.erroForm ? `<p class="erro-form">${esc(S.erroForm)}</p>` : ''}
       <button class="botao" type="submit" ${S.ocupado?'disabled':''}>${
-        S.ocupado ? 'Um momento…' : claim ? 'Criar conta e assumir a central' : 'Entrar'}</button>
+        S.ocupado ? 'Um momento…'
+        : claim ? 'Criar conta e assumir a central'
+        : resgate ? 'Resgatar convite e entrar' : 'Entrar'}</button>
     </form>
 
-    ${S.demo ? '' : `<button class="botao fraco" data-act="demo">Ver demonstração sem central</button>`}
-    <p class="aviso-mini">A conta vive só nesta central. Nada é enviado para a internet.</p>
+    ${!claim && !resgate ? `<button class="botao fraco" data-act="irResgate">Tenho um convite</button>` : ''}
+    ${resgate ? `<button class="botao fraco" data-act="voltarLogin">Voltar para o login</button>` : ''}
+    ${S.demo || claim || resgate ? '' : `<button class="botao fraco" data-act="demo">Ver demonstração sem central</button>`}
+    <p class="aviso-mini">Central: ${esc(location.host || '—')}${S.demo ? ' · demonstração' : ''}<br>
+      A conta vive só nesta central. Nada é enviado para a internet.</p>
   </div>`;
 }
 
 async function submeterEntrada(form, modo){
   const dados = Object.fromEntries(new FormData(form));
+  if (dados.code) dados.code = dados.code.trim().toUpperCase();
   S.ocupado = true; S.erroForm = null; render();
   try{
-    const par = await API.req('POST', modo==='claim' ? '/setup/claim' : '/auth/login', dados);
+    const caminho = modo==='claim' ? '/setup/claim'
+                  : modo==='resgate' ? '/auth/redeem' : '/auth/login';
+    const par = await API.req('POST', caminho, dados);
     API.guardar(par);
     await entrarNoApp();
   }catch(e){
@@ -2115,6 +2278,20 @@ document.addEventListener('click', async e=>{
     return;
   }
 
+  if (act === 'convite'){
+    try{
+      const r = await API.req('POST','/invites',
+        { role: v,
+          allowedDeviceIds: v==='guest' ? S.devices.filter(d=>d.favorite).map(d=>d.id) : null,
+          validoPorHoras: v==='guest' ? 24 : 72 });
+      S.convite = { ...r, role: v };
+    }catch(err){ aviso(err.message, 'ic-alert'); }
+    return render();
+  }
+  if (act === 'fecharConvite'){ S.convite = null; return render(); }
+  if (act === 'irResgate'){ S.tela = 'resgate'; S.erroForm = null; return render(); }
+  if (act === 'voltarLogin'){ S.tela = 'login'; S.erroForm = null; return render(); }
+
   if (act === 'demo'){ S.demo = true; Demo.iniciar(); return entrarNoApp(); }
 
   if (act === 'sair'){
@@ -2128,7 +2305,9 @@ document.addEventListener('click', async e=>{
 });
 
 document.addEventListener('keydown', e=>{
-  if (e.key === 'Escape' && S.sheet){ S.sheet = null; render(); }
+  if (e.key !== 'Escape') return;
+  if (S.convite){ S.convite = null; render(); }
+  else if (S.sheet){ S.sheet = null; render(); }
 });
 
 function aplicarTema(){
@@ -2349,12 +2528,45 @@ const Demo = {
 
     if (caminho === '/pairing/start') return { durationSec:120 };
     if (caminho === '/auth/logout') return null;
+    if (caminho === '/auth/redeem')
+      return { accessToken:'demo', refreshToken:'demo', expiresIn:900 };
+    if (caminho === '/users') return { users:[
+      { id:'u1', name:'Bruno',  email:'bruno@casa.test',  role:'owner' },
+      { id:'u2', name:'Marina', email:'marina@casa.test', role:'member' }
+    ]};
+    if (caminho === '/invites'){
+      const hex = [...crypto.getRandomValues(new Uint8Array(4))]
+        .map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+      return { code: hex,
+        expiresAt: new Date(Date.now() + (corpo?.validoPorHoras||24)*3600e3).toISOString() };
+    }
+    const hist = caminho.match(/^\/devices\/([^/]+)\/history\?/);
+    if (hist) return { points: this.serieFake(hist[1]) };
     if (/\/favorite$/.test(caminho)){
       const id = caminho.split('/')[2];
       const d = this.devices.find(x=>x.id===id); if(d) d.favorite = corpo.favorite;
       return null;
     }
     return null;
+  },
+
+  /* 24 h de série sintética com a forma certa da grandeza: potência tem
+   * vale de madrugada e pico à noite; temperatura é senoide do dia. */
+  serieFake(deviceId){
+    const d = this.devices.find(x=>x.id===deviceId);
+    const ehTemp = !!d?.capabilities.some(c=>c.measure==='temperature');
+    const agora = Date.now();
+    const pts = [];
+    for (let i = 95; i >= 0; i--){
+      const t = new Date(agora - i*15*60e3);
+      const h = t.getHours() + t.getMinutes()/60;
+      const v = ehTemp
+        ? 22 + 5*Math.sin((h-9)/24*2*Math.PI) + (Math.sin(i*2.7)*0.4)
+        : Math.max(4, 60 + 90*Math.exp(-Math.pow(h-20.5,2)/6)
+                        + 40*Math.exp(-Math.pow(h-7.2,2)/2.5) + Math.sin(i*1.9)*9);
+      pts.push({ t: t.toISOString(), v: +v.toFixed(ehTemp?1:0) });
+    }
+    return pts;
   },
 
   recalcularAtivas(){

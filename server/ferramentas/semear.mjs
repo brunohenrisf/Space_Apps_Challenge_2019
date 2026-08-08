@@ -19,8 +19,17 @@ import { fileURLToPath } from 'node:url';
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const destino = process.argv[2] || join(RAIZ, 'server', 'dados', 'ensaio');
 
-const catalogo = JSON.parse(readFileSync(join(RAIZ, 'casa', 'devices.json'), 'utf8'));
-const rotinas  = JSON.parse(readFileSync(join(RAIZ, 'casa', 'routines.json'), 'utf8')).routines;
+/* O aprendiz de produção recebe o catálogo ENRIQUECIDO pelo nexo.mjs
+ * (switchCap/dimmerCap/ctCap) e eventos carimbados com `cap`. O banco de
+ * ensaio precisa falar exatamente esse formato — senão testa outra coisa. */
+const bruto = JSON.parse(readFileSync(join(RAIZ, 'casa', 'devices.json'), 'utf8'));
+const catalogo = { devices: bruto.devices.map(d => ({
+  id: d.id, name: d.name,
+  switchCap: d.caps?.includes('onoff') ? 'switch'     : null,
+  dimmerCap: d.caps?.includes('dim')   ? 'dimmer'     : null,
+  ctCap:     d.caps?.includes('cct')   ? 'color_temp' : null
+})) };
+const rotinas = JSON.parse(readFileSync(join(RAIZ, 'casa', 'routines.json'), 'utf8')).routines;
 
 rmSync(destino, { recursive: true, force: true });
 const h = new Historico(destino);
@@ -38,19 +47,27 @@ for (let d = 29; d >= 0; d--) {
   const base = meiaNoite(d);
   const util = ehUtil(base);
 
-  /* ── Padrão 1: a luz da bancada, todo dia útil, por volta das 6h45 ── */
+  /* ── Padrão 1: a luz da bancada, todo dia útil, por volta das 6h45 ──
+     Ligar + ajustar brilho + ajustar temperatura são TRÊS comandos em
+     produção (uma capability cada), e é assim que o detector reconstrói
+     "a 88%, 4600K": pela mediana dos ajustes feitos perto do acender. */
   if (util && Math.random() < 0.86) {
-    reg({ ts: em(base, 6, 45 + ruido(9)), id: 'coz_bancada', acao: 'on',
-          valor: { on: true, bri: 88 + ruido(4), k: 4600 }, modo: 'normal', origem: 'manual' });
+    const t1 = em(base, 6, 45 + ruido(9));
+    reg({ ts: t1, id: 'coz_bancada', cap: 'switch', acao: 'on',
+          valor: { type: 'switch', state: true }, modo: 'normal', origem: 'manual' });
+    reg({ ts: t1 + 20e3, id: 'coz_bancada', cap: 'dimmer', acao: 'dimmer',
+          valor: { type: 'dimmer', value: 88 + ruido(4) }, modo: 'normal', origem: 'manual' });
+    reg({ ts: t1 + 40e3, id: 'coz_bancada', cap: 'color_temp', acao: 'color_temp',
+          valor: { type: 'color_temp', kelvin: 4600 }, modo: 'normal', origem: 'manual' });
   }
 
   /* ── Padrão 2: a rotina "Fim de tarde" dispara e alguém desfaz ────── */
   const disparo = em(base, 18, 0);
-  reg({ ts: disparo, id: 'var_luz', acao: 'on', valor: { on: true, bri: 45 },
-        modo: 'normal', origem: 'rotina', rotina: 'r1' });
+  reg({ ts: disparo, id: 'var_luz', cap: 'switch', acao: 'on',
+        valor: { type: 'switch', state: true }, modo: 'normal', origem: 'rotina', rotina: 'r1' });
   if (Math.random() < 0.55) {
-    reg({ ts: disparo + (2 + Math.random() * 6) * 60e3, id: 'var_luz', acao: 'off',
-          valor: { on: false }, modo: 'normal', origem: 'manual' });
+    reg({ ts: disparo + (2 + Math.random() * 6) * 60e3, id: 'var_luz', cap: 'switch',
+          acao: 'off', valor: { type: 'switch', state: false }, modo: 'normal', origem: 'manual' });
   }
 
   /* ── Padrão 3: a casa dorme e a TV fica ligada mais uns 40 min ────── */
@@ -58,18 +75,18 @@ for (let d = 29; d >= 0; d--) {
   reg({ ts: dormir, id: '_casa', acao: 'modo', valor: { modo: 'dormindo' },
         modo: 'dormindo', origem: 'manual' });
   if (Math.random() < 0.8) {
-    reg({ ts: dormir + (38 + ruido(10)) * 60e3, id: 'sala_tv', acao: 'off',
-          valor: { on: false }, modo: 'dormindo', origem: 'manual' });
+    reg({ ts: dormir + (38 + ruido(10)) * 60e3, id: 'sala_tv', cap: 'switch', acao: 'off',
+          valor: { type: 'switch', state: false }, modo: 'dormindo', origem: 'manual' });
   }
 
   /* ── Ruído: uso avulso, sem padrão nenhum ─────────────────────────── */
   for (let i = 0; i < 3 + Math.floor(Math.random() * 4); i++) {
     const alvo = ['sala_teto','sui_teto','qt2_teto','esc_teto','sui_abajur','sala_sanca'][
       Math.floor(Math.random() * 6)];
+    const liga = Math.random() < 0.5;
     reg({ ts: em(base, 8 + Math.floor(Math.random() * 14), Math.floor(Math.random() * 60)),
-          id: alvo, acao: Math.random() < 0.5 ? 'on' : 'off',
-          valor: { on: true, bri: 40 + Math.floor(Math.random() * 55) },
-          modo: 'normal', origem: 'manual' });
+          id: alvo, cap: 'switch', acao: liga ? 'on' : 'off',
+          valor: { type: 'switch', state: liga }, modo: 'normal', origem: 'manual' });
   }
 }
 

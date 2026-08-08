@@ -1,0 +1,43 @@
+# Caddy da central Nexo — a única porta aberta para a LAN.
+#
+# O padrão de fábrica serve HTTP puro na porta 80: funciona em qualquer
+# casa no minuto um, e o app instala na tela de início do iPhone mesmo
+# assim (sem cache offline nem push — ver docs/ios-pwa.md).
+#
+# Quando a instalação ganhar um endereço com certificado, troque o bloco
+# ativo por um dos comentados abaixo e `docker compose restart caddy`.
+
+:80 {
+	encode gzip
+	reverse_proxy nexo:8080
+}
+
+# ── OPÇÃO A — domínio próprio com certificado real (recomendada) ──
+# Registro A de casa.SEUDOMINIO.com.br apontando para o IP da LAN.
+# O certificado sai por desafio DNS-01 (não exige porta aberta para a
+# internet — só um token da API do seu DNS, ex.: Cloudflare).
+# Requer a imagem do Caddy com o plugin do seu provedor de DNS.
+#
+# casa.SEUDOMINIO.com.br {
+# 	tls {
+# 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+# 	}
+# 	encode gzip
+# 	reverse_proxy nexo:8080
+# 	header {
+# 		X-Frame-Options "DENY"
+# 		X-Content-Type-Options "nosniff"
+# 		Referrer-Policy "no-referrer"
+# 	}
+# }
+
+# ── OPÇÃO B — CA própria, casa 100% sem internet ──────────────────
+# Gere a CA e o certificado conforme docs/ios-pwa.md, monte-os no
+# contêiner e instale a CA em cada iPhone (perfil + Ajustes de
+# Confiança de Certificado — os DOIS passos).
+#
+# nexo.local {
+# 	tls /etc/caddy/certs/nexo.crt /etc/caddy/certs/nexo.key
+# 	encode gzip
+# 	reverse_proxy nexo:8080
+# }

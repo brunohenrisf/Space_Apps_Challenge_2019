@@ -1,0 +1,15 @@
+# Nada disto pertence à imagem da central.
+.git
+node_modules
+**/node_modules
+server/dados
+dist
+docs
+firmware
+deploy
+server/deploy
+docker
+*.md
+.env
+.env.*
+!.env.example

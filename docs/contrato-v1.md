@@ -5,9 +5,9 @@ O documento do contrato é a fonte da verdade. Esta página registra
 o próprio contrato deixou em aberto.
 
 Verificação: `node server/ferramentas/conformidade.mjs` sobe a central e
-confere 67 cláusulas — normalização, códigos de status, rotação de
+confere 70 cláusulas — normalização, códigos de status, rotação de
 refresh, escopo do convidado, handshake do stream, tolerância a
-capability desconhecida.
+capability desconhecida, healthcheck e freio de força bruta.
 
 ## Onde cada coisa mora
 
@@ -75,7 +75,7 @@ barra na tela signifique algo para quem está instalando.
 
 ## Acréscimos ao contrato
 
-Três, todos marcados no código:
+Quatro, todos marcados no código:
 
 **`GET /setup/status`** (público). O §4 prevê que o cliente leia
 `setup=<0|1>` do TXT do mDNS — mas navegador não faz mDNS. Sem esta rota
@@ -84,6 +84,11 @@ quem já está na LAN não descubra sozinho.
 
 **`POST /devices/:id/favorite`.** Favorito é preferência de quem usa, não
 função do aparelho, então não cabia como capability.
+
+**`GET /health`** (público). O healthcheck do contêiner e o diagnóstico de
+bancada: status, uptime, adaptador, hub e contagem de aparelhos. Mínimo de
+propósito — não revela nada que quem já está na LAN não veja de outro
+jeito.
 
 **Extensões do §9** (`/scenes`, `/modes`, `/automations`, `/suggestions`).
 Ver abaixo.
