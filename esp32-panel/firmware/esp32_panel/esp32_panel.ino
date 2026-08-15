@@ -166,6 +166,31 @@ void handleOptions() {
   server.send(204);
 }
 
+// O serveStatic não conhece .webmanifest e devolveria octet-stream, o que faz
+// o navegador ignorar o manifest. Estes dois arquivos vão com tipo explícito.
+bool serveFile(const char* path, const char* contentType) {
+  File f = LittleFS.open(path, "r");
+  if (!f) {
+    server.send(404, "text/plain", "arquivo nao encontrado");
+    return false;
+  }
+  server.streamFile(f, contentType);
+  f.close();
+  return true;
+}
+
+void handleManifest() {
+  serveFile("/manifest.webmanifest", "application/manifest+json");
+}
+
+void handleServiceWorker() {
+  // Sem no-cache o navegador pode segurar um sw.js antigo por 24 h.
+  server.sendHeader("Cache-Control", "no-cache");
+  // Permite que o sw.js controle toda a raiz do site.
+  server.sendHeader("Service-Worker-Allowed", "/");
+  serveFile("/sw.js", "application/javascript");
+}
+
 // ----------------------------------------------------------------- setup
 
 void setup() {
@@ -194,6 +219,10 @@ void setup() {
   server.on("/api/status", HTTP_GET,     handleStatus);
   server.on("/api/port",   HTTP_POST,    handlePort);
   server.on("/api/port",   HTTP_OPTIONS, handleOptions);
+
+  // Arquivos da PWA que precisam de cabeçalhos próprios.
+  server.on("/manifest.webmanifest", HTTP_GET, handleManifest);
+  server.on("/sw.js",                HTTP_GET, handleServiceWorker);
 
   // Interface estática a partir do LittleFS.
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Painel ESP32">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3352"/>
+      <stop offset="1" stop-color="#101c2e"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ff0b0"/>
+      <stop offset="1" stop-color="#24b57a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- pinos laterais, remetendo ao encapsulamento do módulo ESP32 -->
+  <g fill="#2c4467">
+    <rect x="60"  y="150" width="26" height="16" rx="8"/>
+    <rect x="60"  y="200" width="26" height="16" rx="8"/>
+    <rect x="60"  y="250" width="26" height="16" rx="8"/>
+    <rect x="60"  y="300" width="26" height="16" rx="8"/>
+    <rect x="60"  y="350" width="26" height="16" rx="8"/>
+    <rect x="426" y="150" width="26" height="16" rx="8"/>
+    <rect x="426" y="200" width="26" height="16" rx="8"/>
+    <rect x="426" y="250" width="26" height="16" rx="8"/>
+    <rect x="426" y="300" width="26" height="16" rx="8"/>
+    <rect x="426" y="350" width="26" height="16" rx="8"/>
+  </g>
+
+  <rect x="112" y="112" width="288" height="288" rx="52" fill="#16243a" stroke="#2c4467" stroke-width="8"/>
+
+  <!-- raio: controle / energia -->
+  <path d="M292 140 L196 286 h56 l-32 118 108 -158 h-58 z" fill="url(#bolt)"/>
+</svg>

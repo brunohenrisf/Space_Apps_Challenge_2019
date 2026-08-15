@@ -539,6 +539,46 @@
     reader.readAsText(file);
   }
 
+  /* ---------------------------------------------------------- PWA/iOS */
+
+  const isStandalone = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  const isIOS = () =>
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS 13+ se identifica como Mac; o toque é o que o denuncia.
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  function setupPwa() {
+    // Service worker exige contexto seguro. Servido por HTTP puro pelo ESP32
+    // o registro falha — e tudo bem: o painel só depende da rede local.
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('sw.js').then(
+        reg => log(`Service worker registrado (escopo ${reg.scope}).`),
+        err => log(`Service worker não registrado: ${err.message}`)
+      );
+    } else if (isIOS()) {
+      log('Sem HTTPS: app instalável em tela cheia, porém sem cache offline.');
+    }
+
+    // Aviso de "Adicionar à Tela de Início" — só no iOS, fora do modo app.
+    const hint = $('#ios-hint');
+    const dismissed = localStorage.getItem(STORAGE_KEY + '/ios-hint') === 'off';
+    hint.hidden = !(isIOS() && !isStandalone() && !dismissed);
+    $('#ios-hint-close').onclick = () => {
+      hint.hidden = true;
+      localStorage.setItem(STORAGE_KEY + '/ios-hint', 'off');
+    };
+
+    if (isStandalone()) document.body.classList.add('standalone');
+  }
+
+  // Em standalone o app fica congelado em segundo plano: revalida ao voltar.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) poll();
+  });
+
   /* ------------------------------------------------------------- init */
 
   function init() {
@@ -599,6 +639,7 @@
     };
 
     render();
+    setupPwa();
     log('Painel carregado.');
     startPolling();
   }

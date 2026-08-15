@@ -4,9 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#16243a">
+<meta name="description" content="Interface personalizável para controlar individualmente as portas de um ESP32 na rede local.">
 <title>Painel ESP32 — Controle de Portas</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+
+<!-- iOS: o Safari ignora o manifest para instalação; estas tags é que valem -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Painel ESP32">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+
+<!-- Tela de abertura no iOS (opcional: apague se precisar economizar flash) -->
+<link rel="apple-touch-startup-image" href="icons/splash/splash-750x1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-1125x2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-1170x2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-1179x2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-1284x2778.png"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash/splash-1290x2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
+
 <link rel="stylesheet" href="css/style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#9889;</text></svg>">
 </head>
 <body>
 
@@ -34,6 +61,16 @@
     </div>
   </div>
 </header>
+
+<div id="ios-hint" class="ios-hint" hidden>
+  <span class="ios-hint-icon">📲</span>
+  <p>Instale o painel: toque em <strong>Compartilhar</strong><svg class="share-glyph" viewBox="0 0 24 24"
+       fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M12 3 8 7M12 3l4 4"/><path
+       d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>e em
+     <strong>“Adicionar à Tela de Início”</strong> para abrir em tela cheia, como um app.</p>
+  <button id="ios-hint-close" class="icon-btn" type="button" aria-label="Dispensar aviso">✕</button>
+</div>
 
 <main class="wrap">
 

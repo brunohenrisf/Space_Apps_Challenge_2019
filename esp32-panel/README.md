@@ -46,6 +46,80 @@ resumo do dispositivo (IP, RSSI, uptime, portas ativas).
 A configuração fica salva no `localStorage` do navegador, então sobrevive ao
 recarregamento da página sem precisar gravar nada no ESP32.
 
+## Instalar no iPhone (PWA)
+
+O painel já vem encapsulado como PWA: `manifest.webmanifest`, service worker,
+ícones, telas de abertura e tratamento de *safe area* (notch e barra inferior).
+
+**Como instalar:** abra o painel **no Safari** (Chrome/Firefox no iOS não
+instalam), toque em **Compartilhar** → **Adicionar à Tela de Início**. O app
+passa a abrir em tela cheia, sem barra de endereço, com ícone próprio. A
+própria página mostra esse lembrete quando detecta iPhone fora do modo app.
+
+### A pegadinha: HTTPS
+
+No iOS, duas coisas diferentes dependem de requisitos diferentes:
+
+| Recurso | Precisa de HTTPS? |
+| --- | --- |
+| Adicionar à Tela de Início, tela cheia, ícone, splash | **Não** — funciona por HTTP puro |
+| Service worker (cache offline) | **Sim** — só em contexto seguro (HTTPS ou `localhost`) |
+
+Como o ESP32 serve HTTP puro, o Safari recusa o service worker. O painel
+detecta isso (`window.isSecureContext`) e simplesmente não registra — nada
+quebra, você só fica sem o cache offline. E isso quase não faz falta: o app é
+inútil longe do ESP32 mesmo.
+
+O que **não** funciona é hospedar a página em HTTPS (GitHub Pages, por exemplo)
+e apontar para um ESP32 em HTTP: o Safari bloqueia como *mixed content*.
+Ou os dois em HTTP, ou os dois em HTTPS.
+
+### Escolhendo o cenário
+
+1. **Servir pelo próprio ESP32 (recomendado).** Um endereço, zero
+   infraestrutura, instala em tela cheia. Sem cache offline. É o caso de uso
+   normal deste protótipo.
+2. **HTTPS com certificado próprio no ESP32** (`WiFiClientSecure` /
+   `ESPAsyncWebServer` com TLS). Exige instalar e confiar no certificado via
+   perfil de configuração no iPhone, e o TLS pesa bastante no ESP32.
+3. **Proxy reverso na rede** (Raspberry Pi, OpenWrt, Home Assistant) com
+   certificado válido por DNS-01 e um nome tipo `casa.seudominio.com`
+   apontando para o IP local. É a única forma de ter PWA completo, com cache
+   offline, sem aviso de certificado. Melhor opção se o projeto sair do
+   protótipo.
+
+### Detalhes de comportamento no iOS
+
+- O `localStorage` do app instalado é **separado** do Safari: a configuração de
+  portas não vai junto. Use **Exportar** no Safari e **Importar** no app.
+- Se o app instalado ficar em segundo plano, o iOS congela o polling. O painel
+  força uma atualização assim que volta ao primeiro plano
+  (`visibilitychange`).
+- A barra de status usa `black-translucent`, então o conteúdo passa por baixo
+  dela — o CSS compensa com `env(safe-area-inset-*)`.
+- Para atualizar o app instalado depois de mudar os arquivos, basta reabrir.
+  Com service worker ativo, o `sw.js` é versionado por `VERSION` — troque o
+  valor ao publicar mudanças.
+
+### Gerando os assets
+
+Ícones e splash screens são gerados a partir de `icons/icon.svg`:
+
+```bash
+npm i -D playwright
+node tools/gen-assets.mjs
+```
+
+Para montar a pasta que vai no LittleFS:
+
+```bash
+./tools/build-data.sh              # tudo (~528 KB)
+./tools/build-data.sh --no-splash  # sem telas de abertura (~204 KB)
+```
+
+Confira o tamanho contra a partição SPIFFS/LittleFS da sua placa — no esquema
+padrão de 4 MB sobram cerca de 1,5 MB, então cabe folgado.
+
 ## Contrato da API
 
 A página consome dois endpoints. Qualquer firmware que os implemente funciona.
@@ -100,8 +174,14 @@ firmware — é o que permite o navegador chamar a placa a partir de outra orige
 ```
 esp32-panel/
 ├── index.html
+├── manifest.webmanifest
+├── sw.js
 ├── css/style.css
 ├── js/app.js
+├── icons/                 (icon.svg + PNGs + splash/)
+├── tools/
+│   ├── gen-assets.mjs     gera ícones e splash a partir do SVG
+│   └── build-data.sh      monta a pasta data/ do LittleFS
 ├── firmware/esp32_panel/esp32_panel.ino
 └── README.md
 ```

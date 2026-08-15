@@ -49,7 +49,9 @@ code {
   gap: 18px;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 22px;
+  /* safe-area: em standalone no iPhone a página passa sob a barra de status */
+  padding: calc(14px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right))
+           14px calc(22px + env(safe-area-inset-left));
   background: var(--navy-800);
   border-bottom: 1px solid var(--line);
   position: sticky;
@@ -163,7 +165,43 @@ input:focus, select:focus {
 
 /* ---------- Layout ---------- */
 
-.wrap { max-width: 1240px; margin: 0 auto; padding: 22px; }
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 22px calc(22px + env(safe-area-inset-right)) 22px calc(22px + env(safe-area-inset-left));
+}
+
+/* ---------- Aviso de instalação (iOS) ---------- */
+
+.ios-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1240px;
+  margin: 16px auto -4px;
+  padding: 12px 16px;
+  background: var(--navy-800);
+  border: 1px solid rgba(61, 220, 151, .35);
+  border-left: 4px solid var(--green);
+  border-radius: var(--radius);
+}
+
+.ios-hint[hidden] { display: none; }
+.ios-hint p { margin: 0; flex: 1; font-size: 13.5px; color: var(--muted); }
+.ios-hint strong { color: var(--text); }
+.ios-hint-icon { font-size: 20px; }
+
+.share-glyph {
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+  margin: 0 5px;
+  color: var(--green);
+}
+
+@media (max-width: 1280px) {
+  .ios-hint { margin-left: 16px; margin-right: 16px; }
+}
 
 .board {
   display: grid;
@@ -400,7 +438,12 @@ input:focus, select:focus {
 .log .ok { color: var(--green); }
 .log .err { color: var(--danger); }
 
-.foot { text-align: center; color: var(--muted); font-size: 12.5px; padding: 8px 22px 34px; }
+.foot {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 8px 22px calc(34px + env(safe-area-inset-bottom));
+}
 
 /* ---------- Modal ---------- */
 
@@ -460,12 +503,31 @@ input:focus, select:focus {
 .toast.err { border-left-color: var(--danger); }
 
 @media (max-width: 620px) {
-  .topbar { padding: 12px 14px; }
-  .wrap { padding: 14px; }
+  .topbar {
+    padding: calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+             12px calc(14px + env(safe-area-inset-left));
+  }
+  .wrap { padding: 14px calc(14px + env(safe-area-inset-right)) 14px calc(14px + env(safe-area-inset-left)); }
   .conn { width: 100%; }
   .conn-field { flex: 1; }
   .conn-field input { width: 100%; }
   .toolbar-actions .btn { flex: 1 1 auto; }
+
+  /* Abaixo de 16px o iOS dá zoom ao focar o campo. */
+  input, select, .btn { font-size: 16px; }
+}
+
+/* ---------- Toque (iOS/Android) ---------- */
+
+html { -webkit-text-size-adjust: 100%; }
+
+body { -webkit-tap-highlight-color: transparent; }
+
+.btn, .icon-btn, .toggle, .switch-inline, input[type="range"] { touch-action: manipulation; }
+
+/* Em standalone o "puxar para atualizar" do Safari recarrega o app sem querer. */
+@media (display-mode: standalone) {
+  body { overscroll-behavior-y: contain; }
 }
 
 @media (prefers-reduced-motion: reduce) {
