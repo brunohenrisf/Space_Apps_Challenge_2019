@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16243a">
+<title>Painel ESP32 — Controle de Portas</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#9889;</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">⚡</div>
+    <div class="brand-text">
+      <h1>Painel ESP32</h1>
+      <span>Controle individual de portas</span>
+    </div>
+  </div>
+
+  <div class="conn">
+    <label class="conn-field">
+      <span>Endereço do ESP32</span>
+      <input id="host" type="text" inputmode="url" placeholder="192.168.0.50" autocomplete="off" spellcheck="false">
+    </label>
+    <button id="btn-connect" class="btn btn-primary" type="button">Conectar</button>
+    <label class="switch-inline" title="Sem hardware: simula respostas do ESP32">
+      <input id="demo" type="checkbox">
+      <span>Modo demo</span>
+    </label>
+    <div id="status" class="status status--off">
+      <span class="dot"></span><span id="status-text">Desconectado</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="board" aria-label="Informações do dispositivo">
+    <div class="board-item"><span>Dispositivo</span><strong id="info-device">—</strong></div>
+    <div class="board-item"><span>IP</span><strong id="info-ip">—</strong></div>
+    <div class="board-item"><span>Sinal Wi-Fi</span><strong id="info-rssi">—</strong></div>
+    <div class="board-item"><span>Uptime</span><strong id="info-uptime">—</strong></div>
+    <div class="board-item"><span>Portas ativas</span><strong id="info-on">0 / 0</strong></div>
+  </section>
+
+  <section class="toolbar">
+    <input id="search" class="search" type="search" placeholder="Buscar equipamento, ambiente ou GPIO…" autocomplete="off">
+    <div class="toolbar-actions">
+      <button id="btn-add" class="btn btn-primary" type="button">+ Nova porta</button>
+      <button id="btn-all-on" class="btn" type="button">Ligar tudo</button>
+      <button id="btn-all-off" class="btn" type="button">Desligar tudo</button>
+      <button id="btn-export" class="btn btn-ghost" type="button">Exportar</button>
+      <button id="btn-import" class="btn btn-ghost" type="button">Importar</button>
+      <button id="btn-reset" class="btn btn-ghost" type="button">Restaurar padrão</button>
+      <input id="file-import" type="file" accept="application/json" hidden>
+    </div>
+  </section>
+
+  <section id="grid" class="grid" aria-live="polite"></section>
+  <p id="empty" class="empty" hidden>Nenhuma porta corresponde à busca.</p>
+
+  <section class="log-box">
+    <div class="log-head">
+      <h2>Registro de eventos</h2>
+      <button id="btn-clear-log" class="btn btn-ghost btn-sm" type="button">Limpar</button>
+    </div>
+    <ul id="log" class="log"></ul>
+  </section>
+</main>
+
+<footer class="foot">
+  Protótipo de interface — configuração salva no navegador (localStorage).
+  Consulte <code>README.md</code> para o contrato da API e o firmware de exemplo.
+</footer>
+
+<!-- Modal de configuração da porta -->
+<dialog id="dlg" class="dlg">
+  <form id="form" method="dialog">
+    <h2 id="dlg-title">Configurar porta</h2>
+
+    <div class="field">
+      <label for="f-name">Nome do equipamento</label>
+      <input id="f-name" name="name" type="text" maxlength="40" required placeholder="Ex.: Lâmpada da varanda">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="f-type">Tipo de equipamento</label>
+        <select id="f-type" name="type"></select>
+      </div>
+      <div class="field">
+        <label for="f-room">Ambiente</label>
+        <input id="f-room" name="room" type="text" maxlength="30" placeholder="Ex.: Sala">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="f-gpio">GPIO</label>
+        <input id="f-gpio" name="gpio" type="number" min="0" max="39" required placeholder="2">
+        <small id="gpio-hint" class="hint"></small>
+      </div>
+      <div class="field">
+        <label for="f-mode">Modo de controle</label>
+        <select id="f-mode" name="mode">
+          <option value="switch">Liga/Desliga (digital)</option>
+          <option value="dimmer">Intensidade (PWM 0–100%)</option>
+          <option value="pulse">Pulso (acionamento momentâneo)</option>
+          <option value="sensor">Sensor (somente leitura)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field" data-when="pulse">
+        <label for="f-pulse">Duração do pulso (ms)</label>
+        <input id="f-pulse" name="pulse" type="number" min="50" max="10000" step="50" value="500">
+      </div>
+      <div class="field" data-when="sensor">
+        <label for="f-unit">Unidade de leitura</label>
+        <input id="f-unit" name="unit" type="text" maxlength="8" placeholder="°C, %, lx…">
+      </div>
+    </div>
+
+    <label class="check" data-when="switch dimmer pulse">
+      <input id="f-inverted" name="inverted" type="checkbox">
+      <span>Lógica invertida (módulo relé <em>active low</em>)</span>
+    </label>
+
+    <div class="dlg-actions">
+      <button id="f-delete" class="btn btn-danger" type="button">Excluir</button>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost" type="button" data-close>Cancelar</button>
+      <button class="btn btn-primary" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
