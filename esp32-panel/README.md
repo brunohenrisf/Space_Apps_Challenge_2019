@@ -101,6 +101,43 @@ Ou os dois em HTTP, ou os dois em HTTPS.
   Com service worker ativo, o `sw.js` é versionado por `VERSION` — troque o
   valor ao publicar mudanças.
 
+### O que vai para o iPhone? Nada.
+
+**Adicionar à Tela de Início não copia arquivo nenhum para o celular** — salva
+um atalho para a URL (`http://192.168.0.50/`, por exemplo). O `index.html`, o
+CSS e o JS continuam morando no ESP32; o iPhone só guarda o ícone e o
+endereço. Por isso o painel exige estar na mesma rede do ESP32: sem ele no ar,
+o atalho não abre (a não ser que o service worker tenha cacheado o shell, o
+que só acontece via HTTPS).
+
+Copiar o `index.html` para o app **Arquivos** e abrir por lá não substitui
+isso: a página até aparece, mas o Safari trata `file://` como origem isolada e
+bloqueia as chamadas ao ESP32, então nada além do modo demo funciona — e o
+Safari não oferece "Adicionar à Tela de Início" para arquivo local. Se a ideia
+é ter o painel no celular, o caminho é o atalho para a URL do ESP32.
+
+### Um arquivo só
+
+Se o incômodo for o número de arquivos no LittleFS, dá para reduzir tudo a um
+`index.html` de 59 KB, com CSS, JavaScript e ícones embutidos:
+
+```bash
+node tools/build-single.mjs     # gera dist/index.html
+./tools/build-data.sh --single  # e já monta a data/ com ele
+```
+
+Funciona igual, inclusive instalado na Tela de Início com ícone próprio.
+Ficam de fora, por limitação do formato: o **service worker** (precisa ser um
+arquivo com URL própria — sem cache offline, o que já era o caso por HTTP) e o
+**manifest com as splash screens** (o iOS não usa o manifest para instalar,
+mas Android e desktop usam — para esses, prefira a versão multiarquivo).
+
+| Formato | Tamanho no LittleFS | Instala no iOS | Splash | Offline |
+| --- | --- | --- | --- | --- |
+| Completo | 528 KB | sim | sim | só com HTTPS |
+| `--no-splash` | 204 KB | sim | não | só com HTTPS |
+| `--single` | 64 KB | sim | não | não |
+
 ### Gerando os assets
 
 Ícones e splash screens são gerados a partir de `icons/icon.svg`:
@@ -179,8 +216,10 @@ esp32-panel/
 ├── css/style.css
 ├── js/app.js
 ├── icons/                 (icon.svg + PNGs + splash/)
+├── dist/index.html        build de arquivo único (59 KB, tudo embutido)
 ├── tools/
 │   ├── gen-assets.mjs     gera ícones e splash a partir do SVG
+│   ├── build-single.mjs   gera o dist/index.html
 │   └── build-data.sh      monta a pasta data/ do LittleFS
 ├── firmware/esp32_panel/esp32_panel.ino
 └── README.md

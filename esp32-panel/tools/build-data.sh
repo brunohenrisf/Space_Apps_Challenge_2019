@@ -2,8 +2,9 @@
 #
 # Monta a pasta data/ que o plugin do LittleFS envia para o ESP32.
 #
-#   ./tools/build-data.sh            # copia os arquivos da PWA
-#   ./tools/build-data.sh --no-splash # sem as telas de abertura (~310 KB a menos)
+#   ./tools/build-data.sh             # PWA completa
+#   ./tools/build-data.sh --no-splash # sem as telas de abertura (~324 KB a menos)
+#   ./tools/build-data.sh --single    # só dist/index.html (59 KB, arquivo único)
 #
 # Depois: Arduino IDE > Ferramentas > "ESP32 Sketch Data Upload"
 # (ou: pio run -t uploadfs, no PlatformIO)
@@ -14,6 +15,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA="$ROOT/firmware/esp32_panel/data"
 
 rm -rf "$DATA"
+
+if [ "${1:-}" = "--single" ]; then
+  mkdir -p "$DATA"
+  node "$ROOT/tools/build-single.mjs"
+  cp "$ROOT/dist/index.html" "$DATA/"
+  echo "data/ pronta em: $DATA (arquivo único, $(du -sk "$DATA" | cut -f1) KB)"
+  echo "Sem service worker e sem splash — veja tools/build-single.mjs."
+  exit 0
+fi
+
 mkdir -p "$DATA/css" "$DATA/js" "$DATA/icons"
 
 cp "$ROOT/index.html"            "$DATA/"

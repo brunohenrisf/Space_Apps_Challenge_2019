@@ -551,9 +551,12 @@
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   function setupPwa() {
+    // No build de arquivo único não existe sw.js para registrar.
+    const singleFile = document.documentElement.hasAttribute('data-single-file');
+
     // Service worker exige contexto seguro. Servido por HTTP puro pelo ESP32
     // o registro falha — e tudo bem: o painel só depende da rede local.
-    if ('serviceWorker' in navigator && window.isSecureContext) {
+    if ('serviceWorker' in navigator && window.isSecureContext && !singleFile) {
       navigator.serviceWorker.register('sw.js').then(
         reg => log(`Service worker registrado (escopo ${reg.scope}).`),
         err => log(`Service worker não registrado: ${err.message}`)
