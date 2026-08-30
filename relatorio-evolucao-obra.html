@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="pt-BR">
+<!--
+  MODELO — RELATÓRIO DE EVOLUÇÃO DE OBRA (construção civil residencial)
+  Como usar:
+    1. Abra este arquivo no navegador.
+    2. Clique em "Editar conteúdo" e substitua os dados ilustrativos pelos da sua obra.
+    3. Clique em "Imprimir / salvar PDF" (formato A4, margens padrão).
+  Todos os dados abaixo são fictícios e servem apenas de exemplo de preenchimento.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de Evolução de Obra</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* ---------- Tokens ---------- */
+  :root{
+    /* chrome (tela, ao redor da folha) — muda com o tema */
+    --fundo:#e9ecee;
+    --chrome-superficie:#f4f6f7;
+    --chrome-texto:#38434d;
+    --chrome-mudo:#66747f;
+    --chrome-borda:#d3d9dd;
+
+    /* folha (documento impresso) — fixa, mundo do papel */
+    --papel:#fdfdfc;
+    --tinta:#22303c;
+    --secundaria:#55636f;
+    --muda:#66747f;
+    --linha:#dfe4e8;
+    --linha-forte:#b9c3cc;
+    --tinta-fraca:#eef1f3;
+
+    --azul:#17496a;          /* institucional: títulos, réguas, cabeçalhos */
+    --azul-serie:#2673af;    /* série "previsto" e preenchimento dos medidores */
+    --azul-tinta:#e1eaf1;    /* trilha dos medidores, fundos azulados */
+    --laranja:#e06818;       /* série "executado", detalhes de régua */
+    --laranja-texto:#b44d0f; /* laranja legível em texto pequeno */
+
+    --ok:#1e7b46;        --ok-fundo:#e4f1e9;
+    --atencao:#9a6700;   --atencao-fundo:#f9f0d8;
+    --atraso:#be3d2a;    --atraso-fundo:#fbe9e5;
+    --neutro:#5a6570;    --neutro-fundo:#edf0f2;
+
+    --fonte-titulo:"Archivo","Trebuchet MS",Arial,sans-serif;
+    --fonte-texto:"Source Sans 3","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --fonte-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --fundo:#15191d;
+      --chrome-superficie:#1d232a;
+      --chrome-texto:#c4cdd5;
+      --chrome-mudo:#8b98a3;
+      --chrome-borda:#2c343d;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fundo:#15191d;
+    --chrome-superficie:#1d232a;
+    --chrome-texto:#c4cdd5;
+    --chrome-mudo:#8b98a3;
+    --chrome-borda:#2c343d;
+  }
+
+  /* ---------- Base ---------- */
+  *,*::before,*::after{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--fundo);
+    color:var(--tinta);
+    font-family:var(--fonte-texto);
+    font-size:12px;
+    line-height:1.55;
+  }
+  .mono{ font-family:var(--fonte-mono); }
+
+  /* ---------- Barra de ferramentas (somente tela) ---------- */
+  .barra-ferramentas{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 20px;
+    background:var(--chrome-superficie);
+    border-bottom:1px solid var(--chrome-borda);
+    color:var(--chrome-texto);
+  }
+  .barra-ferramentas .titulo-app{
+    font-family:var(--fonte-titulo); font-weight:600; font-size:13px; letter-spacing:.02em;
+  }
+  .barra-ferramentas .dica{ color:var(--chrome-mudo); font-size:12px; flex:1 1 240px; }
+  .barra-ferramentas .acoes{ display:flex; gap:8px; }
+  .botao{
+    font-family:var(--fonte-texto); font-size:12.5px; font-weight:600;
+    padding:7px 14px; border-radius:4px; cursor:pointer;
+    border:1px solid var(--chrome-borda);
+    background:transparent; color:var(--chrome-texto);
+  }
+  .botao.primario{ background:var(--azul-serie); border-color:var(--azul-serie); color:#fff; }
+  .botao[aria-pressed="true"]{ background:var(--laranja); border-color:var(--laranja); color:#fff; }
+  .botao:focus-visible{ outline:2px solid var(--laranja); outline-offset:2px; }
+  @media (prefers-reduced-motion: no-preference){
+    .botao{ transition:filter .15s ease; }
+  }
+  .botao:hover{ filter:brightness(1.08); }
+
+  /* ---------- Folha A4 ---------- */
+  .area-folha{ padding:28px 16px 56px; }
+  .folha{
+    width:min(210mm,100%);
+    margin:0 auto;
+    background:var(--papel);
+    padding:13mm 14mm 11mm;
+    box-shadow:0 1px 3px rgba(15,23,32,.18), 0 12px 32px rgba(15,23,32,.16);
+  }
+  .folha:focus-visible{ outline:2px solid var(--azul-serie); outline-offset:3px; }
+  [contenteditable="true"] :is(td,th,dd,li,p,figcaption,span,strong,em):focus-visible{
+    outline:1.5px solid var(--laranja); outline-offset:1px;
+  }
+
+  /* ---------- Cabeçalho do documento ---------- */
+  .masthead{
+    display:grid;
+    grid-template-columns:30mm 1fr 52mm;
+    gap:12px;
+    align-items:stretch;
+  }
+  .logotipo{
+    border:1.5px dashed var(--linha-forte);
+    border-radius:3px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--fonte-mono); font-size:9px; letter-spacing:.18em;
+    color:var(--muda); min-height:22mm;
+  }
+  .empresa{ align-self:center; }
+  .empresa .nome{
+    font-family:var(--fonte-titulo); font-weight:700; font-size:15px;
+    letter-spacing:.02em; color:var(--azul);
+  }
+  .empresa .detalhe{ font-size:10.5px; color:var(--secundaria); line-height:1.5; }
+  .bloco-doc{
+    border:1px solid var(--linha-forte); border-radius:3px;
+    font-family:var(--fonte-mono); font-size:9px; line-height:1.4;
+    display:grid; grid-template-columns:1fr 1fr;
+  }
+  .bloco-doc div{ padding:4px 8px; border-bottom:1px solid var(--linha); }
+  .bloco-doc div:nth-last-child(-n+2){ border-bottom:0; }
+  .bloco-doc div:nth-child(odd){ border-right:1px solid var(--linha); }
+  .bloco-doc .rotulo{ display:block; font-size:7px; letter-spacing:.12em; text-transform:uppercase; color:var(--muda); }
+  .bloco-doc .valor{ font-weight:500; color:var(--tinta); font-size:9.5px; }
+
+  .faixa-titulo{ margin-top:14px; padding-bottom:10px; position:relative; }
+  .faixa-titulo::after{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:3px;
+    background:var(--azul);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .faixa-titulo::before{
+    content:""; position:absolute; left:0; bottom:0; height:3px; width:22mm;
+    background:var(--laranja); z-index:1;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  h1{
+    margin:0;
+    font-family:var(--fonte-titulo); font-weight:700; font-size:23px;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--tinta);
+    text-wrap:balance;
+  }
+  .faixa-titulo .subtitulo{
+    margin-top:2px; font-size:11.5px; color:var(--secundaria);
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .faixa-titulo .periodo{ font-family:var(--fonte-mono); font-size:9.5px; color:var(--laranja-texto); font-weight:500; }
+
+  /* ---------- Seções ---------- */
+  section{ margin-top:18px; break-inside:avoid; }
+  section.pode-quebrar{ break-inside:auto; }
+  h2{
+    display:flex; align-items:baseline; gap:8px;
+    margin:0 0 8px;
+    font-family:var(--fonte-titulo); font-weight:700; font-size:11.5px;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--azul);
+  }
+  h2 .num{ font-family:var(--fonte-mono); font-weight:500; font-size:10px; color:var(--laranja-texto); }
+  h2::after{ content:""; flex:1; height:1px; background:var(--linha-forte); align-self:center; }
+  h3{
+    margin:0 0 6px; font-family:var(--fonte-titulo); font-weight:600; font-size:10.5px;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--secundaria);
+  }
+
+  /* ---------- Grade de campos (formulário) ---------- */
+  .grade-campos{
+    display:grid; grid-template-columns:repeat(12,1fr); gap:1px;
+    background:var(--linha); border:1px solid var(--linha); border-radius:3px;
+    overflow:hidden;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .campo{ background:var(--papel); padding:5px 8px 6px; min-width:0; }
+  .campo .rotulo{
+    display:block; font-family:var(--fonte-mono); font-size:7.5px; font-weight:500;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--muda);
+  }
+  .campo .valor{ font-size:11.5px; font-weight:600; color:var(--tinta); overflow-wrap:break-word; }
+  .campo .valor small{ font-weight:400; color:var(--secundaria); white-space:nowrap; }
+  .c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}
+  .c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}
+  .c8{grid-column:span 8}.c12{grid-column:span 12}
+
+  /* ---------- KPIs ---------- */
+  .linha-kpi{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .kpi{
+    border:1px solid var(--linha); border-left:3px solid var(--azul-serie);
+    border-radius:3px; padding:8px 10px 9px;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .kpi.destaque{ border-left-color:var(--laranja); }
+  .kpi .rotulo{ font-size:10px; color:var(--secundaria); }
+  .kpi .valor{
+    font-family:var(--fonte-titulo); font-weight:600; font-size:24px; line-height:1.15;
+    color:var(--tinta); letter-spacing:.01em;
+  }
+  .kpi .valor.negativo{ color:var(--atraso); }
+  .kpi .apoio{ font-family:var(--fonte-mono); font-size:8px; color:var(--muda); letter-spacing:.02em; }
+
+  /* ---------- Medidor geral ---------- */
+  .medidor{ margin-top:10px; }
+  .medidor .cabecalho{
+    display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+    font-size:10.5px; color:var(--secundaria); margin-bottom:15px;
+  }
+  .medidor .cabecalho .meta{ font-family:var(--fonte-mono); font-size:8.5px; color:var(--muda); }
+  .trilha{
+    position:relative; height:15px; border-radius:0 4px 4px 0;
+    background:var(--azul-tinta);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .trilha .preenchido{
+    position:absolute; inset:0 auto 0 0; border-radius:0 4px 4px 0;
+    background:var(--azul-serie);
+    display:flex; align-items:center; justify-content:flex-end;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .trilha .preenchido span{
+    color:#fff; font-family:var(--fonte-mono); font-size:8.5px; font-weight:500; padding-right:6px;
+  }
+  .trilha .marcador{
+    position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--tinta);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .trilha .marcador i{
+    position:absolute; top:-11px; left:-2px;
+    font-style:normal; font-family:var(--fonte-mono); font-size:7.5px; color:var(--tinta); white-space:nowrap;
+  }
+  .trilha .marcador.direita i{ left:auto; right:-2px; }
+  .escala{
+    display:flex; justify-content:space-between; margin-top:4px;
+    font-family:var(--fonte-mono); font-size:7.5px; color:var(--muda);
+  }
+
+  /* ---------- Gráfico (curva S) ---------- */
+  .grafico{ border:1px solid var(--linha); border-radius:3px; padding:10px 12px 6px; }
+  .grafico .topo{
+    display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:2px;
+  }
+  .grafico .titulo-grafico{ font-size:11px; font-weight:600; color:var(--tinta); }
+  .grafico .titulo-grafico small{ font-weight:400; color:var(--muda); }
+  .legenda{ display:flex; gap:14px; font-size:10px; color:var(--secundaria); }
+  .legenda span{ display:inline-flex; align-items:center; gap:5px; }
+  .chave{ width:16px; height:3px; border-radius:2px; display:inline-block;
+          print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .chave.previsto{ background:var(--azul-serie); }
+  .chave.executado{ background:var(--laranja); }
+  .envelope-svg{ position:relative; }
+  .envelope-svg svg{ display:block; width:100%; height:auto; }
+  .dica-grafico{
+    position:absolute; display:none; pointer-events:none; z-index:5;
+    background:var(--tinta); color:#fff; border-radius:3px;
+    padding:5px 8px; font-size:10px; line-height:1.45; white-space:nowrap;
+    transform:translate(-50%,-100%); margin-top:-8px;
+  }
+  .dica-grafico b{ font-family:var(--fonte-mono); font-weight:500; font-size:8.5px; letter-spacing:.06em; text-transform:uppercase; display:block; color:#c8d4dd; }
+
+  .tabela-mini{ width:100%; border-collapse:collapse; margin-top:8px; font-family:var(--fonte-mono); font-size:8px; }
+  .tabela-mini th,.tabela-mini td{
+    border:1px solid var(--linha); padding:2.5px 4px; text-align:right;
+    font-variant-numeric:tabular-nums; font-weight:400;
+  }
+  .tabela-mini th{ color:var(--muda); font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  .tabela-mini th:first-child,.tabela-mini td:first-child{ text-align:left; }
+  .tabela-mini td:first-child{ color:var(--secundaria); }
+  .tabela-mini .ref{ background:var(--tinta-fraca); print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+
+  /* ---------- Tabelas ---------- */
+  .rolagem{ overflow-x:auto; }
+  table.dados{ width:100%; border-collapse:collapse; font-size:11px; }
+  table.dados th{
+    font-family:var(--fonte-mono); font-size:7.5px; font-weight:500;
+    letter-spacing:.09em; text-transform:uppercase;
+    color:#fff; background:var(--azul); text-align:left; padding:5px 8px;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  table.dados td{
+    padding:4px 8px; border-bottom:1px solid var(--linha); vertical-align:middle;
+  }
+  table.dados tr{ break-inside:avoid; }
+  table.dados .num{ text-align:right; font-family:var(--fonte-mono); font-size:9.5px; font-variant-numeric:tabular-nums; }
+  table.dados th.num{ text-align:right; }
+  table.dados .idx{ color:var(--muda); font-family:var(--fonte-mono); font-size:8.5px; }
+  table.dados tfoot td{
+    border-top:2px solid var(--linha-forte); border-bottom:0;
+    font-weight:700; background:var(--tinta-fraca);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  td.desvio-atencao{ color:var(--atencao); font-weight:500; }
+  td.desvio-atraso{ color:var(--atraso); font-weight:600; }
+  td.desvio-zero{ color:var(--muda); }
+
+  .barra-etapa{
+    position:relative; height:8px; width:100%; min-width:70px;
+    background:var(--azul-tinta); border-radius:0 3px 3px 0;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .barra-etapa .exec{
+    position:absolute; inset:0 auto 0 0; background:var(--azul-serie); border-radius:0 3px 3px 0;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .barra-etapa .prev{
+    position:absolute; top:-2px; bottom:-2px; width:1.5px; background:var(--tinta);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+
+  .selo{
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+    font-family:var(--fonte-mono); font-size:8px; font-weight:500; letter-spacing:.05em;
+    padding:2px 7px; border-radius:9px;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .selo::before{ content:""; width:5px; height:5px; border-radius:50%; background:currentColor; }
+  .selo.ok{ color:var(--ok); background:var(--ok-fundo); }
+  .selo.andamento{ color:var(--azul); background:var(--azul-tinta); }
+  .selo.atraso{ color:var(--atraso); background:var(--atraso-fundo); }
+  .selo.pendente{ color:var(--neutro); background:var(--neutro-fundo); }
+
+  /* ---------- Listas de atividades ---------- */
+  .duas-colunas{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .painel{ border:1px solid var(--linha); border-radius:3px; padding:9px 12px 10px; }
+  .painel ul{ margin:0; padding:0; list-style:none; }
+  .painel li{
+    position:relative; padding:3px 0 3px 14px; border-bottom:1px solid var(--tinta-fraca);
+    font-size:11px;
+  }
+  .painel li:last-child{ border-bottom:0; }
+  .painel li::before{
+    content:""; position:absolute; left:0; top:9px; width:6px; height:6px; border-radius:1px;
+    background:var(--laranja);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .painel.previstas li::before{ background:var(--azul-serie); }
+  .painel li .quando{ font-family:var(--fonte-mono); font-size:8px; color:var(--muda); }
+
+  /* ---------- Observações ---------- */
+  ol.observacoes{ margin:0; padding:0; list-style:none; counter-reset:obs; }
+  ol.observacoes li{
+    counter-increment:obs; position:relative; padding:5px 0 5px 34px;
+    border-bottom:1px solid var(--tinta-fraca); font-size:11.5px;
+  }
+  ol.observacoes li:last-child{ border-bottom:0; }
+  ol.observacoes li::before{
+    content:"9." counter(obs); position:absolute; left:0; top:6px;
+    font-family:var(--fonte-mono); font-size:9px; font-weight:500; color:var(--laranja-texto);
+  }
+
+  /* ---------- Fotos ---------- */
+  .fotos{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .fotos figure{ margin:0; break-inside:avoid; }
+  .moldura{
+    aspect-ratio:4/3; border:1.5px dashed var(--linha-forte); border-radius:3px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    color:var(--muda); background:var(--tinta-fraca);
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .moldura svg{ opacity:.75; }
+  .moldura .aviso{ font-family:var(--fonte-mono); font-size:7.5px; letter-spacing:.14em; text-transform:uppercase; }
+  .fotos figcaption{ margin-top:4px; font-size:10px; color:var(--secundaria); line-height:1.4; }
+  .fotos figcaption .cod{
+    display:block; font-family:var(--fonte-mono); font-size:7.5px; letter-spacing:.1em;
+    color:var(--laranja-texto); text-transform:uppercase;
+  }
+
+  /* ---------- Assinaturas ---------- */
+  .encerramento p{ margin:0 0 18px; font-size:11.5px; }
+  .assinaturas{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:26px; }
+  .assinatura{ text-align:center; }
+  .assinatura .linha-ass{ border-top:1px solid var(--tinta); padding-top:5px; }
+  .assinatura .nome{ font-weight:700; font-size:11px; }
+  .assinatura .funcao{ font-size:10px; color:var(--secundaria); line-height:1.4; }
+  .assinatura .registro{ font-family:var(--fonte-mono); font-size:8px; color:var(--muda); }
+
+  /* ---------- Rodapé da folha ---------- */
+  .rodape-folha{
+    margin-top:22px; padding-top:8px; border-top:1px solid var(--linha-forte);
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    font-family:var(--fonte-mono); font-size:7.5px; color:var(--muda); letter-spacing:.03em;
+  }
+
+  /* ---------- Responsivo (somente tela estreita; nunca na impressão) ---------- */
+  @media screen and (max-width:760px){
+    .folha{ padding:20px 16px; }
+    .masthead{ grid-template-columns:1fr; }
+    .logotipo{ min-height:16mm; }
+    .linha-kpi,.duas-colunas,.assinaturas{ grid-template-columns:1fr 1fr; }
+    .fotos{ grid-template-columns:repeat(2,1fr); }
+    .grade-campos :is(.c2,.c3,.c4,.c5){ grid-column:span 6; }
+    .grade-campos :is(.c6,.c7,.c8){ grid-column:span 12; }
+  }
+  @media screen and (max-width:480px){
+    .linha-kpi,.duas-colunas,.assinaturas{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Impressão ---------- */
+  @page{ size:A4; margin:11mm 11mm 13mm; }
+  @media print{
+    body{ background:#fff; font-size:11.5px; }
+    .barra-ferramentas,.dica-grafico{ display:none !important; }
+    .area-folha{ padding:0; }
+    .folha{ width:auto; margin:0; padding:0; box-shadow:none; }
+    table.dados thead{ display:table-header-group; }
+    section{ margin-top:14px; }
+    a{ color:inherit; text-decoration:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="barra-ferramentas">
+  <span class="titulo-app">Modelo · Relatório de Evolução de Obra</span>
+  <span class="dica" id="dica-barra">Dados ilustrativos — edite o conteúdo e imprima em A4.</span>
+  <span class="acoes">
+    <button type="button" class="botao" id="botao-editar" aria-pressed="false">Editar conteúdo</button>
+    <button type="button" class="botao primario" id="botao-imprimir">Imprimir / salvar PDF</button>
+  </span>
+</header>
+
+<main class="area-folha">
+  <article class="folha" id="folha" spellcheck="false">
+
+    <!-- Cabeçalho -->
+    <div class="masthead">
+      <div class="logotipo">LOGO</div>
+      <div class="empresa">
+        <div class="nome">Alicerce Engenharia e Construções Ltda.</div>
+        <div class="detalhe">
+          CNPJ 00.000.000/0001-00 · CREA-UF 0000000-0<br>
+          Rua Exemplo, 100 — Centro · Cidade/UF · (00)&nbsp;0000-0000<br>
+          contato@empresa.com.br
+        </div>
+      </div>
+      <div class="bloco-doc">
+        <div><span class="rotulo">Documento nº</span><span class="valor">REO-006/2026</span></div>
+        <div><span class="rotulo">Revisão</span><span class="valor">R0</span></div>
+        <div><span class="rotulo">Emissão</span><span class="valor">31/08/2026</span></div>
+        <div><span class="rotulo">Folha</span><span class="valor">1 de 1</span></div>
+        <div><span class="rotulo">Elaboração</span><span class="valor">A.B.F.</span></div>
+        <div><span class="rotulo">Aprovação</span><span class="valor">R.T.</span></div>
+      </div>
+    </div>
+
+    <div class="faixa-titulo">
+      <h1>Relatório de Evolução de Obra</h1>
+      <div class="subtitulo">
+        <span>Construção civil residencial · acompanhamento mensal</span>
+        <span class="periodo">Período de referência: 01/08/2026 a 31/08/2026</span>
+      </div>
+    </div>
+
+    <!-- 1. Identificação -->
+    <section>
+      <h2><span class="num">1</span>Identificação da obra</h2>
+      <div class="grade-campos">
+        <div class="campo c8"><span class="rotulo">Obra / empreendimento</span><span class="valor">Residência unifamiliar — Lote 12, Condomínio Vale dos Ipês</span></div>
+        <div class="campo c4"><span class="rotulo">Contrato nº</span><span class="valor">042/2025 <small>(empreitada global)</small></span></div>
+        <div class="campo c8"><span class="rotulo">Endereço da obra</span><span class="valor">Rua das Paineiras, 250 — Jardim Alto · Cidade/UF · CEP 00000-000</span></div>
+        <div class="campo c4"><span class="rotulo">Proprietário / contratante</span><span class="valor">Carlos E. Menezes</span></div>
+        <div class="campo c5"><span class="rotulo">Responsável técnico (execução)</span><span class="valor">Eng.ª Civil Ana Beatriz Ferraz <small>· CREA-UF 000000000-0</small></span></div>
+        <div class="campo c3"><span class="rotulo">ART de execução</span><span class="valor">0000000000000000</span></div>
+        <div class="campo c2"><span class="rotulo">Área do terreno</span><span class="valor">450,00 m²</span></div>
+        <div class="campo c2"><span class="rotulo">Área construída</span><span class="valor">218,50 m²</span></div>
+        <div class="campo c3"><span class="rotulo">Início da obra</span><span class="valor">02/03/2026</span></div>
+        <div class="campo c3"><span class="rotulo">Prazo contratual</span><span class="valor">300 dias corridos</span></div>
+        <div class="campo c3"><span class="rotulo">Término previsto</span><span class="valor">26/12/2026</span></div>
+        <div class="campo c3"><span class="rotulo">Padrão construtivo</span><span class="valor">Alvenaria convencional · 2 pav.</span></div>
+      </div>
+    </section>
+
+    <!-- 2. Situação geral -->
+    <section>
+      <h2><span class="num">2</span>Situação geral do avanço físico</h2>
+      <div class="linha-kpi">
+        <div class="kpi">
+          <div class="rotulo">Avanço previsto (acum.)</div>
+          <div class="valor">61,9%</div>
+          <div class="apoio">linha de base — curva S</div>
+        </div>
+        <div class="kpi destaque">
+          <div class="rotulo">Avanço executado (acum.)</div>
+          <div class="valor">56,3%</div>
+          <div class="apoio">medição de 31/08/2026</div>
+        </div>
+        <div class="kpi">
+          <div class="rotulo">Desvio físico</div>
+          <div class="valor negativo">−5,6 p.p.</div>
+          <div class="apoio">concentrado: cobertura e esquadrias</div>
+        </div>
+        <div class="kpi">
+          <div class="rotulo">Prazo decorrido</div>
+          <div class="valor">60,3%</div>
+          <div class="apoio">181 de 300 dias corridos</div>
+        </div>
+      </div>
+
+      <div class="medidor">
+        <div class="cabecalho">
+          <span>Avanço físico acumulado da obra</span>
+          <span class="meta">situação: em atraso recuperável — plano de recuperação na seção 9</span>
+        </div>
+        <div class="trilha">
+          <div class="preenchido" style="width:56.3%"><span>56,3%</span></div>
+          <div class="marcador" style="left:61.9%"><i>previsto 61,9%</i></div>
+        </div>
+        <div class="escala"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div>
+      </div>
+    </section>
+
+    <!-- 3. Curva S -->
+    <section>
+      <h2><span class="num">3</span>Curva de avanço físico (curva S)</h2>
+      <div class="grafico">
+        <div class="topo">
+          <span class="titulo-grafico">Avanço físico acumulado <small>· % por mês, mar–dez/2026</small></span>
+          <span class="legenda">
+            <span><span class="chave previsto"></span>Previsto</span>
+            <span><span class="chave executado"></span>Executado</span>
+          </span>
+        </div>
+        <div class="envelope-svg" id="envelope-curva">
+          <svg viewBox="0 0 680 232" role="img" aria-label="Curva S: avanço previsto por mês de março a dezembro de 2026 e avanço executado até agosto; executado em 56,3% contra 61,9% previsto.">
+            <!-- grade -->
+            <g stroke="#dfe4e8" stroke-width="1">
+              <line x1="48" y1="24"  x2="656" y2="24"></line>
+              <line x1="48" y1="68"  x2="656" y2="68"></line>
+              <line x1="48" y1="112" x2="656" y2="112"></line>
+              <line x1="48" y1="156" x2="656" y2="156"></line>
+              <line x1="48" y1="200" x2="656" y2="200"></line>
+            </g>
+            <!-- marcador do mês de referência (ago) -->
+            <line x1="385.8" y1="24" x2="385.8" y2="200" stroke="#cbd3da" stroke-width="1"></line>
+            <!-- eixos: rótulos y -->
+            <g font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#66747f" text-anchor="end">
+              <text x="42" y="203">0</text>
+              <text x="42" y="159">25</text>
+              <text x="42" y="115">50</text>
+              <text x="42" y="71">75</text>
+              <text x="42" y="27">100</text>
+            </g>
+            <!-- rótulos x -->
+            <g font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#66747f" text-anchor="middle">
+              <text x="48"    y="216">mar</text>
+              <text x="115.6" y="216">abr</text>
+              <text x="183.1" y="216">mai</text>
+              <text x="250.7" y="216">jun</text>
+              <text x="318.2" y="216">jul</text>
+              <text x="385.8" y="216" fill="#22303c" font-weight="600">ago</text>
+              <text x="453.3" y="216">set</text>
+              <text x="520.9" y="216">out</text>
+              <text x="588.4" y="216">nov</text>
+              <text x="656"   y="216">dez</text>
+            </g>
+            <!-- séries -->
+            <polyline points="48,191.2 115.6,178.9 183.1,163 250.7,141.9 318.2,117.3 385.8,91.1 453.3,69.8 520.9,48.6 588.4,32.8 656,24"
+                      fill="none" stroke="#2673af" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            <polyline points="48,191.9 115.6,180.6 183.1,165.7 250.7,147.2 318.2,124.3 385.8,100.9"
+                      fill="none" stroke="#e06818" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            <!-- marcadores de extremidade -->
+            <circle cx="656" cy="24" r="4.5" fill="#2673af" stroke="#fdfdfc" stroke-width="2"></circle>
+            <circle cx="385.8" cy="100.9" r="4.5" fill="#e06818" stroke="#fdfdfc" stroke-width="2"></circle>
+            <!-- rótulos diretos -->
+            <g font-family="Source Sans 3,Arial,sans-serif" font-size="10.5" fill="#22303c" font-weight="600">
+              <text x="646" y="15" text-anchor="end">100%</text>
+              <text x="396" y="117">56,3%</text>
+            </g>
+            <!-- linha-guia do cursor (tela) -->
+            <line id="cruz" x1="0" y1="24" x2="0" y2="200" stroke="#22303c" stroke-width="1" opacity="0" pointer-events="none"></line>
+            <!-- alvos de interação -->
+            <g id="alvos-curva" fill="transparent"></g>
+          </svg>
+          <div class="dica-grafico" id="dica-curva" role="status" aria-hidden="true"></div>
+        </div>
+        <table class="tabela-mini" aria-label="Quadro de avanço físico mensal acumulado (%)">
+          <thead>
+            <tr><th>% acum.</th><th>mar</th><th>abr</th><th>mai</th><th>jun</th><th>jul</th><th class="ref">ago</th><th>set</th><th>out</th><th>nov</th><th>dez</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Previsto</td><td>5,0</td><td>12,0</td><td>21,0</td><td>33,0</td><td>47,0</td><td class="ref">61,9</td><td>74,0</td><td>86,0</td><td>95,0</td><td>100,0</td></tr>
+            <tr><td>Executado</td><td>4,6</td><td>11,0</td><td>19,5</td><td>30,0</td><td>43,0</td><td class="ref">56,3</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. Cronograma por etapa -->
+    <section class="pode-quebrar">
+      <h2><span class="num">4</span>Cronograma físico por etapa</h2>
+      <div class="rolagem">
+        <table class="dados">
+          <thead>
+            <tr>
+              <th style="width:20px">#</th>
+              <th>Etapa / serviço</th>
+              <th class="num" style="width:44px">Peso %</th>
+              <th class="num" style="width:48px">Prev. %</th>
+              <th class="num" style="width:48px">Exec. %</th>
+              <th class="num" style="width:52px">Desvio p.p.</th>
+              <th style="width:19%">Avanço da etapa</th>
+              <th style="width:92px">Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="idx">01</td><td>Serviços preliminares e canteiro</td>
+              <td class="num">3,0</td><td class="num">100</td><td class="num">100</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:100%"></div><div class="prev" style="left:100%"></div></div></td>
+              <td><span class="selo ok">Concluído</span></td>
+            </tr>
+            <tr>
+              <td class="idx">02</td><td>Movimento de terra</td>
+              <td class="num">2,0</td><td class="num">100</td><td class="num">100</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:100%"></div><div class="prev" style="left:100%"></div></div></td>
+              <td><span class="selo ok">Concluído</span></td>
+            </tr>
+            <tr>
+              <td class="idx">03</td><td>Fundações</td>
+              <td class="num">8,0</td><td class="num">100</td><td class="num">100</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:100%"></div><div class="prev" style="left:100%"></div></div></td>
+              <td><span class="selo ok">Concluído</span></td>
+            </tr>
+            <tr>
+              <td class="idx">04</td><td>Estrutura de concreto armado</td>
+              <td class="num">16,0</td><td class="num">100</td><td class="num">100</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:100%"></div><div class="prev" style="left:100%"></div></div></td>
+              <td><span class="selo ok">Concluído</span></td>
+            </tr>
+            <tr>
+              <td class="idx">05</td><td>Alvenaria e vedações</td>
+              <td class="num">10,0</td><td class="num">100</td><td class="num">94</td><td class="num desvio-atencao">−6,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:94%"></div><div class="prev" style="left:100%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">06</td><td>Cobertura</td>
+              <td class="num">6,0</td><td class="num">90</td><td class="num">72</td><td class="num desvio-atraso">−18,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:72%"></div><div class="prev" style="left:90%"></div></div></td>
+              <td><span class="selo atraso">Em atraso</span></td>
+            </tr>
+            <tr>
+              <td class="idx">07</td><td>Instalações hidrossanitárias</td>
+              <td class="num">7,0</td><td class="num">75</td><td class="num">66</td><td class="num desvio-atencao">−9,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:66%"></div><div class="prev" style="left:75%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">08</td><td>Instalações elétricas</td>
+              <td class="num">6,0</td><td class="num">70</td><td class="num">62</td><td class="num desvio-atencao">−8,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:62%"></div><div class="prev" style="left:70%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">09</td><td>Esquadrias e vidros</td>
+              <td class="num">5,0</td><td class="num">45</td><td class="num">30</td><td class="num desvio-atraso">−15,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:30%"></div><div class="prev" style="left:45%"></div></div></td>
+              <td><span class="selo atraso">Em atraso</span></td>
+            </tr>
+            <tr>
+              <td class="idx">10</td><td>Revestimentos internos</td>
+              <td class="num">9,0</td><td class="num">40</td><td class="num">30</td><td class="num desvio-atencao">−10,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:30%"></div><div class="prev" style="left:40%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">11</td><td>Revestimentos externos e fachada</td>
+              <td class="num">7,0</td><td class="num">20</td><td class="num">10</td><td class="num desvio-atencao">−10,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:10%"></div><div class="prev" style="left:20%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">12</td><td>Pisos e acabamentos</td>
+              <td class="num">8,0</td><td class="num">10</td><td class="num">4</td><td class="num desvio-atencao">−6,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:4%"></div><div class="prev" style="left:10%"></div></div></td>
+              <td><span class="selo andamento">Em execução</span></td>
+            </tr>
+            <tr>
+              <td class="idx">13</td><td>Pintura</td>
+              <td class="num">6,0</td><td class="num">0</td><td class="num">0</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:0%"></div><div class="prev" style="left:0%"></div></div></td>
+              <td><span class="selo pendente">Não iniciado</span></td>
+            </tr>
+            <tr>
+              <td class="idx">14</td><td>Louças, metais e bancadas</td>
+              <td class="num">4,0</td><td class="num">0</td><td class="num">0</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:0%"></div><div class="prev" style="left:0%"></div></div></td>
+              <td><span class="selo pendente">Não iniciado</span></td>
+            </tr>
+            <tr>
+              <td class="idx">15</td><td>Serviços complementares e limpeza final</td>
+              <td class="num">3,0</td><td class="num">0</td><td class="num">0</td><td class="num desvio-zero">0,0</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:0%"></div><div class="prev" style="left:0%"></div></div></td>
+              <td><span class="selo pendente">Não iniciado</span></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td></td><td>Avanço ponderado da obra</td>
+              <td class="num">100,0</td><td class="num">61,9</td><td class="num">56,3</td><td class="num desvio-atencao">−5,6</td>
+              <td><div class="barra-etapa"><div class="exec" style="width:56.3%"></div><div class="prev" style="left:61.9%"></div></div></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p style="margin:6px 0 0; font-size:9.5px; color:var(--muda);">
+        Percentuais por etapa medidos sobre o escopo da própria etapa; o traço vertical em cada barra indica o previsto acumulado. Critério de medição conforme planilha orçamentária do contrato 042/2025.
+      </p>
+    </section>
+
+    <!-- 5. Atividades -->
+    <section>
+      <h2><span class="num">5</span>Atividades do período</h2>
+      <div class="duas-colunas">
+        <div class="painel">
+          <h3>5.1 · Executadas em agosto/2026</h3>
+          <ul>
+            <li>Conclusão da alvenaria do pavimento superior, eixos 1 a 4 <span class="quando">· 01–12/08</span></li>
+            <li>Vergas, contravergas e encunhamento das vedações <span class="quando">· 05–15/08</span></li>
+            <li>Madeiramento da cobertura (72% concluído) <span class="quando">· 10–29/08</span></li>
+            <li>Prumadas e ramais hidrossanitários do pav. superior <span class="quando">· 03–22/08</span></li>
+            <li>Eletrodutos e caixas nas paredes do pav. superior <span class="quando">· 06–27/08</span></li>
+            <li>Impermeabilização dos boxes e áreas frias do pav. superior <span class="quando">· 24–28/08</span></li>
+            <li>Início do contrapiso do pavimento térreo <span class="quando">· 25–31/08</span></li>
+          </ul>
+        </div>
+        <div class="painel previstas">
+          <h3>5.2 · Previstas para setembro/2026</h3>
+          <ul>
+            <li>Conclusão do madeiramento e colocação das telhas cerâmicas</li>
+            <li>Instalação dos contramarcos das esquadrias de alumínio</li>
+            <li>Chapisco e emboço internos do pavimento térreo</li>
+            <li>Enfiação dos circuitos elétricos do pavimento térreo</li>
+            <li>Teste de estanqueidade das instalações hidráulicas</li>
+            <li>Contrapiso do pavimento superior</li>
+            <li>Compra dos revestimentos cerâmicos (ver seção 9)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Recursos -->
+    <section>
+      <h2><span class="num">6</span>Recursos mobilizados no período</h2>
+      <div class="duas-colunas">
+        <div>
+          <h3>6.1 · Efetivo médio em obra</h3>
+          <table class="dados">
+            <thead><tr><th>Função</th><th class="num" style="width:70px">Qtde</th></tr></thead>
+            <tbody>
+              <tr><td>Mestre de obras</td><td class="num">1</td></tr>
+              <tr><td>Pedreiro</td><td class="num">4</td></tr>
+              <tr><td>Servente</td><td class="num">4</td></tr>
+              <tr><td>Carpinteiro (cobertura)</td><td class="num">2</td></tr>
+              <tr><td>Eletricista</td><td class="num">1</td></tr>
+              <tr><td>Encanador</td><td class="num">1</td></tr>
+            </tbody>
+            <tfoot><tr><td>Total</td><td class="num">13</td></tr></tfoot>
+          </table>
+          <p style="margin:5px 0 0; font-size:9.5px; color:var(--muda);">Responsável técnico em obra 2×/semana e nas concretagens/liberações.</p>
+        </div>
+        <div>
+          <h3>6.2 · Equipamentos principais</h3>
+          <table class="dados">
+            <thead><tr><th>Equipamento</th><th class="num" style="width:56px">Qtde</th><th style="width:104px">Situação</th></tr></thead>
+            <tbody>
+              <tr><td>Betoneira 400 L</td><td class="num">1</td><td><span class="selo andamento">Em operação</span></td></tr>
+              <tr><td>Andaime fachadeiro (m²)</td><td class="num">120</td><td><span class="selo andamento">Mobilizado</span></td></tr>
+              <tr><td>Serra circular de bancada</td><td class="num">1</td><td><span class="selo andamento">Em operação</span></td></tr>
+              <tr><td>Vibrador de imersão</td><td class="num">1</td><td><span class="selo pendente">Desmobilizado</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Clima e ocorrências -->
+    <section>
+      <h2><span class="num">7</span>Condições climáticas e ocorrências</h2>
+      <div class="grade-campos" style="margin-bottom:10px;">
+        <div class="campo c2"><span class="rotulo">Dias corridos</span><span class="valor">31</span></div>
+        <div class="campo c2"><span class="rotulo">Dias úteis</span><span class="valor">21</span></div>
+        <div class="campo c2"><span class="rotulo">Dias trabalhados</span><span class="valor">19</span></div>
+        <div class="campo c3"><span class="rotulo">Dias com chuva</span><span class="valor">4 <small>(2 com paralisação)</small></span></div>
+        <div class="campo c3"><span class="rotulo">Dias paralisados</span><span class="valor">2 <small>(chuva forte)</small></span></div>
+      </div>
+      <table class="dados">
+        <thead>
+          <tr><th style="width:64px">Data</th><th>Ocorrência</th><th style="width:38%">Providência / encaminhamento</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">07/08</td>
+            <td>Chuva intensa; paralisação das atividades externas.</td>
+            <td>Equipe remanejada para atividades internas (instalações do pav. superior).</td>
+          </tr>
+          <tr>
+            <td class="num">12/08</td>
+            <td>Atraso do fornecedor na entrega das telhas cerâmicas.</td>
+            <td>Nova entrega confirmada para 04/09; equipe de cobertura replanejada.</td>
+          </tr>
+          <tr>
+            <td class="num">21/08</td>
+            <td>Ajuste de projeto: reposicionamento de ponto hidráulico da cozinha (RFI-011).</td>
+            <td>Aprovado pelo projetista em 24/08; executado sem impacto no prazo.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 8. Fotos -->
+    <section class="pode-quebrar">
+      <h2><span class="num">8</span>Registro fotográfico</h2>
+      <div class="fotos">
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 01 · 28/08/2026</span>Vista geral da fachada frontal.</figcaption>
+        </figure>
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 02 · 28/08/2026</span>Alvenaria do pavimento superior concluída.</figcaption>
+        </figure>
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 03 · 29/08/2026</span>Madeiramento da cobertura em execução.</figcaption>
+        </figure>
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 04 · 29/08/2026</span>Prumadas hidrossanitárias do pav. superior.</figcaption>
+        </figure>
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 05 · 30/08/2026</span>Infraestrutura elétrica das paredes e laje.</figcaption>
+        </figure>
+        <figure>
+          <div class="moldura">
+            <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="28" height="22" rx="2"></rect><circle cx="10" cy="9" r="3"></circle><path d="M1 19l8-7 6 5 5-4 9 7"></path></svg>
+            <span class="aviso">Inserir foto</span>
+          </div>
+          <figcaption><span class="cod">Foto 06 · 31/08/2026</span>Contrapiso do pavimento térreo iniciado.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 9. Observações -->
+    <section>
+      <h2><span class="num">9</span>Observações, pendências e recomendações</h2>
+      <ol class="observacoes">
+        <li>O desvio de −5,6 p.p. concentra-se nas etapas de cobertura e esquadrias, decorrente de atraso de fornecimento. Plano de recuperação: reforço de 1 equipe de carpintaria a partir de 02/09 e priorização do fechamento da cobertura, com retorno à curva prevista estimado para outubro/2026.</li>
+        <li>Recomenda-se antecipar a compra dos revestimentos cerâmicos e das louças e metais (prazo de entrega médio de 30 dias) para não impactar as etapas 12 e 14.</li>
+        <li>Pendência do contratante: definição da cor da fachada e aprovação do projeto de paisagismo até 15/09/2026.</li>
+        <li>Sem acidentes de trabalho ou ocorrências de segurança no período; DDS realizado semanalmente.</li>
+      </ol>
+    </section>
+
+    <!-- 10. Encerramento -->
+    <section class="encerramento">
+      <h2><span class="num">10</span>Encerramento e assinaturas</h2>
+      <p>
+        O presente relatório registra a evolução física da obra no período de referência e segue para ciência
+        e aprovação das partes. Os percentuais informados têm por base o critério de medição contratual.
+      </p>
+      <p class="mono" style="font-size:10px; color:var(--secundaria); margin-bottom:0;">Cidade (UF), 31 de agosto de 2026.</p>
+      <div class="assinaturas">
+        <div class="assinatura">
+          <div class="linha-ass">
+            <div class="nome">Eng.ª Ana Beatriz Ferraz</div>
+            <div class="funcao">Responsável técnico pela execução</div>
+            <div class="registro">CREA-UF 000000000-0 · ART 0000000000000000</div>
+          </div>
+        </div>
+        <div class="assinatura">
+          <div class="linha-ass">
+            <div class="nome">Alicerce Engenharia e Construções</div>
+            <div class="funcao">Construtora / contratada</div>
+            <div class="registro">CNPJ 00.000.000/0001-00</div>
+          </div>
+        </div>
+        <div class="assinatura">
+          <div class="linha-ass">
+            <div class="nome">Carlos E. Menezes</div>
+            <div class="funcao">Proprietário / contratante</div>
+            <div class="registro">Ciência e aprovação</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="rodape-folha">
+      <span>ALICERCE ENGENHARIA · REO-006/2026 · R0</span>
+      <span>Modelo com dados ilustrativos — substitua pelos dados da sua obra</span>
+      <span>Emitido em 31/08/2026</span>
+    </footer>
+
+  </article>
+</main>
+
+<script>
+  (function(){
+    "use strict";
+
+    /* Imprimir */
+    document.getElementById("botao-imprimir").addEventListener("click", function(){ window.print(); });
+
+    /* Alternar edição do conteúdo da folha */
+    var folha = document.getElementById("folha");
+    var botaoEditar = document.getElementById("botao-editar");
+    var dicaBarra = document.getElementById("dica-barra");
+    botaoEditar.addEventListener("click", function(){
+      var editando = folha.getAttribute("contenteditable") === "true";
+      folha.setAttribute("contenteditable", editando ? "false" : "true");
+      botaoEditar.setAttribute("aria-pressed", String(!editando));
+      botaoEditar.textContent = editando ? "Editar conteúdo" : "Concluir edição";
+      dicaBarra.textContent = editando
+        ? "Dados ilustrativos — edite o conteúdo e imprima em A4."
+        : "Modo de edição ativo: clique em qualquer texto da folha para alterá-lo.";
+      if (!editando) folha.focus();
+    });
+
+    /* Curva S: camada de leitura por mês (tela) */
+    var meses = ["mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+    var previsto  = ["5,0","12,0","21,0","33,0","47,0","61,9","74,0","86,0","95,0","100,0"];
+    var executado = ["4,6","11,0","19,5","30,0","43,0","56,3",null,null,null,null];
+    var xs = [48,115.6,183.1,250.7,318.2,385.8,453.3,520.9,588.4,656];
+
+    var envelope = document.getElementById("envelope-curva");
+    var svg = envelope.querySelector("svg");
+    var alvos = document.getElementById("alvos-curva");
+    var cruz = document.getElementById("cruz");
+    var dica = document.getElementById("dica-curva");
+    var NS = "http://www.w3.org/2000/svg";
+    var meio = 67.6;
+
+    xs.forEach(function(x, i){
+      var r = document.createElementNS(NS, "rect");
+      r.setAttribute("x", String(x - meio/2));
+      r.setAttribute("y", "24");
+      r.setAttribute("width", String(meio));
+      r.setAttribute("height", "176");
+      r.dataset.i = String(i);
+      alvos.appendChild(r);
+    });
+
+    function mostrar(i){
+      var texto = "<b>" + meses[i] + "/2026</b>Previsto " + previsto[i] + "%";
+      if (executado[i] !== null) texto += " · Executado " + executado[i] + "%";
+      dica.innerHTML = texto;
+      dica.style.display = "block";
+      dica.setAttribute("aria-hidden","false");
+      var caixaSvg = svg.getBoundingClientRect();
+      var caixaEnv = envelope.getBoundingClientRect();
+      var escala = caixaSvg.width / 680;
+      var x = (caixaSvg.left - caixaEnv.left) + xs[i]*escala;
+      var y = (caixaSvg.top  - caixaEnv.top)  + 24*escala;
+      dica.style.left = x + "px";
+      dica.style.top  = (y + 14) + "px";
+      cruz.setAttribute("x1", String(xs[i]));
+      cruz.setAttribute("x2", String(xs[i]));
+      cruz.setAttribute("opacity", "0.35");
+    }
+    function esconder(){
+      dica.style.display = "none";
+      dica.setAttribute("aria-hidden","true");
+      cruz.setAttribute("opacity","0");
+    }
+    alvos.addEventListener("mouseover", function(e){
+      var alvo = e.target.closest("rect");
+      if (alvo) mostrar(Number(alvo.dataset.i));
+    });
+    alvos.addEventListener("mouseleave", esconder);
+    svg.addEventListener("touchend", esconder, {passive:true});
+    alvos.addEventListener("touchstart", function(e){
+      var alvo = e.target.closest("rect");
+      if (alvo) mostrar(Number(alvo.dataset.i));
+    }, {passive:true});
+  })();
+</script>
+
+</body>
+</html>
